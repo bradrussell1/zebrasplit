@@ -3,7 +3,10 @@
   "apple": {
     "version": "1.0.3",
     "copyright": "2026 Bradley Russell",
-    "categories": ["FINANCE", "TRAVEL"],
+    "categories": [
+      "FINANCE",
+      "TRAVEL"
+    ],
     "release": {
       "automaticRelease": true
     },
@@ -14,7 +17,8 @@
       "demoRequired": true,
       "demoUsername": "+1 555 555 0101",
       "demoPassword": "123456",
-      "notes": "Zebrasplit signs in with a phone number and a 6-digit SMS code — there is no password.\n\nTo sign in:\n1. On the welcome screen tap \"Log in\".\n2. Enter the phone number 5555550101 (US, +1).\n3. Tap Continue. Enter the code 123456.\n\nThis is a reserved test number with a fixed code, so no real SMS is sent. The account is \"Jordan Test\" and is already a member of a sample trip (\"Cabo crew\") with expenses, so every screen has data in it.\n\nNotes on specific features:\n- Zebrasplit never holds, moves or processes money, and never asks for bank or card details. The Pay button opens the Venmo app (or venmo.com) with the amount and note pre-filled; the payment happens entirely inside Venmo. Payments can also simply be marked as paid by hand.\n- \"Dazzle\" is the in-app word for a trip (a group of zebras is called a dazzle). A \"stripe\" means a member has finished adding expenses.\n- Receipt scanning: tap the camera on an expense to photograph a receipt. The photo is read to extract the line items and total. Any photo of a restaurant or store receipt works.\n- Contacts access is only used to let the user pick who to invite, and only the numbers they select are ever sent.\n- The account can be deleted in-app from Profile > Settings > Delete account."
+      "notes": "Zebrasplit signs in with a phone number and a 6-digit SMS code — there is no password.\n\nTo sign in:\n1. On the welcome screen tap \"Log in\".\n2. Enter the phone number 5555550101 (US, +1).\n3. Tap Continue. Enter the code 123456.\n\nThis is a reserved test number with a fixed code, so no real SMS is sent. The account is \"Jordan Test\" and is already a member of a sample trip (\"Cabo crew\") with expenses, so every screen has data in it.\n\nNotes on specific features:\n- Zebrasplit never holds, moves or processes money, and never asks for bank or card details. The Pay button opens the Venmo app (or venmo.com) with the amount and note pre-filled; the payment happens entirely inside Venmo. Payments can also simply be marked as paid by hand.\n- \"Dazzle\" is the in-app word for a trip (a group of zebras is called a dazzle). A \"stripe\" means a member has finished adding expenses.\n- Receipt scanning: tap the camera on an expense to photograph a receipt. The photo is read to extract the line items and total. Any photo of a restaurant or store receipt works.\n- Contacts access is only used to let the user pick who to invite, and only the numbers they select are ever sent.\n- The account can be deleted in-app from Profile > Settings > Delete account.",
+      "phone": "+1 612 423 6230"
     },
     "info": {
       "en-US": {
@@ -22,7 +26,16 @@
         "subtitle": "Split and share expenses",
         "promoText": "Split the trip, track who paid, know when everyone's done, then settle the whole thing with one payment each.",
         "description": "Zebrasplit is the expense sharing app without the confusion and hassle of leading competitors.\n\nSplit the trip or expense, track who paid for what, know exactly when everyone is done, then settle the whole thing with a single payment each.\n\nHOW IT WORKS\n\n1. Start a trip and invite your people from your contacts or by phone number.\n2. Everyone logs what they paid as they go.\n3. Each person taps Done when they've finished adding expenses.\n4. Once everyone is Done, Zebrasplit works out the fewest payments that settle the group and opens Venmo with the amount already filled in.\n\nSPLIT IT HOWEVER IT ACTUALLY HAPPENED\n\n- Evenly, by exact amounts, by percentage or by shares\n- By nights stayed, so people who arrive late pay less automatically\n- Item by item from a photo of the receipt\n- In any currency, with the exchange rate locked in when you save\n\nNO MORE \"IS EVERYONE DONE?\"\n\nEvery trip shows a zebra, and each person earns a stripe when they've finished adding their expenses. When the zebra has all its stripes, the group settles up. Nudge anyone who's holding things up, and if someone never responds, the trip owner can close it out anyway.\n\nONE PAYMENT EACH, NOT FIVE\n\nInstead of six people paying six people, Zebrasplit works out the smallest set of payments that settles everyone, so you usually pay one person once. Tap Pay and Venmo opens with the amount and note ready to send.\n\nZebrasplit never touches your money. It never holds funds, never processes a payment and never asks for bank or card details. Paying another way — cash, Zelle, a bank transfer — works fine too; just mark the payment as paid.\n\nFRIENDS DON'T NEED THE APP\n\nAnyone you invite gets a text with a link. They can open it in a browser, verify their number, add expenses and tap Done without installing anything.\n\nAFTER THE TRIP\n\nSettled trips move to Past with a recap: the total, cost per person, the biggest expense and who fronted the most. Export it as an image for the group chat.\n\nFREE\n\nEverything described here is free.",
-        "keywords": "split expenses,group trip,venmo,bill splitter,settle up,roommates,travel costs,receipt scan",
+        "keywords": [
+          "split expenses",
+          "group trip",
+          "venmo",
+          "bill splitter",
+          "settle up",
+          "roommates",
+          "travel costs",
+          "receipt scan"
+        ],
         "marketingUrl": "https://zebrasplit.com",
         "supportUrl": "https://zebrasplit.com/faq",
         "privacyPolicyUrl": "https://zebrasplit.com/privacy"
