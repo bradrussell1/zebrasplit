@@ -163,6 +163,7 @@ export default function ProfileScreen() {
 
           {/* 8: FAQ */}
           <RowCard title="FAQ" caption="How splitting, Done and close-out work" right={<Icon name="chevronRight" size={18} color={color.textMuted} />} onPress={() => router.push("/(app)/faq")} />
+          <RowCard title="Send feedback" caption="Tell us what broke or what you'd change" right={<Icon name="chevronRight" size={18} color={color.textMuted} />} onPress={() => router.push("/(app)/feedback")} />
 
           {/* 9–10 */}
           <Button kind="secondary" label="Sign out" height={size.buttonHeight} onPress={signOut} />
