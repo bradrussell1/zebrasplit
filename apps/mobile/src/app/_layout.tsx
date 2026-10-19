@@ -63,6 +63,8 @@ function Routes() {
       <Stack.Protected guard={signedIn}>
         <Stack.Screen name="(auth)/reset-password" />
       </Stack.Protected>
+      {/* always reachable: an invite link must open whether or not anyone is signed in */}
+      <Stack.Screen name="join/[code]" />
       <Stack.Screen name="(auth)/callback" />
       {__DEV__ && <Stack.Screen name="dev-login" />}
       {__DEV__ && <Stack.Screen name="design" />}

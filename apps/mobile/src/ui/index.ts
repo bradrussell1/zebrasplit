@@ -19,3 +19,4 @@ export { MemberPill } from "./Pills";
 export { Receipt } from "./Receipt";
 export { Zebra, useDanceTrigger } from "./zebra/Zebra";
 export * from "./motion";
+export { PlatformMark, PlatformChip } from "./Payments";

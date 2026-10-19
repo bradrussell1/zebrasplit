@@ -26,7 +26,10 @@
         "usesNonExemptEncryption": false
       },
       "appleTeamId": "8LR5F2TH8L",
-      "usesAppleSignIn": true
+      "usesAppleSignIn": true,
+      "associatedDomains": [
+        "applinks:zebrasplit.com"
+      ]
     },
     "android": {
       "package": "com.bunktab.app",
@@ -42,6 +45,26 @@
         "android.permission.CAMERA"
       ],
       "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "https",
+              "host": "zebrasplit.com",
+              "pathPrefix": "/join"
+            },
+            {
+              "scheme": "https",
+              "host": "www.zebrasplit.com",
+              "pathPrefix": "/join"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
+        },
         {
           "action": "VIEW",
           "data": [

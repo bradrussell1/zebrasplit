@@ -1,21 +1,22 @@
-import { CATEGORIES, formatCents, isValidNamePart, isValidVenmoUsername, joinName, splitName } from "@bunktab/core";
+import { CATEGORIES, formatCents, isValidNamePart, joinName, splitName } from "@bunktab/core";
 import { color, layout, palette, radius, size, space } from "@bunktab/theme";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { PaymentMethodsEditor, savePaymentMethods, type PaymentMethodsValue } from "@/components/PaymentMethods";
 import { TripHistoryList } from "@/components/TripHistoryList";
 import { ActionSheet, Avatar, Button, Card, Icon, Input, InsetPanel, Press, RowCard, ScreenBackground, SegmentedControl, Skeleton, TextLink, TopBar, ZText, useToast } from "@/ui";
 import { useAuth } from "@/lib/auth";
 import { pickImage, uploadImage } from "@/lib/storage";
 import { supabase } from "@/lib/supabase";
+import { useMyPayments } from "@/lib/payments";
 import { loadTripSummaries, type TripSummary } from "@/lib/trips";
-import { openVenmoProfile } from "@/lib/venmo";
 
 /**
  * Profile (user: hierarchy). Photo → Add/Replace photo → Name → the login identifier
  * (email, else phone; read-only) → Password (read-only, with a "Change password" link
- * to the reset screen) → Venmo username → Save → Stats | History → FAQ → Sign out →
+ * to the reset screen) → how you get paid (Venmo / Cash App / PayPal) → Save → Stats | History → FAQ → Sign out →
  * Delete account. Delete confirms in an action sheet (never a system alert) and still
  * calls delete_my_account.
  */
@@ -30,7 +31,10 @@ export default function ProfileScreen() {
   const prefill = splitName(profile?.display_name);
   const [first, setFirst] = useState(profile?.first_name ?? prefill.first ?? "");
   const [last, setLast] = useState(profile?.last_name ?? prefill.last ?? "");
-  const [venmo, setVenmo] = useState(profile?.venmo_username ?? "");
+  const pay = useMyPayments(uid);
+  const [payments, setPayments] = useState<PaymentMethodsValue | null>(null);
+  // the loaded set is the baseline for the diff on save; edits live in `payments`
+  const payValue: PaymentMethodsValue = payments ?? { handles: pay.handles, defaultPlatform: pay.defaultPlatform };
   const [busy, setBusy] = useState(false);
   const [photoBusy, setPhotoBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -88,14 +92,16 @@ export default function ProfileScreen() {
   async function save() {
     if (!isValidNamePart(first)) { setError("Enter your first name."); return; }
     if (!isValidNamePart(last)) { setError("Enter your last name."); return; }
-    if (venmo.trim() && !isValidVenmoUsername(venmo)) { setError("Venmo usernames are 5–30 letters, numbers, hyphens or underscores."); return; }
     setBusy(true); setError(null);
     const f = first.trim(), l = last.trim();
     // first_name / last_name are the source; display_name stays the composed name every reader uses
-    const { error: e } = await supabase.from("users").update({ first_name: f, last_name: l, display_name: joinName(f, l), venmo_username: venmo.trim().replace(/^@/, "") || null }).eq("id", uid);
+    const { error: e } = await supabase.from("users").update({ first_name: f, last_name: l, display_name: joinName(f, l) }).eq("id", uid);
+    if (e) { setBusy(false); setError(e.message); return; }
+    // payment_handles keeps users.venmo_username in step through a database trigger
+    const payErr = await savePaymentMethods(uid, payValue, pay.handles);
     setBusy(false);
-    if (e) { setError(e.message); return; }
-    await refreshProfile();
+    if (payErr) { setError(payErr); return; }
+    await Promise.all([refreshProfile(), pay.reload()]);
     show({ message: "Saved", tone: "volt", duration: 2000 });
   }
 
@@ -135,10 +141,7 @@ export default function ProfileScreen() {
               {/* the reset-password route is built alongside the account flows */}
               <TextLink label="Change password" onPress={() => router.push("/(auth)/reset-password?mode=change" as Parameters<typeof router.push>[0])} />
             </View>
-            <View style={styles.fieldWithLink}>
-              <Input label="Venmo username" placeholder="your-venmo" value={venmo} onChangeText={setVenmo} autoCapitalize="none" autoCorrect={false} error={error} returnKeyType="done" />
-              {venmo.trim().length >= 5 ? <TextLink label="View on Venmo" onPress={() => openVenmoProfile(venmo)} /> : null}
-            </View>
+            <PaymentMethodsEditor value={payValue} onChange={setPayments} error={error} />
             <Button kind="ink" label="Save" height={size.buttonHeight} onPress={save} loading={busy} />
           </Card>
 

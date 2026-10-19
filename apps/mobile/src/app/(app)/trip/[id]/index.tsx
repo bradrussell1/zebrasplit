@@ -315,7 +315,9 @@ export default function TripScreen() {
             <IconButton name="camera" label="Snap a receipt" onPress={() => setSnap(true)} size={size.buttonHeight} />
             {unlocked
               ? <Button kind="ink" label="Close out" height={size.buttonHeight} style={styles.footerButton} onPress={() => router.push(`/(app)/trip/${trip.id}/closeout`)} />
-              : <Button kind="locked" label={`Close out · ${toGo} to go`} height={size.buttonHeight} style={[styles.footerButton, styles.footerWide]} accessibilityLabel={`Close out, locked, ${toGo} still adding`} />}
+              /* the count stays in the accessibility label only: the button reads "Close out" in both
+                 states, so it keeps its width and doesn't jump when the last stripe lands */
+              : <Button kind="locked" label="Close out" height={size.buttonHeight} style={styles.footerButton} accessibilityLabel={`Close out, locked, ${toGo} still adding`} />}
           </View>
           {/* the Done toggle sits below the two CTAs (feedback round 1, item 10) */}
           <View style={styles.doneRow}>
@@ -464,6 +466,5 @@ const styles = StyleSheet.create({
   doneRow: { flexDirection: "row", alignItems: "center", gap: space[12], minHeight: layout.minTapTarget },
   footerButtons: { flexDirection: "row", gap: space[10] },
   footerButton: { flex: 1, paddingHorizontal: space[12] },
-  footerWide: { flex: 1.2 },
 });
 
