@@ -43,7 +43,11 @@ Deno.serve(withSentry("send-invite", async (req) => {
   const trip = (inv as unknown as { trips: { title: string } | null }).trips;
   const inviter = (inv as unknown as { users: { display_name: string | null } | null }).users;
   const who = inviter?.display_name?.split(" ")[0] || "A friend";
-  const base = Deno.env.get("INVITE_BASE_URL") ?? "https://www.zebrasplit.com/i/";
+  // zebrasplit.com/join/<token> is the invite landing page: it previews the Dazzle, carries the
+  // store badges, and is the path claimed by the apple-app-site-association file, so on a phone
+  // with the app installed the link opens the app instead of the browser. The apex is deliberate:
+  // www 308-redirects to it and iOS does not follow redirects when fetching the AASA.
+  const base = Deno.env.get("INVITE_BASE_URL") ?? "https://zebrasplit.com/join/";
   // one-time invitation; the Messaging Service handles STOP/HELP automatically
   const text = `Zebrasplit: ${who} added you to '${trip?.title ?? "a trip"}' to split trip expenses. Open it: ${base}${inv.token}\nReply STOP to opt out.`;
   const to = inv.phone.startsWith("+") ? inv.phone : `+${inv.phone}`;
