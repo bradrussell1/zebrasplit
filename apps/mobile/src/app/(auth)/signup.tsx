@@ -1,4 +1,5 @@
 import { isValidHandle, isValidNamePart, joinName, normalizeHandle, PAY_PLATFORMS, type PayPlatform, PLATFORM_SPECS } from "@bunktab/core";
+import { track } from "@/lib/analytics";
 import { color, space } from "@bunktab/theme";
 import { useRouter } from "expo-router";
 import { useState } from "react";
@@ -33,6 +34,7 @@ export default function SignupScreen() {
   const mismatch = confirm.length > 0 && confirm !== password;
 
   async function next() {
+    track("onboarding_signup_started");
     const e164 = toE164(phone);
     if (!isValidNamePart(first)) return setError("Enter your first name.");
     if (!isValidNamePart(last)) return setError("Enter your last name.");
@@ -53,6 +55,8 @@ export default function SignupScreen() {
     });
     if (err) { setBusy(false); setError(friendlyAuthError(err.message)); return; }
     if (!data.session) { setBusy(false); setError("Check your email to confirm the address, then log in."); return; } // only if autoconfirm is ever turned off
+    track("onboarding_phone_entered");
+    track("onboarding_payment_added");
     const { error: e2 } = await supabase.auth.updateUser({ phone: e164 });
     setBusy(false);
     if (e2) {
@@ -60,7 +64,10 @@ export default function SignupScreen() {
       setError(m.includes("already") ? "That phone number is on another account. Log in instead." : friendlyAuthError(e2.message));
       return; // the layout now holds this account on the add-phone step, which offers "Log in"
     }
-    router.replace({ pathname: "/(auth)/code", params: { phone: e164, mode: "phone_change" } });
+    track("onboarding_code_sent");
+    // onboarding=1 tells the code screen this phone_change is part of signing up,
+    // not an existing account swapping its number from Settings
+    router.replace({ pathname: "/(auth)/code", params: { phone: e164, mode: "phone_change", onboarding: "1" } });
   }
 
   return (

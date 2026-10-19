@@ -1,8 +1,10 @@
 import { zebraLabel, zebraMoodFor } from "@bunktab/core";
 import { color, space } from "@bunktab/theme";
 import { useRouter } from "expo-router";
+import { useEffect } from "react";
 import { View } from "react-native";
 import { AuthScreen } from "@/components/AuthScreen";
+import { track } from "@/lib/analytics";
 import { Button, Zebra, ZText } from "@/ui";
 
 /**
@@ -12,6 +14,8 @@ import { Button, Zebra, ZText } from "@/ui";
  */
 export default function LandingScreen() {
   const router = useRouter();
+  // the top of the onboarding funnel; everything below is measured against it
+  useEffect(() => { track("onboarding_landing_seen"); }, []);
   const mood = zebraMoodFor({ place: "login", profileSaved: false }) ?? "hi";
   return (
     <AuthScreen
@@ -19,7 +23,7 @@ export default function LandingScreen() {
       hero={<Zebra variant="full" mood={mood} size={236} animate={{ blink: true, bob: true }} accessibilityLabel={zebraLabel(mood)} />}
       footer={
         <>
-          <Button label="Log in" onPress={() => router.push("/(auth)/login")} />
+          <Button label="Log in" onPress={() => { track("login_started"); router.push("/(auth)/login"); }} />
           <Button label="Create an account" kind="secondary" onPress={() => router.push("/(auth)/signup")} />
         </>
       }

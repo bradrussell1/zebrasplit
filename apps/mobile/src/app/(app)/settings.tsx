@@ -10,6 +10,7 @@ import { ActionSheet, Avatar, Button, Card, Icon, Input, InsetPanel, Press, RowC
 import { useAuth } from "@/lib/auth";
 import { pickImage, uploadImage } from "@/lib/storage";
 import { supabase } from "@/lib/supabase";
+import { forgetAnonId } from "@/lib/analytics";
 import { useMyPayments } from "@/lib/payments";
 import { loadTripSummaries, type TripSummary } from "@/lib/trips";
 
@@ -106,6 +107,7 @@ export default function ProfileScreen() {
   }
 
   async function deleteAccount() {
+    await forgetAnonId();
     await supabase.storage.from("avatars").remove([`${uid}/avatar.jpg`]).catch(() => null);
     const { error: e } = await supabase.rpc("delete_my_account");
     if (e) { setError(e.message); return; }

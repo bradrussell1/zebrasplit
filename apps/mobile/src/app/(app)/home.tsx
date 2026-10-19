@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { FlatList, Image, RefreshControl, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AmountPill, Button, Card, CountUp, Icon, IconButton, Input, InsetPanel, HeroCard, Money, ScreenBackground, SegmentedControl, StripeMeter, TopBar, Zebra, ZText, useToast } from "@/ui";
+import { trackOnboardingFinishedOnce } from "@/lib/analytics";
 import { useAuth } from "@/lib/auth";
 import { useSignedUrl } from "@/lib/media";
 import { supabase } from "@/lib/supabase";
@@ -24,6 +25,8 @@ type MemberRow = { user_id: string; role: "owner" | "member"; joined_at: string 
 type TripRow = { id: string; title: string; status: "open" | "settled" | "archived"; start_date: string; end_date: string; base_currency: string; cover_photo_url: string | null; last_activity_at: string; members: MemberRow[]; net_cents: number };
 
 export default function HomeScreen() {
+  // the last step of the funnel: every route into an account ends up here
+  useEffect(() => { trackOnboardingFinishedOnce(); }, []);
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { show } = useToast();
