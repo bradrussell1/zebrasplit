@@ -1,12 +1,12 @@
-import { isValidNamePart, isValidVenmoUsername, joinName } from "@bunktab/core";
+import { isValidHandle, isValidNamePart, joinName, normalizeHandle, PAY_PLATFORMS, type PayPlatform, PLATFORM_SPECS } from "@bunktab/core";
 import { color, space } from "@bunktab/theme";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { View } from "react-native";
 import { AuthScreen, FormError } from "@/components/AuthScreen";
-import { Button, Input, TextLink, ZText } from "@/ui";
+import { Button, Input, ZText } from "@/ui";
 import { friendlyAuthError, isValidEmail, toE164 } from "@/lib/auth";
-import { openVenmoProfile } from "@/lib/venmo";
+import { PlatformPills } from "@/components/PaymentMethods";
 import { supabase } from "@/lib/supabase";
 
 /**
@@ -26,7 +26,8 @@ export default function SignupScreen() {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [phone, setPhone] = useState("");
-  const [venmo, setVenmo] = useState("");
+  const [payPlatform, setPayPlatform] = useState<PayPlatform>("venmo");
+  const [payHandle, setPayHandle] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const mismatch = confirm.length > 0 && confirm !== password;
@@ -39,14 +40,16 @@ export default function SignupScreen() {
     if (password.length < 8) return setError("Use a password of at least 8 characters.");
     if (password !== confirm) return setError("The two passwords don't match.");
     if (!e164) return setError("Enter a phone number, like (555) 555-0100.");
-    if (venmo.trim() && !isValidVenmoUsername(venmo)) return setError("Venmo usernames are 5–30 letters, numbers, hyphens or underscores.");
+    // a way to get paid is required: a Dazzle can't settle to someone nobody can pay
+    if (!payHandle.trim()) return setError(`Add your ${PLATFORM_SPECS[payPlatform].label} ${PLATFORM_SPECS[payPlatform].handleLabel} so friends can pay you.`);
+    if (!isValidHandle(payPlatform, payHandle)) return setError(`That doesn't look like a ${PLATFORM_SPECS[payPlatform].label} ${PLATFORM_SPECS[payPlatform].handleLabel}.`);
     setBusy(true); setError(null);
-    const venmoClean = venmo.trim().replace(/^@/, "") || null;
+    const handleClean = normalizeHandle(payPlatform, payHandle);
     const firstClean = first.trim(), lastClean = last.trim();
     const { data, error: err } = await supabase.auth.signUp({
       email: email.trim().toLowerCase(),
       password,
-      options: { data: { first_name: firstClean, last_name: lastClean, display_name: joinName(firstClean, lastClean), venmo_username: venmoClean } },
+      options: { data: { first_name: firstClean, last_name: lastClean, display_name: joinName(firstClean, lastClean), pay_platform: payPlatform, pay_handle: handleClean, venmo_username: payPlatform === "venmo" ? handleClean : null } },
     });
     if (err) { setBusy(false); setError(friendlyAuthError(err.message)); return; }
     if (!data.session) { setBusy(false); setError("Check your email to confirm the address, then log in."); return; } // only if autoconfirm is ever turned off
@@ -82,8 +85,17 @@ export default function SignupScreen() {
       <Input label="Confirm Password" placeholder="Same again" value={confirm} onChangeText={setConfirm} secureTextEntry textContentType="newPassword" autoComplete="new-password" returnKeyType="next" error={mismatch ? "These don't match yet." : null} />
       <Input label="Phone number" placeholder="(555) 555-0100" value={phone} onChangeText={setPhone} keyboardType="phone-pad" textContentType="telephoneNumber" autoComplete="tel" helper="Your login and how friends' invites find you." returnKeyType="done" />
       <View style={{ gap: space[4] }}>
-        <Input label="Venmo username (optional)" placeholder="your-venmo" value={venmo} onChangeText={setVenmo} autoCapitalize="none" autoCorrect={false} helper="Needed before close-out so friends can pay you in Venmo." returnKeyType="done" />
-        {venmo.trim().length >= 5 ? <TextLink label="Check it" onPress={() => openVenmoProfile(venmo)} /> : null}
+        <PlatformPills value={payPlatform} onChange={setPayPlatform} options={[...PAY_PLATFORMS]} />
+        <Input
+          label={`${PLATFORM_SPECS[payPlatform].label} ${PLATFORM_SPECS[payPlatform].handleLabel}`}
+          placeholder={payPlatform === "paypal" ? "yourname" : `${PLATFORM_SPECS[payPlatform].prefix}yourname`}
+          value={payHandle}
+          onChangeText={setPayHandle}
+          autoCapitalize="none"
+          autoCorrect={false}
+          helper="How friends pay you at close-out. You can add the others later."
+          returnKeyType="done"
+        />
       </View>
     </AuthScreen>
   );

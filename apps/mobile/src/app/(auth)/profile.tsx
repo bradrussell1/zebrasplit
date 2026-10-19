@@ -1,17 +1,19 @@
-import { isValidNamePart, isValidVenmoUsername, joinName, splitName, zebraLabel, zebraMoodFor } from "@bunktab/core";
+import { isValidHandle, isValidNamePart, joinName, normalizeHandle, PAY_PLATFORMS, PLATFORM_SPECS, splitName, zebraLabel, zebraMoodFor, type PayPlatform } from "@bunktab/core";
 import { color, radius, space } from "@bunktab/theme";
 import { useState } from "react";
 import { StyleSheet, View } from "react-native";
 import { AuthScreen, FormError } from "@/components/AuthScreen";
-import { Avatar, Button, Icon, Input, Press, TextLink, Zebra, ZText } from "@/ui";
+import { Avatar, Button, Icon, Input, Press, Zebra, ZText } from "@/ui";
 import { useAuth } from "@/lib/auth";
 import { pickImage, uploadImage } from "@/lib/storage";
 import { supabase } from "@/lib/supabase";
-import { openVenmoProfile } from "@/lib/venmo";
+import { PlatformPills } from "@/components/PaymentMethods";
+import { hasAnyHandle, saveHandle, setDefaultPlatform, useMyPayments } from "@/lib/payments";
 
 /**
  * Profile step: first name, last name, optional photo (Avatar with a sand "+" tile),
- * Venmo username with a "Check it" link. Shown on a first login with no name, and once
+ * and a required way to get paid (Venmo, Cash App or PayPal) when the account has
+ * none yet. Shown on a first login with no name, and once
  * to an existing account that has no last name yet (feedback round 1, item 18): the
  * fields are prefilled from the display name. The zebra is hi until the profile saves,
  * then happy (login rule in zebraMoodFor).
@@ -22,7 +24,10 @@ export default function ProfileScreen() {
   const prefill = splitName(profile?.display_name);
   const [first, setFirst] = useState(profile?.first_name ?? prefill.first ?? "");
   const [last, setLast] = useState(profile?.last_name ?? prefill.last ?? "");
-  const [venmo, setVenmo] = useState(profile?.venmo_username ?? "");
+  const pay = useMyPayments(uid);
+  const needsPayment = !pay.loading && !hasAnyHandle(pay.handles);
+  const [payPlatform, setPayPlatform] = useState<PayPlatform>("venmo");
+  const [payHandle, setPayHandle] = useState("");
   const [photo, setPhoto] = useState<string | null>(profile?.photo_url ?? null);
   const [busy, setBusy] = useState(false);
   const [photoBusy, setPhotoBusy] = useState(false);
@@ -48,12 +53,20 @@ export default function ProfileScreen() {
   async function save() {
     if (!isValidNamePart(first)) { setError("Enter your first name."); return; }
     if (!isValidNamePart(last)) { setError("Enter your last name."); return; }
-    if (venmo.trim() && !isValidVenmoUsername(venmo)) { setError("Venmo usernames are 5–30 letters, numbers, hyphens or underscores."); return; }
+    // only asked for when the account has no way to be paid at all
+    if (needsPayment) {
+      if (!payHandle.trim()) { setError(`Add your ${PLATFORM_SPECS[payPlatform].label} ${PLATFORM_SPECS[payPlatform].handleLabel} so friends can pay you.`); return; }
+      if (!isValidHandle(payPlatform, payHandle)) { setError(`That doesn't look like a ${PLATFORM_SPECS[payPlatform].label} ${PLATFORM_SPECS[payPlatform].handleLabel}.`); return; }
+    }
     setBusy(true); setError(null);
     const f = first.trim(), l = last.trim();
-    const { error: e } = await supabase.from("users").update({ first_name: f, last_name: l, display_name: joinName(f, l), venmo_username: venmo.trim().replace(/^@/, "") || null }).eq("id", uid);
+    const { error: e } = await supabase.from("users").update({ first_name: f, last_name: l, display_name: joinName(f, l) }).eq("id", uid);
+    if (e) { setBusy(false); setError(e.message); return; }
+    if (needsPayment) {
+      const pe = (await saveHandle(uid, payPlatform, normalizeHandle(payPlatform, payHandle))) ?? (await setDefaultPlatform(uid, payPlatform));
+      if (pe) { setBusy(false); setError(pe); return; }
+    }
     setBusy(false);
-    if (e) { setError(e.message); return; }
     setSaved(true);
     // let the happy zebra land before the root layout moves on
     setTimeout(() => { refreshProfile(); }, 600);
@@ -83,8 +96,21 @@ export default function ProfileScreen() {
         <Input label="Last name" placeholder="Russell" value={last} onChangeText={setLast} autoCapitalize="words" textContentType="familyName" autoComplete="family-name" returnKeyType="done" style={styles.flex} />
       </View>
       <View style={{ gap: space[4] }}>
-        <Input label="Venmo username" placeholder="your-venmo" value={venmo} onChangeText={setVenmo} autoCapitalize="none" autoCorrect={false} helper="Optional now; needed before close-out so friends can pay you in Venmo." returnKeyType="done" />
-        {venmo.trim().length >= 5 ? <TextLink label="Check it" onPress={() => openVenmoProfile(venmo)} /> : null}
+        {needsPayment ? (
+          <>
+            <PlatformPills value={payPlatform} onChange={setPayPlatform} options={[...PAY_PLATFORMS]} />
+            <Input
+              label={`${PLATFORM_SPECS[payPlatform].label} ${PLATFORM_SPECS[payPlatform].handleLabel}`}
+              placeholder={payPlatform === "paypal" ? "yourname" : `${PLATFORM_SPECS[payPlatform].prefix}yourname`}
+              value={payHandle}
+              onChangeText={setPayHandle}
+              autoCapitalize="none"
+              autoCorrect={false}
+              helper="How friends pay you at close-out. You can add the others later."
+              returnKeyType="done"
+            />
+          </>
+        ) : null}
       </View>
     </AuthScreen>
   );

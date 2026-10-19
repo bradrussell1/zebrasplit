@@ -1,10 +1,10 @@
-import { closeoutUnlocked, countDone, formatCents, venmoChargeLink, venmoPayLink, zebraLabel, zebraMoodFor } from "@bunktab/core";
+import { availablePlatforms, choosePlatform, closeoutUnlocked, countDone, formatCents, formatHandle, payLink, PLATFORM_SPECS, venmoChargeLink, zebraLabel, zebraMoodFor, type Handles, type PayPlatform } from "@bunktab/core";
 import { color, layout, palette, radius, shadow, size, space } from "@bunktab/theme";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import { Linking, ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { ActionSheet, Banner, Button, Card, Confetti, Dance, HeroCard, Icon, InsetPanel, PersonPill, Press, Rise, ScreenBackground, StatusPill, TextLink, Toggle, TopBar, VenmoZipButton, Zebra, ZText, haptic, ScreenSkeleton, useToast } from "@/ui";
+import { ActionSheet, Banner, Button, Card, Confetti, Dance, HeroCard, Icon, InsetPanel, PersonPill, PlatformChip, Press, Rise, ScreenBackground, StatusPill, TextLink, Toggle, TopBar, VenmoZipButton, Zebra, ZText, haptic, ScreenSkeleton, useToast } from "@/ui";
 import { useAuth } from "@/lib/auth";
 import { isNetworkError, supabase } from "@/lib/supabase";
 import { activeMembers, memberName, useTrip } from "@/lib/trips";
@@ -24,11 +24,21 @@ import { activeMembers, memberName, useTrip } from "@/lib/trips";
  *
  * Everyone done: "Stripes are even. Time to settle." The zebra dances and confetti
  * fires the moment the last stripe lands; the payment plan (written by the database
- * through generate_settlements) rises in: your payments as "Pay Mike $84.50" Venmo
- * zip buttons with Mark as paid / Undo, what's owed to you with Got it, payments
+ * through generate_settlements) rises in: your payments as "Pay Mike $84.50" zip
+ * buttons with Mark as paid / Undo, what's owed to you with Got it, payments
  * between others, then "We earned our stripes. Share the recap?" and one volt
  * "Request … in Venmo" for creditors. Settled up stays a toggle (set_settled_up).
- * Venmo link building, RPC names and the gate are unchanged.
+ *
+ * Each payment opens Venmo, Cash App or PayPal, whichever the RECIPIENT has added:
+ * the handle belongs to the person being paid, so the chip under a payment offers
+ * only the platforms they actually registered. `choosePlatform` picks the payer's
+ * recorded choice (settlements.platform, written by set_settlement_platform), then
+ * the recipient's default. Someone with nothing registered can only be marked
+ * "Paid another way" — that is also the Zelle, cash and bank-transfer path.
+ *
+ * There is one link per payment: Venmo's deep link carries several recipients but
+ * only ONE amount, so three different debts cannot be batched into one trip out to
+ * Venmo. The settlement algorithm keeps that cheap by minimising payments per payer.
  */
 function friendly(m: string): string {
   const s = m.toLowerCase();
@@ -55,6 +65,7 @@ export default function CloseoutScreen() {
   const [closingOut, setClosingOut] = useState(false);
   const [nudging, setNudging] = useState<string | null>(null);
   const [nudged, setNudged] = useState<Record<string, boolean>>({}); // user_id → sent this session
+  const [picking, setPicking] = useState<string | null>(null); // settlement id whose platform is being changed
   const [play, setPlay] = useState({ dance: 0, confetti: 0 });
   const wasUnlocked = useRef<boolean | null>(null);
 
@@ -91,8 +102,14 @@ export default function CloseoutScreen() {
   const owed = settlements.filter((s) => s.to_user === me);
   const others = settlements.filter((s) => s.from_user !== me && s.to_user !== me);
   const venmoOf = (uid: string) => data.members.find((m) => m.user_id === uid)?.venmo_username ?? null;
+  const handlesOf = (uid: string): Handles => data.members.find((m) => m.user_id === uid)?.handles ?? {};
+  const defaultOf = (uid: string) => data.members.find((m) => m.user_id === uid)?.default_pay_platform ?? null;
+  /** The platform a payment will open: the payer's recorded choice, else the recipient's default. */
+  const platformFor = (s: { to_user: string; platform: PayPlatform | null }) =>
+    choosePlatform(handlesOf(s.to_user), defaultOf(s.to_user), s.platform);
   const settledUp = !!data.members.find((m) => m.user_id === me)?.settled_up_at;
   const pendingOwed = owed.filter((s) => s.status === "pending");
+  // "Request from everyone" is a Venmo-only link (one charge, several recipients, one amount)
   const canRequest = pendingOwed.length > 0 && owed.every((s) => venmoOf(s.from_user));
   const allMinePaid = mine.length > 0 && mine.every((s) => s.status !== "pending");
   const who = (uid: string) => memberName(data, uid, me);
@@ -133,6 +150,12 @@ export default function CloseoutScreen() {
   async function mark(sid: string, action: "mark_paid" | "unmark" | "confirm") {
     const { error: e } = await supabase.rpc("mark_settlement", { p_settlement: sid, p_action: action });
     if (e) setError(friendly(e.message)); reload();
+  }
+  // the payer picks the platform; the database records it so the choice survives a reopen
+  async function pickPlatform(sid: string, platform: PayPlatform) {
+    const { error: e } = await supabase.rpc("set_settlement_platform", { p_settlement: sid, p_platform: platform });
+    if (e) { show({ message: friendly(e.message) }); return; }
+    reload();
   }
   const requestLabel = pendingOwed.length === 1 ? `Request ${formatCents(pendingOwed[0]!.amount_cents, cur)} in Venmo` : "Request from everyone in Venmo";
   const request = () => open(venmoChargeLink(pendingOwed.map((s) => venmoOf(s.from_user)!), owed[0]!.amount_cents, trip.title));
@@ -202,19 +225,36 @@ export default function CloseoutScreen() {
                     <Zebra variant="bust" size={84} mood={zebraMoodFor({ place: "payment", paid: allMinePaid }) ?? "hi"} animate={{ blink: true }} accessibilityLabel={allMinePaid ? "Zebra, love: all paid" : "Zebra, hi"} />
                   </View>
                   {mine.map((s) => {
-                    const to = who(s.to_user); const handle = venmoOf(s.to_user); const paid = s.status !== "pending"; const amt = formatCents(s.amount_cents, cur);
+                    const to = who(s.to_user);
+                    const handles = handlesOf(s.to_user);
+                    const platform = platformFor(s);
+                    const paid = s.status !== "pending";
+                    const amt = formatCents(s.amount_cents, cur);
+                    const canSwitch = availablePlatforms(handles).length > 1;
                     return (
                       <View key={s.id} style={styles.payRow}>
-                        {handle ? (
-                          <VenmoZipButton label={`Pay ${to} ${amt}`} paid={paid} onPress={() => open(venmoPayLink(handle, s.amount_cents, trip.title))} />
+                        {platform ? (
+                          <VenmoZipButton
+                            label={`Pay ${to} ${amt}`}
+                            openingLabel={`Opening ${PLATFORM_SPECS[platform].label}…`}
+                            paid={paid}
+                            onPress={() => open(payLink(platform, handles[platform]!, s.amount_cents, trip.title, cur))}
+                          />
                         ) : (
-                          <Button kind="locked" label={`Pay ${to} ${amt}`} accessibilityLabel={`Pay ${to} ${amt}, unavailable: ${to} hasn't added a Venmo handle yet`} />
+                          <Button kind="locked" label={`Pay ${to} ${amt}`} accessibilityLabel={`Pay ${to} ${amt}, unavailable: ${to} hasn't added a way to be paid yet`} />
                         )}
                         <View style={styles.payMeta}>
-                          <ZText variant="caption" color={color.textMuted} style={styles.flex} numberOfLines={1}>{handle ? `@${handle}` : `${to} hasn't added a Venmo handle yet`}</ZText>
+                          {platform ? (
+                            <PlatformChip platform={platform} disabled={paid || !canSwitch} onPress={canSwitch && !paid ? () => setPicking(s.id) : undefined} />
+                          ) : (
+                            <ZText variant="caption" color={color.textMuted} style={styles.flex} numberOfLines={1}>{to} hasn&apos;t added a way to be paid yet</ZText>
+                          )}
+                          {platform ? (
+                            <ZText variant="caption" color={color.textMuted} style={styles.flex} numberOfLines={1}>{formatHandle(platform, handles[platform]!)}</ZText>
+                          ) : null}
                           {s.status === "confirmed"
                             ? <ZText variant="captionStrong">{to} confirmed</ZText>
-                            : <TextLink label={paid ? "Undo" : "Mark as paid"} muted={paid} onPress={() => mark(s.id, paid ? "unmark" : "mark_paid")} />}
+                            : <TextLink label={paid ? "Undo" : platform ? "Mark as paid" : "Paid another way"} muted={paid} onPress={() => mark(s.id, paid ? "unmark" : "mark_paid")} />}
                         </View>
                       </View>
                     );
@@ -300,6 +340,26 @@ export default function CloseoutScreen() {
         title={`Close out the remaining ${toGo === 1 ? "zebra" : "zebras"}? Everyone still adding is marked Done and notified, the override is logged, and expenses already logged still count.`}
         actions={[{ label: "Close out for everyone", destructive: true, onPress: closeOutRemaining }]}
       />
+
+      {/* changing the platform for one payment: only the ones that person has actually added */}
+      {(() => {
+        const s = picking ? mine.find((x) => x.id === picking) : null;
+        if (!s) return null;
+        const to = who(s.to_user);
+        const handles = handlesOf(s.to_user);
+        const current = platformFor(s);
+        return (
+          <ActionSheet
+            open
+            onClose={() => setPicking(null)}
+            title={`How do you want to pay ${to}?`}
+            actions={availablePlatforms(handles).map((p) => ({
+              label: p === current ? `${PLATFORM_SPECS[p].label} · ${formatHandle(p, handles[p]!)} (using)` : `${PLATFORM_SPECS[p].label} · ${formatHandle(p, handles[p]!)}`,
+              onPress: () => pickPlatform(s.id, p),
+            }))}
+          />
+        );
+      })()}
     </View>
   );
 }
