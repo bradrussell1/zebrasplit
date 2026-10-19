@@ -1,6 +1,6 @@
 # Zebrasplit mobile (Expo)
 
-- The spec is `docs/checkm8-v1-spec.md` at the repo root. Screens, copy and
+- The spec is `docs/zebrasplit-spec.md` at the repo root. Screens, copy and
   arithmetic come from it; the arithmetic itself lives in `@bunktab/core`
   (tested) and the tokens in `@bunktab/theme` - never restyle inline.
 - Design system (2026-10-14): `design/DESIGN_SYSTEM.md` wins on anything visual;

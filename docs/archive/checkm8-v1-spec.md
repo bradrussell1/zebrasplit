@@ -1,3 +1,7 @@
+> **Superseded.** This describes the app as designed in September 2026, under the name
+> Checkm8 and before the reskin, multi-platform settling, receipt reading and the
+> admin portal. It is kept as history. The current spec is `docs/zebrasplit-spec.md`.
+
 > **Product renamed Bunktab on 2026-10-01; references to Checkm8 below are historical.**
 
 # Checkm8 — V1 Product Spec

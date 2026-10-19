@@ -4,7 +4,8 @@
 
 A group logs shared trip expenses, everyone taps **Done**, and close-out
 opens Venmo with each payment pre-filled, using the fewest payments possible.
-The spec is [`docs/checkm8-v1-spec.md`](docs/checkm8-v1-spec.md).
+The spec is [`docs/zebrasplit-spec.md`](docs/zebrasplit-spec.md). The original Checkm8
+spec is kept as history in [`docs/archive/`](docs/archive/checkm8-v1-spec.md).
 
 ## Layout
 
