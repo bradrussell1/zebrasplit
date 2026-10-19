@@ -6,3 +6,4 @@
 .link { font-size: var(--zs-fs-nav); font-weight: 600; padding: var(--zs-space-12); border-radius: var(--zs-radius-pill); min-height: var(--zs-layout-min-tap-target); display: inline-flex; align-items: center; }
 .link[aria-current="page"] { font-weight: 700; text-decoration: underline; text-underline-offset: 6px; text-decoration-thickness: 2px; }
 .placeholder { color: var(--zs-color-text-muted); cursor: default; }
+.quiet { color: var(--zs-color-text-muted); }

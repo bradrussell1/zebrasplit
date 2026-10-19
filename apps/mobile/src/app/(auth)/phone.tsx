@@ -1,4 +1,5 @@
 import { useRouter } from "expo-router";
+import { track } from "@/lib/analytics";
 import { useState } from "react";
 import { AuthScreen, FormError } from "@/components/AuthScreen";
 import { Button, Input } from "@/ui";
@@ -21,9 +22,11 @@ export default function PhoneScreen() {
     const phone = toE164(raw);
     if (!phone) { setError("Enter a phone number, like (555) 555-0100."); return; }
     setBusy(true); setError(null);
+    track("onboarding_phone_entered");
     const { error: e } = await supabase.auth.signInWithOtp({ phone });
     setBusy(false);
     if (e) { setError(friendlyAuthError(e.message)); return; }
+    track("onboarding_code_sent");
     router.push({ pathname: "/(auth)/code", params: { phone, mode: "otp" } });
   }
 

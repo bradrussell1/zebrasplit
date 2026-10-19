@@ -9,8 +9,9 @@
 //
 // Models: the prompt names claude-sonnet-5-5 / claude-opus-5-5, which don't exist in
 // the models list; the current generation is claude-sonnet-5 (first read) and
-// claude-opus-5 (the one retry after a failed reconciliation). Both are env-configurable
-// (RECEIPT_MODEL, RECEIPT_RETRY_MODEL).
+// claude-opus-5 (the one retry after a failed reconciliation). Both come from
+// private.config through receipt_settings(), so the admin portal's Models tab can
+// swap them with no redeploy; RECEIPT_MODEL / RECEIPT_RETRY_MODEL still override.
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders, internalOk, json } from "../_shared/cors.ts";
 import { withSentry } from "../_shared/sentry.ts";
@@ -94,7 +95,10 @@ Deno.serve(withSentry("receipt-parse", async (req) => {
   const started = Date.now();
   const result = await runExtraction({
     apiKey: key, workspaceId: Deno.env.get("ANTHROPIC_WORKSPACE_ID"),
-    model: Deno.env.get("RECEIPT_MODEL") ?? DEFAULT_MODEL, retryModel: Deno.env.get("RECEIPT_RETRY_MODEL") ?? DEFAULT_RETRY_MODEL,
+    // private.config first, so the Models tab in the admin portal can swap a model
+    // without a redeploy; the env vars stay as an override for a stuck setting.
+    model: Deno.env.get("RECEIPT_MODEL") ?? settings?.model ?? DEFAULT_MODEL,
+    retryModel: Deno.env.get("RECEIPT_RETRY_MODEL") ?? settings?.retry_model ?? DEFAULT_RETRY_MODEL,
     imageBase64: toBase64(bytes), mediaType, schema, instructions: INSTRUCTIONS,
   });
   const usage = {

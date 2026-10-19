@@ -1,4 +1,5 @@
 import { color } from "@bunktab/theme";
+import { track } from "@/lib/analytics";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { View } from "react-native";
@@ -20,7 +21,8 @@ type Mode = "phone_change" | "otp" | "reset";
 
 export default function CodeScreen() {
   const router = useRouter();
-  const { phone, mode = "otp" } = useLocalSearchParams<{ phone: string; mode?: Mode }>();
+  const params = useLocalSearchParams<{ phone: string; mode?: Mode; onboarding?: string }>();
+  const { phone, mode = "otp" } = params;
   const { setPendingPasswordReset, signOut, session } = useAuth();
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
@@ -47,6 +49,11 @@ export default function CodeScreen() {
       return;
     }
     if (mode === "phone_change") await supabase.auth.refreshSession().then(() => undefined, () => undefined); // pick up phone_confirmed_at
+    // "otp" is someone signing in or signing up by code; the other modes are an
+    // existing account resetting a password or swapping a number, not onboarding
+    // either route into an account: a code login, or the phone step of signing up
+    if (mode === "otp" || params.onboarding === "1") track("onboarding_code_verified");
+    if (mode === "otp") track("login_succeeded");
     setBusy(false);
   }, [mode, phone, setPendingPasswordReset]);
 

@@ -1,4 +1,5 @@
 import { isValidHandle, isValidNamePart, joinName, normalizeHandle, PAY_PLATFORMS, PLATFORM_SPECS, splitName, zebraLabel, zebraMoodFor, type PayPlatform } from "@bunktab/core";
+import { track } from "@/lib/analytics";
 import { color, radius, space } from "@bunktab/theme";
 import { useState } from "react";
 import { StyleSheet, View } from "react-native";
@@ -67,6 +68,8 @@ export default function ProfileScreen() {
       if (pe) { setBusy(false); setError(pe); return; }
     }
     setBusy(false);
+    track("onboarding_profile_saved");
+    if (needsPayment) track("onboarding_payment_added");
     setSaved(true);
     // let the happy zebra land before the root layout moves on
     setTimeout(() => { refreshProfile(); }, 600);

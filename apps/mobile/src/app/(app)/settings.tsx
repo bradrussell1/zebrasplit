@@ -10,6 +10,7 @@ import { ActionSheet, Avatar, Button, Card, Icon, Input, InsetPanel, Press, RowC
 import { useAuth } from "@/lib/auth";
 import { pickImage, uploadImage } from "@/lib/storage";
 import { supabase } from "@/lib/supabase";
+import { forgetAnonId } from "@/lib/analytics";
 import { useMyPayments } from "@/lib/payments";
 import { loadTripSummaries, type TripSummary } from "@/lib/trips";
 
@@ -106,6 +107,7 @@ export default function ProfileScreen() {
   }
 
   async function deleteAccount() {
+    await forgetAnonId();
     await supabase.storage.from("avatars").remove([`${uid}/avatar.jpg`]).catch(() => null);
     const { error: e } = await supabase.rpc("delete_my_account");
     if (e) { setError(e.message); return; }
@@ -163,6 +165,7 @@ export default function ProfileScreen() {
 
           {/* 8: FAQ */}
           <RowCard title="FAQ" caption="How splitting, Done and close-out work" right={<Icon name="chevronRight" size={18} color={color.textMuted} />} onPress={() => router.push("/(app)/faq")} />
+          <RowCard title="Send feedback" caption="Tell us what broke or what you'd change" right={<Icon name="chevronRight" size={18} color={color.textMuted} />} onPress={() => router.push("/(app)/feedback")} />
 
           {/* 9–10 */}
           <Button kind="secondary" label="Sign out" height={size.buttonHeight} onPress={signOut} />
