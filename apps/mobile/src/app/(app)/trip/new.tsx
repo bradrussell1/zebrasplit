@@ -198,11 +198,19 @@ export default function NewTripScreen() {
         <>
           {picks.length > 0 ? (
             <View style={styles.consent}>
-              <Press onPress={() => setAgreed((v) => !v)} accessibilityRole="checkbox" accessibilityState={{ checked: agreed }} accessibilityLabel="I agree to the Terms and Conditions" scaleTo={0.98} style={styles.consentRow}>
+              {/* The checkbox has to carry the SMS consent itself — who is texting, that it
+                  is one message, how to stop it and that rates apply. A bare "I agree to the
+                  Terms" link is what carriers reject (Twilio 30513), because the screenshot
+                  submitted as opt-in proof then shows no consent to be texted. This wording
+                  is the one sent to Twilio in scripts/tollfree-resubmit.mjs: keep them identical. */}
+              <Press onPress={() => setAgreed((v) => !v)} accessibilityRole="checkbox" accessibilityState={{ checked: agreed }} accessibilityLabel="I have these people's permission to send them one text from Zebrasplit about this trip. They can reply STOP to opt out. Message and data rates may apply." scaleTo={0.98} style={styles.consentRow}>
                 <CheckCircle on={agreed} />
-                <ZText variant="body" style={styles.flex}>I agree to the <ZText variant="bodyStrong" style={styles.inlineLink} onPress={() => openBrowserAsync(TERMS)} accessibilityRole="link">Terms &amp; Conditions</ZText></ZText>
+                <ZText variant="body" style={styles.flex}>I have these people&apos;s permission to send them one text from Zebrasplit about this trip. They can reply STOP to opt out. Msg &amp; data rates may apply.</ZText>
               </Press>
-              <TextLink label="How Zebrasplit texts work" muted onPress={() => openBrowserAsync(SMS_INFO)} style={styles.smsLink} />
+              <View style={styles.consentLinks}>
+                <TextLink label="How Zebrasplit texts work" muted onPress={() => openBrowserAsync(SMS_INFO)} />
+                <TextLink label="Terms &amp; Conditions" muted onPress={() => openBrowserAsync(TERMS)} />
+              </View>
             </View>
           ) : null}
           <FormError>{error}</FormError>
@@ -294,8 +302,7 @@ const styles = StyleSheet.create({
   spinner: { paddingVertical: space[16] },
   consent: { gap: space[4] },
   consentRow: { flexDirection: "row", alignItems: "center", gap: space[12], minHeight: layout.minTapTarget, paddingHorizontal: space[4] },
-  inlineLink: { textDecorationLine: "underline" },
-  smsLink: { alignSelf: "flex-start", marginLeft: 26 + space[12] + space[4] },
+  consentLinks: { flexDirection: "row", flexWrap: "wrap", gap: space[16], marginLeft: 26 + space[12] + space[4] },
   check: { width: 26, height: 26, borderRadius: radius.pill, borderWidth: 1.5, borderColor: color.outline, backgroundColor: palette.white, alignItems: "center", justifyContent: "center" },
   checkOn: { backgroundColor: palette.ink, borderColor: palette.ink },
 });

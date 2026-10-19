@@ -12,7 +12,7 @@ if (!SID || !TOK || !EMAIL) { console.error("Set TWILIO_ACCOUNT_SID, TWILIO_AUTH
 if (!/@(zebrasplit\.com|bunktab\.com|check-m8\.io)$/i.test(EMAIL)) { console.error(`BUSINESS_EMAIL must be on the official domain (got ${EMAIL}); Twilio rejects free-mail addresses (30482).`); process.exit(1); }
 
 const REJECTED_SID = "HH8ad9189e807aae6d9ba06862e335e417";
-const OPT_IN_IMAGE = "https://qywowvkkkxldgxoatdsh.supabase.co/storage/v1/object/public/site-assets/compliance/invite-opt-in-v2.png";
+const OPT_IN_IMAGE = "https://zebrasplit.com/compliance/invite-opt-in.png";
 const SMS_PAGE = "https://zebrasplit.com/sms";
 const SAMPLE = "Zebrasplit: Bradley added you to 'Tahoe long weekend' to split trip expenses. Open it: https://zebrasplit.com/join/3f9a1c2e\nReply STOP to opt out.";
 const CONSENT = "I have these people's permission to send them one text from Zebrasplit about this trip. They can reply STOP to opt out. Msg & data rates may apply.";
