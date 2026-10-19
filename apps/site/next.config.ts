@@ -40,6 +40,7 @@ const nextConfig: NextConfig = {
       { source: "/(.*)", headers: securityHeaders },
       { source: "/join/:code*", headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }] },
       { source: "/design", headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }] },
+      { source: "/admin/:path*", headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }] },
       {
         source: "/.well-known/:file*",
         headers: [{ key: "Cache-Control", value: "public, max-age=300, s-maxage=3600" }],
