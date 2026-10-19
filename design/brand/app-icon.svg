@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024" role="img" aria-label="Zebrasplit">
+  <title>Zebrasplit</title>
+<rect width="1024" height="1024" fill="#E2FF2B"/>
+  <g transform="translate(5.98 138.27) scale(4.2169)">
+  <g transform="rotate(-24 82 58)">
+  <ellipse cx="82" cy="40" rx="15" ry="27" fill="#FFFBF2" stroke="#1D1A17" stroke-width="5.0"/>
+  <ellipse cx="82" cy="44" rx="7.5" ry="17" fill="#F5A9B8"/>
+  </g>
+  <g transform="rotate(24 158 58)">
+  <ellipse cx="158" cy="40" rx="15" ry="27" fill="#FFFBF2" stroke="#1D1A17" stroke-width="5.0"/>
+  <ellipse cx="158" cy="44" rx="7.5" ry="17" fill="#F5A9B8"/>
+  </g>
+  <ellipse cx="120" cy="98" rx="60" ry="54" fill="#1D1A17" stroke="#1D1A17" stroke-width="10.0"/>
+  <ellipse cx="120" cy="140" rx="42" ry="28" fill="#1D1A17" stroke="#1D1A17" stroke-width="10.0"/>
+  <ellipse cx="120" cy="98" rx="60" ry="54" fill="#FFFBF2"/>
+  <defs>
+  <clipPath id="zs-face">
+  <ellipse cx="120" cy="98" rx="60" ry="54"/>
+  </clipPath>
+  </defs>
+  <g clip-path="url(#zs-face)" fill="none" stroke="#1D1A17" stroke-width="9" stroke-linecap="round">
+  <path d="M56 82 Q70 86 74 98"/>
+  <path d="M58 108 Q66 110 70 118"/>
+  <path d="M184 82 Q170 86 166 98"/>
+  <path d="M182 108 Q174 110 170 118"/>
+  </g>
+  <ellipse cx="120" cy="140" rx="42" ry="28" fill="#9B9590"/>
+  <ellipse cx="120" cy="134" rx="30" ry="12" fill="#ABA59F" opacity="0.7"/>
+  <path d="M104 136 q-3 6 2 9" stroke="#3C3833" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+  <path d="M136 136 q3 6 -2 9" stroke="#3C3833" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+  <ellipse cx="76" cy="118" rx="12" ry="7.5" fill="#F7A8BC"/>
+  <ellipse cx="164" cy="118" rx="12" ry="7.5" fill="#F7A8BC"/>
+  <path d="M88 100 q9 -11 18 0" stroke="#1D1A17" stroke-width="6.5" fill="none" stroke-linecap="round"/>
+  <path d="M134 100 q9 -11 18 0" stroke="#1D1A17" stroke-width="6.5" fill="none" stroke-linecap="round"/>
+  <path d="M100 52 C96 40 102 30 112 28 C110 36 116 40 120 34 C120 26 128 20 138 22 C132 30 136 38 144 38 C140 50 124 58 100 52 Z" fill="#1D1A17" stroke="#1D1A17" stroke-width="3" stroke-linejoin="round"/>
+  </g>
+  </svg>
