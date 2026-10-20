@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Trip story: the awards</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;600;700;800&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#1D1A17;text-decoration:none}a:hover{color:#3A3631}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; padding: 16px 20px 22px 20px; display: flex; flex-direction: column; gap: 14px; font-family: 'Figtree', system-ui, sans-serif; color: #1D1A17; background: radial-gradient(120% 55% at 100% 0%, #FFE9F3 0%, rgba(255,233,243,0) 60%), radial-gradient(100% 45% at 0% 22%, #F6FFD3 0%, rgba(246,255,211,0) 55%), linear-gradient(180deg, #FFFFFF 0%, #FBF8F2 50%, #F5F0E7 100%)">
+
+  <div aria-label="Chapter 3 of 5" style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px">
+    <span style="height: 4px; border-radius: 999px; background: #1D1A17"></span><span style="height: 4px; border-radius: 999px; background: #1D1A17"></span><span style="height: 4px; border-radius: 999px; background: #1D1A17"></span><span style="height: 4px; border-radius: 999px; background: #E6E0D6"></span><span style="height: 4px; border-radius: 999px; background: #E6E0D6"></span>
+  </div>
+  <div style="display: flex; align-items: center; justify-content: space-between">
+    <span style="font-size: 13px; font-weight: 700">Cabo 2026 · Trip story</span>
+    <button type="button" aria-label="Close story" style="width: 44px; height: 44px; border: none; border-radius: 999px; background: #FFFFFF; display: flex; align-items: center; justify-content: center">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1D1A17" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+    </button>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 6px">
+    <span style="font-size: 12px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: #6E6A63">Chapter 3 · The awards</span>
+    <h1 style="margin: 0; font-size: 34px; line-height: 1; font-weight: 800; letter-spacing: -0.04em">And the Stripes go to…</h1>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
+    <sc-for list="{{awards}}" as="a" hint-placeholder-count="6">
+      <div style="border-radius: 22px; background: #FFFFFF; padding: 12px; display: flex; flex-direction: column; gap: 6px; min-height: 182px; box-sizing: border-box">
+        <div style="display: flex; align-items: flex-end; justify-content: space-between">
+          <dc-import name="Zebra" mood="{{a.mood}}" outfit="{{a.outfit}}" size="52" hint-size="52px,61px"></dc-import>
+          <span style="padding: 4px 8px; border-radius: 999px; background: {{a.statBg}}; font-size: 12px; font-weight: 800">{{a.stat}}</span>
+        </div>
+        <span style="font-size: 11px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: #6E6A63">{{a.title}}</span>
+        <span style="font-size: 17px; font-weight: 800; letter-spacing: -0.01em">{{a.who}}</span>
+        <span style="font-size: 12px; line-height: 1.35; color: #3A3631">{{a.line}}</span>
+      </div>
+    </sc-for>
+  </div>
+
+  <div style="flex: 1"></div>
+  <a href="Story4.dc.html" style="display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 52px; border-radius: 999px; background: #1D1A17; color: #FFFBF2; font-size: 16px; font-weight: 800">See Payments
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E2FF2B" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+  </a>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var a = function (title, who, stat, mood, outfit, line, volt) {
+      return { title: title, who: who, stat: stat, mood: mood, outfit: outfit, line: line, statBg: volt ? '#E2FF2B' : '#F3EFE8' };
+    };
+    return {
+      awards: [
+        a('The Treasurer', 'Jen', '$4,718.80', 'starry', 'none', 'Fronted the most. The Bank of Jen is now closed.', true),
+        a('Receipt Royalty', 'Priya', '14 scans', 'happy', 'glasses', '14 of 23 receipts scanned. Nobody asked for 14.', false),
+        a('The Early Bird', 'Mike', '9 min', 'wink', 'none', 'Paid 9 minutes after close-out. From the airport bar.', true),
+        a('The Houdini', 'Dev', '2 days', 'sleepy', 'none', 'Last to settle. Vanished, then reappeared with exact change.', false),
+        a('The Nickel & Dimer', 'Sam', '$2.75', 'love', 'party', 'Logged a $2.75 churro. With a receipt.', false),
+        a('The Vampire', 'Apollo', '3 after 12', 'happy', 'shades,lei', 'Logged 3 expenses between midnight and 4 AM. Tacos, mostly.', false)
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

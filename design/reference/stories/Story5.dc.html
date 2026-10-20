@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Trip story: the tale</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;600;700;800;900&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#1D1A17;text-decoration:none}a:hover{color:#3A3631}
+@keyframes zsBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+@keyframes zsSway{0%,100%{transform:rotate(-4deg)}50%{transform:rotate(4deg)}}
+.zs-bob{animation:zsBob 1.6s ease-in-out infinite}
+.zs-bob2{animation:zsBob 1.6s ease-in-out .4s infinite}
+.zs-sway{animation:zsSway 2.4s ease-in-out infinite;transform-origin:50% 90%}
+@media (prefers-reduced-motion: reduce){.zs-bob,.zs-bob2,.zs-sway{animation:none}}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; padding: 16px 20px 22px 20px; display: flex; flex-direction: column; gap: 12px; font-family: 'Figtree', system-ui, sans-serif; color: #1D1A17; background: radial-gradient(120% 55% at 100% 0%, #FFE9F3 0%, rgba(255,233,243,0) 60%), radial-gradient(100% 45% at 0% 22%, #F6FFD3 0%, rgba(246,255,211,0) 55%), linear-gradient(180deg, #FFFFFF 0%, #FBF8F2 50%, #F5F0E7 100%)">
+
+  <div aria-label="Chapter 5 of 5" style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px">
+    <span style="height: 4px; border-radius: 999px; background: #1D1A17"></span><span style="height: 4px; border-radius: 999px; background: #1D1A17"></span><span style="height: 4px; border-radius: 999px; background: #1D1A17"></span><span style="height: 4px; border-radius: 999px; background: #1D1A17"></span><span style="height: 4px; border-radius: 999px; background: #1D1A17"></span>
+  </div>
+  <div style="display: flex; align-items: center; justify-content: space-between">
+    <span style="font-size: 13px; font-weight: 700">Cabo 2026 · Trip story</span>
+    <button type="button" aria-label="Close story" style="width: 44px; height: 44px; border: none; border-radius: 999px; background: #FFFFFF; display: flex; align-items: center; justify-content: center">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1D1A17" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+    </button>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 6px">
+    <span style="font-size: 12px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: #6E6A63">Chapter 5 · The tale</span>
+    <h1 style="margin: 0; font-size: 30px; line-height: 1; font-weight: 800; letter-spacing: -0.04em">The Ballad of Cabo 2026</h1>
+  </div>
+
+  <div role="region" aria-label="Animated trip story" style="position: relative; height: 470px; border-radius: 28px; overflow: hidden; background: #1D1A17">
+    <sc-for list="{{scenes}}" as="s" hint-placeholder-count="6">
+      <div aria-hidden="{{s.hidden}}" style="position: absolute; left: 0; top: 0; right: 0; bottom: 0; background: {{s.bg}}; opacity: {{s.op}}; transform: scale({{s.scale}}); transition: opacity 500ms ease, transform 700ms cubic-bezier(.2,.8,.2,1)">
+        <sc-if value="{{s.field}}" hint-placeholder-val="{{ true }}">
+          <svg width="350" height="250" viewBox="0 0 350 250" aria-hidden="true" style="position: absolute; left: 0; bottom: 0">
+            <path d="M0 44 Q70 14 160 34 T350 28 V250 H0 Z" fill="#EEF5D4"></path>
+            <path d="M0 140 Q110 116 220 136 T350 130 V250 H0 Z" fill="#E6F0C6"></path>
+            <g stroke="#B9CF8C" stroke-width="4" stroke-linecap="round" fill="none">
+              <path d="M40 90 l-6 -16 M40 90 l2 -18 M40 90 l9 -14"></path>
+              <path d="M300 80 l-6 -16 M300 80 l2 -18 M300 80 l9 -14"></path>
+              <path d="M170 70 l-6 -16 M170 70 l2 -18 M170 70 l9 -14"></path>
+            </g>
+            <g fill="#F7A8BC"><circle cx="90" cy="70" r="5"></circle><circle cx="250" cy="66" r="5"></circle><circle cx="320" cy="150" r="5"></circle></g>
+          </svg>
+        </sc-if>
+
+        <sc-if value="{{s.plane}}" hint-placeholder-val="{{ false }}">
+          <svg class="zs-sway" width="120" height="80" viewBox="0 0 120 80" aria-hidden="true" style="position: absolute; left: 130px; top: 50px">
+            <path d="M8 44 L100 30 Q116 28 114 38 Q112 46 98 46 L60 50 L40 74 L30 74 L40 50 L20 52 L12 62 L4 62 L8 48 Z" fill="#FFFFFF" stroke="#1D1A17" stroke-width="4" stroke-linejoin="round"></path>
+            <path d="M60 36 L78 10 L88 10 L80 34" fill="#FFFFFF" stroke="#1D1A17" stroke-width="4" stroke-linejoin="round"></path>
+          </svg>
+        </sc-if>
+        <sc-if value="{{s.villa}}" hint-placeholder-val="{{ false }}">
+          <svg width="190" height="140" viewBox="0 0 190 140" aria-hidden="true" style="position: absolute; left: 20px; top: 70px">
+            <path d="M14 70 L95 16 L176 70" fill="none" stroke="#1D1A17" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"></path>
+            <rect x="28" y="66" width="134" height="68" rx="10" fill="#FFFFFF" stroke="#1D1A17" stroke-width="5"></rect>
+            <rect x="80" y="92" width="30" height="42" rx="6" fill="#FF4FA3" stroke="#1D1A17" stroke-width="4"></rect>
+            <rect x="42" y="82" width="26" height="22" rx="5" fill="#E2FF2B" stroke="#1D1A17" stroke-width="4"></rect>
+            <rect x="122" y="82" width="26" height="22" rx="5" fill="#E2FF2B" stroke="#1D1A17" stroke-width="4"></rect>
+          </svg>
+          <span class="zs-bob" style="position: absolute; right: 22px; top: 90px; padding: 8px 14px; border-radius: 16px; background: #1D1A17; color: #E2FF2B; font-size: 26px; font-weight: 900">$3,600</span>
+        </sc-if>
+        <sc-if value="{{s.tequila}}" hint-placeholder-val="{{ false }}">
+          <svg class="zs-sway" width="200" height="190" viewBox="0 0 200 190" aria-hidden="true" style="position: absolute; left: 75px; top: 30px">
+            <path d="M78 10 h24 v34 q26 16 26 50 v80 q0 10 -10 10 h-56 q-10 0 -10 -10 v-80 q0 -34 26 -50 Z" fill="#FFFFFF" stroke="#1D1A17" stroke-width="5" stroke-linejoin="round"></path>
+            <rect x="62" y="100" width="56" height="44" rx="6" fill="#FF9F43" stroke="#1D1A17" stroke-width="4"></rect>
+            <path d="M150 120 l14 -40 l24 0 l-6 40 z" fill="#E2FF2B" stroke="#1D1A17" stroke-width="4" stroke-linejoin="round"></path>
+            <path d="M20 120 l-6 -36 l24 0 l2 36 z" fill="#E2FF2B" stroke="#1D1A17" stroke-width="4" stroke-linejoin="round"></path>
+          </svg>
+          <span style="position: absolute; left: 22px; top: 196px; display: flex; gap: 8px">
+            <span style="padding: 6px 12px; border-radius: 999px; background: #FF9F43; font-size: 18px; font-weight: 900">Tequila 14%</span>
+            <span style="padding: 6px 12px; border-radius: 999px; background: #FFFFFF; font-size: 18px; font-weight: 900">Museums 0%</span>
+          </span>
+        </sc-if>
+        <sc-if value="{{s.boat}}" hint-placeholder-val="{{ false }}">
+          <svg width="390" height="200" viewBox="0 0 390 200" aria-hidden="true" style="position: absolute; left: -20px; top: 150px">
+            <path d="M0 150 Q48 130 96 150 T192 150 T288 150 T384 150 V200 H0 Z" fill="#4DA3FF"></path>
+          </svg>
+          <svg class="zs-sway" width="220" height="150" viewBox="0 0 220 150" aria-hidden="true" style="position: absolute; left: 80px; top: 40px">
+            <path d="M104 12 L104 100" stroke="#1D1A17" stroke-width="5"></path>
+            <path d="M108 16 L170 90 L108 90 Z" fill="#FFFFFF" stroke="#1D1A17" stroke-width="5" stroke-linejoin="round"></path>
+            <path d="M20 104 H200 L176 140 H44 Z" fill="#FF4FA3" stroke="#1D1A17" stroke-width="5" stroke-linejoin="round"></path>
+          </svg>
+          <span class="zs-bob" style="position: absolute; right: 22px; top: 40px; padding: 8px 14px; border-radius: 16px; background: #FFFFFF; font-size: 22px; font-weight: 900">$520</span>
+        </sc-if>
+        <sc-if value="{{s.receipts}}" hint-placeholder-val="{{ false }}">
+          <svg class="zs-sway" width="200" height="190" viewBox="0 0 200 190" aria-hidden="true" style="position: absolute; left: 30px; top: 40px">
+            <path d="M30 40 h70 v120 l-10 -6 l-10 6 l-10 -6 l-10 6 l-10 -6 l-10 6 l-10 -6 z" fill="#FFFFFF" stroke="#1D1A17" stroke-width="4" transform="rotate(-10 65 100)"></path>
+            <path d="M70 26 h70 v120 l-10 -6 l-10 6 l-10 -6 l-10 6 l-10 -6 l-10 6 l-10 -6 z" fill="#FFFFFF" stroke="#1D1A17" stroke-width="4" transform="rotate(6 105 86)"></path>
+            <path d="M84 54 h42 M84 70 h34 M84 86 h42" stroke="#9B9590" stroke-width="4" stroke-linecap="round" transform="rotate(6 105 86)"></path>
+          </svg>
+          <span class="zs-bob" style="position: absolute; right: 26px; top: 70px; padding: 8px 14px; border-radius: 16px; background: #E2FF2B; font-size: 26px; font-weight: 900">×14</span>
+          <span class="zs-bob2" style="position: absolute; right: 30px; top: 150px; padding: 6px 12px; border-radius: 999px; background: #FFFFFF; font-size: 16px; font-weight: 900">churro: $2.75</span>
+        </sc-if>
+        <sc-if value="{{s.finale}}" hint-placeholder-val="{{ false }}">
+          <svg aria-hidden="true" width="350" height="200" viewBox="0 0 350 200" style="position: absolute; left: 0; top: 20px">
+            <path d="M50 40 l5 12 l12 5 l-12 5 l-5 12 l-5 -12 l-12 -5 l12 -5 Z" fill="#E2FF2B"></path>
+            <path d="M290 30 l4 10 l10 4 l-10 4 l-4 10 l-4 -10 l-10 -4 l10 -4 Z" fill="#FF4FA3"></path>
+            <path d="M260 140 l3 7 l7 3 l-7 3 l-3 7 l-3 -7 l-7 -3 l7 -3 Z" fill="#E2FF2B"></path>
+          </svg>
+          <span style="position: absolute; left: 24px; top: 70px; font-size: 44px; line-height: 0.95; font-weight: 900; letter-spacing: -0.04em; color: #FFFBF2">0 regrets.<br><span style="color: #E2FF2B">Stripes: earned.</span></span>
+        </sc-if>
+
+        <sc-for list="{{s.herd}}" as="z" hint-placeholder-count="3">
+          <span class="{{z.cls}}" style="position: absolute; left: {{z.l}}px; top: {{z.t}}px">
+            <dc-import name="ZebraFull" mood="{{z.mood}}" outfit="{{z.outfit}}" size="{{z.s}}" hint-size="120px,124px"></dc-import>
+          </span>
+        </sc-for>
+
+        <div style="position: absolute; left: 16px; right: 16px; bottom: 18px; display: flex; justify-content: center">
+          <span style="max-width: 100%; padding: 10px 14px; border-radius: 16px; background: {{s.capBg}}; color: {{s.capFg}}; font-size: 15px; line-height: 1.35; font-weight: 700; text-align: center">{{s.caption}}</span>
+        </div>
+      </div>
+    </sc-for>
+
+    <div style="position: absolute; left: 14px; right: 14px; top: 12px; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px">
+      <sc-for list="{{ticks}}" as="t" hint-placeholder-count="6">
+        <span style="height: 3px; border-radius: 999px; background: {{t.c}}"></span>
+      </sc-for>
+    </div>
+    <button type="button" onClick="{{togglePlay}}" aria-label="{{playLabel}}" style="position: absolute; right: 12px; top: 24px; width: 40px; height: 40px; border: none; border-radius: 999px; background: rgba(255,255,255,0.9); display: flex; align-items: center; justify-content: center; cursor: pointer">
+      <sc-if value="{{playing}}" hint-placeholder-val="{{ true }}">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="#1D1A17" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"></rect><rect x="14" y="5" width="4" height="14" rx="1"></rect></svg>
+      </sc-if>
+      <sc-if value="{{paused}}" hint-placeholder-val="{{ false }}">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="#1D1A17" aria-hidden="true"><path d="M7 5l12 7-12 7z"></path></svg>
+      </sc-if>
+    </button>
+  </div>
+
+  <div style="flex: 1"></div>
+  <a href="ShareIG.dc.html" style="display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 52px; border-radius: 999px; background: #E2FF2B; color: #1D1A17; font-size: 16px; font-weight: 800">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1D1A17" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 8l5-5 5 5M5 14v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5"></path></svg>
+    Share the story
+  </a>
+  <a href="Main.dc.html" style="display: flex; align-items: center; justify-content: center; min-height: 48px; border-radius: 999px; background: #FFFFFF; border: 1.5px solid #E8E2D8; box-sizing: border-box; font-size: 15px; font-weight: 700">Back to Home</a>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { i: 0, playing: true }; }
+  componentDidMount() {
+    var self = this;
+    this.timer = setInterval(function () {
+      if (self.state.playing) self.setState({ i: (self.state.i + 1) % 6 });
+    }, 3200);
+  }
+  componentWillUnmount() { clearInterval(this.timer); }
+  renderVals() {
+    var self = this;
+    var i = this.state.i;
+    var Z = function (mood, outfit, l, t, s, cls) { return { mood: mood, outfit: outfit, l: l, t: t, s: s, cls: cls || 'zs-bob' }; };
+    var six = function (m) {
+      return [
+        Z(m || 'happy', 'glasses', 30, 186, 100, 'zs-bob2'), Z(m || 'wink', 'none', 125, 178, 100), Z(m || 'sleepy', 'none', 220, 186, 100, 'zs-bob2'),
+        Z(m || 'happy', 'shades,lei', -5, 242, 118), Z(m || 'starry', 'none', 116, 250, 118, 'zs-bob2'), Z(m || 'love', 'party', 232, 242, 118)
+      ];
+    };
+    var data = [
+      { bg: '#F6FFD3', field: true, plane: true, herd: six(), caption: 'March 12: six zebras land in Cabo with good intentions and one shared villa.' },
+      { bg: '#FFE9F3', field: true, villa: true, herd: [Z('starry', 'none', 100, 200, 150)], caption: 'By sundown Jen has fronted $3,600 for the villa. The intentions are gone.' },
+      { bg: '#FFF1E2', field: true, tequila: true, herd: [Z('love', 'shades,lei', 30, 240, 130), Z('wink', 'none', 190, 240, 130, 'zs-bob2')], caption: '14% of the trip goes to tequila. 0% goes to museums.' },
+      { bg: '#EAF4FF', field: false, boat: true, herd: [Z('happy', 'none', 0, 236, 112), Z('happy', 'glasses', 118, 228, 112, 'zs-bob2'), Z('happy', 'party', 236, 236, 112)], caption: 'Culture is observed, technically, from a $520 boat.' },
+      { bg: '#FAF7F2', field: true, receipts: true, herd: [Z('wink', 'glasses', 30, 236, 130), Z('love', 'party', 190, 236, 130, 'zs-bob2')], caption: 'Priya scans 14 receipts. Sam logs a $2.75 churro. Both are heroes.' },
+      { bg: '#1D1A17', field: true, finale: true, herd: six('starry'), dark: true, caption: '6 zebras. 5 payments. Settled in 2 days.' }
+    ];
+    var scenes = data.map(function (d, k) {
+      var on = k === i;
+      return {
+        bg: d.bg, op: on ? 1 : 0, scale: on ? 1 : 1.06, hidden: on ? 'false' : 'true',
+        field: !!d.field, plane: !!d.plane, villa: !!d.villa, tequila: !!d.tequila, boat: !!d.boat, receipts: !!d.receipts, finale: !!d.finale,
+        herd: d.herd, caption: d.caption,
+        capBg: d.dark ? '#E2FF2B' : '#FFFFFF', capFg: '#1D1A17'
+      };
+    });
+    return {
+      scenes: scenes,
+      ticks: data.map(function (d, k) { return { c: k <= i ? '#1D1A17' : 'rgba(29,26,23,0.18)' }; }),
+      playing: this.state.playing,
+      paused: !this.state.playing,
+      playLabel: this.state.playing ? 'Pause story' : 'Play story',
+      togglePlay: function () { self.setState({ playing: !self.state.playing }); }
+    };
+  }
+}
+</script>
+</body>
+</html>

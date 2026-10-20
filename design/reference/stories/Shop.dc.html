@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Your zebra closet and shop</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;600;700;800&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#1D1A17;text-decoration:none}a:hover{color:#3A3631}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; padding: 20px 20px 22px 20px; display: flex; flex-direction: column; gap: 14px; font-family: 'Figtree', system-ui, sans-serif; color: #1D1A17; background: radial-gradient(120% 55% at 100% 0%, #FFE9F3 0%, rgba(255,233,243,0) 60%), radial-gradient(100% 45% at 0% 22%, #F6FFD3 0%, rgba(246,255,211,0) 55%), linear-gradient(180deg, #FFFFFF 0%, #FBF8F2 50%, #F5F0E7 100%)">
+
+  <div style="display: flex; align-items: center; justify-content: space-between">
+    <a href="Main.dc.html" aria-label="Back to your dazzles" style="width: 44px; height: 44px; border-radius: 999px; background: #FFFFFF; display: flex; align-items: center; justify-content: center">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1D1A17" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg>
+    </a>
+    <span style="font-size: 17px; font-weight: 800">Shop</span>
+    <span style="padding: 8px 12px; border-radius: 999px; background: #FFFFFF; font-size: 13px; font-weight: 700">Gift</span>
+  </div>
+
+  <div style="position: relative; height: 210px; border-radius: 28px; background: #FFFFFF; display: flex; align-items: flex-end; justify-content: center; overflow: hidden; box-shadow: 0 6px 18px rgba(29,26,23,0.06)">
+    <span style="position: absolute; left: 50%; bottom: -40px; width: 230px; height: 120px; margin-left: -115px; border-radius: 999px; background: #FFF3F8"></span>
+    <span style="position: relative; padding-bottom: 6px">
+      <dc-import name="Zebra" mood="{{previewMood}}" outfit="{{sel.id}}" size="150" hint-size="150px,198px"></dc-import>
+    </span>
+    <span style="position: absolute; left: 14px; top: 14px; padding: 6px 12px; border-radius: 999px; background: #FAF7F2; font-size: 12px; font-weight: 700">Trying on: {{sel.name}}</span>
+  </div>
+
+
+  <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px">
+    <sc-for list="{{items}}" as="it" hint-placeholder-count="8">
+      <button type="button" onClick="{{it.pick}}" aria-pressed="{{it.pressed}}" aria-label="{{it.name}}, {{it.tag}}" style="position: relative; height: 92px; padding: 6px 0 0 0; border-radius: 18px; border: 2px solid {{it.border}}; background: #FFFFFF; font-family: inherit; display: flex; flex-direction: column; align-items: center; justify-content: space-between; cursor: pointer; overflow: hidden">
+        <dc-import name="Zebra" mood="hi" outfit="{{it.id}}" size="46" hint-size="46px,54px"></dc-import>
+        <span style="width: 100%; padding: 3px 0; background: {{it.tagBg}}; color: {{it.tagFg}}; font-size: 11px; font-weight: 800">{{it.tag}}</span>
+      </button>
+    </sc-for>
+  </div>
+
+
+  <div style="flex: 1"></div>
+  <sc-if value="{{sel.buy}}" hint-placeholder-val="{{ true }}">
+    <button type="button" style="min-height: 56px; border: none; border-radius: 999px; background: #E2FF2B; color: #1D1A17; font-family: inherit; font-size: 17px; font-weight: 800">Buy {{sel.name}} · {{sel.tag}}</button>
+  </sc-if>
+  <sc-if value="{{sel.owned}}" hint-placeholder-val="{{ false }}">
+    <button type="button" style="min-height: 56px; border: none; border-radius: 999px; background: #1D1A17; color: #FFFBF2; font-family: inherit; font-size: 17px; font-weight: 800">Wear it</button>
+  </sc-if>
+  <sc-if value="{{sel.free}}" hint-placeholder-val="{{ false }}">
+    <button type="button" style="min-height: 56px; border: none; border-radius: 999px; background: #1D1A17; color: #FFFBF2; font-family: inherit; font-size: 17px; font-weight: 800">Get {{sel.name}} · Free</button>
+  </sc-if>
+  <sc-if value="{{sel.pack}}" hint-placeholder-val="{{ false }}">
+    <button type="button" style="min-height: 56px; border: none; border-radius: 999px; background: #FF4FA3; color: #1D1A17; font-family: inherit; font-size: 17px; font-weight: 800">Get the Bachelorette pack · {{sel.tag}}</button>
+  </sc-if>
+  <sc-if value="{{sel.locked}}" hint-placeholder-val="{{ false }}">
+    <button type="button" disabled="" style="min-height: 56px; border: none; border-radius: 999px; background: #F3EFE8; color: #6E6A63; font-family: inherit; font-size: 16px; font-weight: 700">{{sel.hint}}</button>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { picked: 'tiara' }; }
+  renderVals() {
+    var self = this;
+    var data = [
+      { id: 'beanie', name: 'Beanie', kind: 'free' },
+      { id: 'glasses', name: 'Round glasses', kind: 'owned' },
+      { id: 'shades', name: 'Sunglasses', kind: 'owned' },
+      { id: 'tee', name: 'Zebra tee', kind: 'free' },
+      { id: 'scarf', name: 'Scarf', kind: 'free' },
+      { id: 'tiara', name: 'Tiara', kind: 'buy', price: '$0.99' },
+      { id: 'hearts', name: 'Heart shades', kind: 'buy', price: '$0.99' },
+      { id: 'hoodie', name: 'Hoodie', kind: 'buy', price: '$0.99' },
+      { id: 'chain', name: 'Gold chain', kind: 'buy', price: '$0.99' },
+      { id: 'sash', name: 'Bride sash', kind: 'pack', price: '$2.99' },
+      { id: 'lei', name: 'Lei', kind: 'owned' },
+      { id: 'crown', name: 'Crown', kind: 'locked', hint: 'Earn it: settle 3 dazzles' }
+    ];
+    var tagFor = { owned: 'Owned', free: 'Free', locked: 'Earn it', pack: 'Pack' };
+    var bgFor = { owned: '#1D1A17', free: '#F3EFE8', locked: '#F3EFE8', pack: '#FFE4F1', buy: '#E2FF2B' };
+    var fgFor = { owned: '#FFFBF2', free: '#1D1A17', locked: '#1D1A17', pack: '#A3195F', buy: '#1D1A17' };
+    var items = data.map(function (d) {
+      var on = self.state.picked === d.id;
+      return {
+        id: d.id, name: d.name, tag: tagFor[d.kind] || d.price,
+        pressed: on ? 'true' : 'false',
+        border: on ? '#1D1A17' : '#FFFFFF',
+        tagBg: bgFor[d.kind], tagFg: fgFor[d.kind],
+        pick: function () { self.setState({ picked: d.id }); }
+      };
+    });
+    var s = data.filter(function (d) { return d.id === self.state.picked; })[0];
+    return {
+      items: items,
+      previewMood: s.kind === 'buy' || s.kind === 'pack' ? 'wink' : 'happy',
+      sel: { id: s.id, name: s.name, tag: s.price || '', hint: s.hint || '', buy: s.kind === 'buy', owned: s.kind === 'owned', locked: s.kind === 'locked', free: s.kind === 'free', pack: s.kind === 'pack' }
+    };
+  }
+}
+</script>
+</body>
+</html>
