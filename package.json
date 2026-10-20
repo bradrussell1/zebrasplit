@@ -16,7 +16,9 @@
     "smoke": "node scripts/smoke.mjs",
     "smoke:server": "node scripts/smoke-server.mjs",
     "web": "npm run dev --workspace=@bunktab/web",
-    "site": "npm run dev --workspace=@bunktab/site"
+    "site": "npm run dev --workspace=@bunktab/site",
+    "check:chart": "node scripts/check-chart-tokens.mjs",
+    "check": "npm run typecheck && npm run test && npm run check:chart"
   },
   "engines": {
     "node": ">=20"

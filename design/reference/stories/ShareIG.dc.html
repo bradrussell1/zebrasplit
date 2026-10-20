@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Instagram story card</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;600;700;800;900&amp;display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 540px; height: 960px; box-sizing: border-box; padding: 76px 36px 104px 36px; display: flex; flex-direction: column; gap: 22px; overflow: hidden; font-family: 'Figtree', system-ui, sans-serif; color: #1D1A17; background: radial-gradient(90% 45% at 100% 0%, #FFE9F3 0%, rgba(255,233,243,0) 65%), radial-gradient(80% 40% at 0% 30%, #F6FFD3 0%, rgba(246,255,211,0) 60%), linear-gradient(180deg, #FFFFFF 0%, #FBF8F2 50%, #F5F0E7 100%)">
+
+  <div style="display: flex; align-items: center; justify-content: space-between">
+    <span style="font-size: 22px; font-weight: 800; letter-spacing: -0.03em">zebrasplit</span>
+    <span style="padding: 6px 12px; border-radius: 999px; background: #1D1A17; color: #E2FF2B; font-size: 13px; font-weight: 800; letter-spacing: 0.06em">TRIP STORY</span>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 6px">
+    <div style="font-size: 58px; line-height: 0.92; font-weight: 900; letter-spacing: -0.05em">Six zebras.<br>One villa.<br>Zero museums.</div>
+    <div style="font-size: 18px; font-weight: 700; color: #3A3631">Cabo 2026 · Mar 12 – 16 · 4 nights</div>
+  </div>
+
+
+  <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+    <div style="border-radius: 24px; background: #FFFFFF; padding: 16px 18px">
+      <div style="font-size: 14px; font-weight: 700; color: #6E6A63">Total damage</div>
+      <div style="font-size: 40px; font-weight: 900; letter-spacing: -0.04em">$7,842</div>
+    </div>
+    <div style="border-radius: 24px; background: #E2FF2B; padding: 16px 18px">
+      <div style="font-size: 14px; font-weight: 700">Per zebra</div>
+      <div style="font-size: 40px; font-weight: 900; letter-spacing: -0.04em">$1,307</div>
+    </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 8px">
+    <div style="display: flex; gap: 3px; height: 22px">
+      <span style="flex: 45.9 1 0; border-radius: 7px; background: #1D1A17"></span><span style="flex: 21.5 1 0; border-radius: 7px; background: #FF4FA3"></span><span style="flex: 14.1 1 0; border-radius: 7px; background: #FF9F43"></span><span style="flex: 9.2 1 0; border-radius: 7px; background: #9B7BFF"></span><span style="flex: 6.2 1 0; border-radius: 7px; background: #4DA3FF"></span><span style="flex: 3.2 1 0; border-radius: 7px; background: #4CCB8F"></span>
+    </div>
+    <div style="display: flex; gap: 14px; font-size: 14px; font-weight: 700; color: #3A3631">
+      <span>Villa 46%</span><span>Dining 21%</span><span>Tequila 14%</span>
+    </div>
+  </div>
+
+  <div style="border-radius: 24px; background: #1D1A17; color: #FFFBF2; padding: 18px 20px; display: flex; flex-direction: column; gap: 6px">
+    <span style="font-size: 13px; font-weight: 800; letter-spacing: 0.08em; color: #E2FF2B">THE TEQUILA INDEX</span>
+    <span style="font-size: 26px; line-height: 1.15; font-weight: 800; letter-spacing: -0.02em">14% on drinks, mostly tequila. 0% on museums.</span>
+  </div>
+
+  <div style="flex: 1"></div>
+  <div style="display: flex; flex-direction: column; gap: 8px">
+    <span style="font-size: 13px; font-weight: 800; letter-spacing: 0.08em; color: #6E6A63">THE STRIPES WENT TO</span>
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px">
+      <sc-for list="{{badges}}" as="b" hint-placeholder-count="6">
+        <span style="display: flex; align-items: center; gap: 6px; padding: 4px 10px 4px 4px; border-radius: 999px; background: #FFFFFF; font-size: 13px; font-weight: 700; white-space: nowrap; overflow: hidden">
+          <span style="width: 30px; height: 30px; border-radius: 999px; background: #FFF3F8; display: flex; align-items: flex-end; justify-content: center; overflow: hidden; flex-shrink: 0"><dc-import name="Zebra" mood="{{b.mood}}" outfit="{{b.outfit}}" size="26" hint-size="26px,30px"></dc-import></span>
+          <b style="font-weight: 800">{{b.award}}</b> {{b.who}}
+        </span>
+      </sc-for>
+    </div>
+  </div>
+  <div style="display: flex; align-items: flex-end; justify-content: space-between">
+    <span style="font-size: 18px; line-height: 1.2; font-weight: 800">Split the trip<br>Not the friendship</span>
+    <span style="font-size: 15px; font-weight: 700; color: #6E6A63">zebrasplit.com</span>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":540,"height":960}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      herd: [
+        { mood: 'happy', outfit: 'shades,lei' }, { mood: 'starry', outfit: 'none' }, { mood: 'wink', outfit: 'none' },
+        { mood: 'happy', outfit: 'glasses' }, { mood: 'love', outfit: 'party' }, { mood: 'sleepy', outfit: 'none' }
+      ],
+      badges: [
+        { award: 'Treasurer', who: 'Jen', mood: 'starry', outfit: 'none' },
+        { award: 'Receipt Royalty', who: 'Priya', mood: 'happy', outfit: 'glasses' },
+        { award: 'Early Bird', who: 'Mike', mood: 'wink', outfit: 'none' },
+        { award: 'Houdini', who: 'Dev', mood: 'sleepy', outfit: 'none' },
+        { award: 'Nickel & Dimer', who: 'Sam', mood: 'love', outfit: 'party' },
+        { award: 'Vampire', who: 'Apollo', mood: 'happy', outfit: 'shades,lei' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

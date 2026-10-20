@@ -1,0 +1,35 @@
+{
+  "v": 3,
+  "createdOnFiles": {"v": 1, "at": "2026-10-20T18:40:00Z"},
+  "title": "Zebrasplit trip stories and store",
+  "launch": {"view": "canvas"},
+  "pages": [],
+  "boards": {
+    "Main.dc.html": {"x": 0, "y": 300, "w": 390, "h": 844, "title": "Home: shop bag in the header"},
+    "Shop.dc.html": {"x": 470, "y": 300, "w": 390, "h": 844, "title": "Shop (tap to try on)", "is_interactive": true},
+    "Account.dc.html": {"x": 940, "y": 300, "w": 390, "h": 844, "title": "Your account · Account tab"},
+    "AccountZebra.dc.html": {"x": 1410, "y": 300, "w": 390, "h": 1100, "title": "Your account · Zebra tab (wardrobe)", "is_interactive": true},
+    "Zebra.dc.html": {"x": 1880, "y": 300, "w": 200, "h": 264, "title": "Zebra avatar component"},
+    "ZebraFull.dc.html": {"x": 2160, "y": 300, "w": 240, "h": 268, "title": "Full zebra component"},
+    "Story1.dc.html": {"x": 0, "y": 1820, "w": 390, "h": 844, "title": "Story 1 · The dazzle"},
+    "Story2.dc.html": {"x": 470, "y": 1820, "w": 390, "h": 844, "title": "Story 2 · The damage (tap a category)", "is_interactive": true},
+    "Story3.dc.html": {"x": 940, "y": 1820, "w": 390, "h": 844, "title": "Story 3 · The awards"},
+    "Story4.dc.html": {"x": 1410, "y": 1820, "w": 390, "h": 844, "title": "Story 4 · Payment summary"},
+    "Story5.dc.html": {"x": 1880, "y": 1820, "w": 390, "h": 844, "title": "Story 5 · The tale (animated, plays itself)", "is_interactive": true},
+    "ShareIG.dc.html": {"x": 0, "y": 3084, "w": 540, "h": 960, "title": "Instagram Story card (1080×1920)"},
+    "ShareTikTok.dc.html": {"x": 620, "y": 3084, "w": 540, "h": 960, "title": "TikTok video (animated, 1080×1920)", "is_interactive": true},
+    "LogoAnim.dc.html": {"x": 1240, "y": 3084, "w": 540, "h": 960, "title": "Logo animation: stripes → zebra → pasture", "is_interactive": true},
+    "Wrapped1.dc.html": {"x": 0, "y": 4464, "w": 390, "h": 844, "title": "Wrapped 1 · Your year in stripes"},
+    "Wrapped2.dc.html": {"x": 470, "y": 4464, "w": 390, "h": 844, "title": "Wrapped 2 · The money"},
+    "Wrapped3.dc.html": {"x": 940, "y": 4464, "w": 390, "h": 844, "title": "Wrapped 3 · The herd"},
+    "Wrapped4.dc.html": {"x": 1410, "y": 4464, "w": 390, "h": 844, "title": "Wrapped 4 · Your zebra type"},
+    "WrappedShare.dc.html": {"x": 1880, "y": 4464, "w": 540, "h": 960, "title": "Wrapped share card (1080×1920)"}
+  },
+  "order": ["Main.dc.html", "Shop.dc.html", "Account.dc.html", "AccountZebra.dc.html", "Zebra.dc.html", "ZebraFull.dc.html", "Story1.dc.html", "Story2.dc.html", "Story3.dc.html", "Story4.dc.html", "Story5.dc.html", "ShareIG.dc.html", "ShareTikTok.dc.html", "LogoAnim.dc.html", "Wrapped1.dc.html", "Wrapped2.dc.html", "Wrapped3.dc.html", "Wrapped4.dc.html", "WrappedShare.dc.html"],
+  "notes": {
+    "tStore": {"x": 0, "y": 0, "text": "Home, shop and your account", "kind": "title1", "maxW": 2400},
+    "tStory": {"x": 0, "y": 1520, "text": "Trip Story", "kind": "title1", "maxW": 2270},
+    "tShare": {"x": 0, "y": 2784, "text": "Share cards and logo animation", "kind": "title1", "maxW": 1780},
+    "tWrapped": {"x": 0, "y": 4164, "text": "Zebrasplit Wrapped", "kind": "title1", "maxW": 2420}
+  }
+}
