@@ -107,6 +107,10 @@ function Sheet() {
               <Button key={m} label={m} kind={mood === m ? "ink" : "secondary"} height={32} onPress={() => setMood(m)} />
             ))}
           </Row>
+          <Row>
+            <View style={styles.tile}><Zebra variant="bust" size={110} striped mood={mood} outfit={{ body: "hoodie", head: "cap" }} decorative /><ZText variant="micro">Hood up (bust)</ZText></View>
+            <View style={styles.tile}><Zebra variant="full" size={110} striped mood={mood} outfit={{ body: "hoodie", head: "cap" }} decorative /><ZText variant="micro">Hood up (full)</ZText></View>
+          </Row>
           {OUTFIT_SLOTS.map((slot) => (
             <View key={slot} style={styles.wardrobe}>
               <ZText variant="overline" color={color.textMuted}>{SLOT_LABELS[slot]}</ZText>
@@ -269,7 +273,7 @@ function Sheet() {
 const styles = StyleSheet.create({
   wardrobe: { gap: 8 },
   tiles: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
-  tile: { width: 92, alignItems: "center", gap: 2 },
+  tile: { width: 112, alignItems: "center", gap: 2 },
   screen: { flex: 1 },
   content: { paddingHorizontal: layout.screenGutter, gap: space[12] },
   section: { gap: space[10], marginTop: space[20] },

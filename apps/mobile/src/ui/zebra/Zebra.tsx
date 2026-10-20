@@ -211,10 +211,14 @@ export function Zebra({ variant = "full", mood = "hi", members = 6, done = 0, st
         {layer(MOODS.map((m, i) => (BLINKING.includes(m) ? <MoodFade key={m} opacity={opac[i]}><Eyes mood={m} sw={sw} /></MoodFade> : null)))}
       </Animated.View>
       {/* layer 4: hood, throat, face and head items. Above the eyes, so glasses cover
-          them rather than hiding behind them; only mounted when something is worn. */}
+          them rather than hiding behind them; only mounted when something is worn.
+          The ears are drawn again directly over the hood, because A7 is explicit that
+          they poke out of it — the band passes right across where they sit. */}
       {overEyes.length ? (
         <View pointerEvents="none" style={StyleSheet.absoluteFill}>
-          {layer(overEyes.map(wears))}
+          {layer(overEyes.flatMap((l) => (l.layer === "hood"
+            ? [wears(l), <G key="hood-ears"><Ears mood={mood} sw={sw} /></G>]
+            : [wears(l)])))}
         </View>
       ) : null}
       {/* layer 5: mood extras draw above the outfit, never under it */}
