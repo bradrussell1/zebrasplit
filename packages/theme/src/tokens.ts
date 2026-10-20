@@ -216,6 +216,60 @@ export const motion = {
 } as const;
 
 /**
+ * Category data-viz palette (prompt section 9, decision A14).
+ *
+ * These seven map 1:1 onto the top-level CATEGORIES in packages/core. They are the ONLY
+ * colors in the product besides volt and pink, and they are allowed on charts and
+ * nowhere else, ever: bars, segments and their legend swatches in Trip Story, Wrapped
+ * and the dazzle Summary tab. Never on buttons, pills, text, backgrounds or outfits.
+ * `scripts/check-chart-tokens.mjs` fails the build if theme.chart is read outside
+ * src/ui/charts/. Ink text is legible on every one of them.
+ */
+export const chart = {
+  travel: palette.ink,
+  dining: '#FF4FA3',
+  alcohol: '#FF9F43',
+  recreation: '#9B7BFF',
+  transportation: '#4DA3FF',
+  groceries: '#4CCB8F',
+  other: '#9B9590',
+} as const;
+
+/** The Pasture the herd stands in. Name tags use the existing ink and white. */
+export const pasture = {
+  field: '#EEF5D4',
+  fieldFront: '#E6F0C6',
+  grass: '#B9CF8C',
+  flower: '#F7A8BC',
+} as const;
+
+/** Background tints for the animated tale's scenes, in order. */
+export const storyTint = ['#F6FFD3', '#FFE9F3', '#FFF1E2', '#EAF4FF', '#FAF7F2'] as const;
+
+/**
+ * Outfit art. The wardrobe draws in the brand palette only; the four Jersey pack team
+ * colors are the single exception and are outfit art only — they are deliberately not
+ * the chart palette, and neither set may be used anywhere the other is.
+ */
+export const outfit = {
+  ink: palette.ink,
+  hide: palette.hide,
+  volt: palette.volt,
+  pink: palette.pink,
+  blush: palette.blush,
+  shade: '#3A3631',
+  shadeSoft: '#5C5852',
+  team: {
+    blue: '#2F6BFF',
+    green: '#1FA463',
+    purple: '#7A4DFF',
+    red: '#F0443A',
+  },
+} as const;
+
+export type TeamColor = keyof typeof outfit.team;
+
+/**
  * Web display scale for the marketing site (apps/site). The mobile scale above tops out
  * at display 46; the approved site boards run headings fluidly (clamp) up to 84 px, so
  * those sizes live here as tokens instead of as raw numbers in site components.
@@ -247,6 +301,6 @@ export const siteText = {
   phoneTitle:{ size: 24, lineHeight: 1,    tracking: -0.03 },   // phone-mock screen title
 } as const;
 
-export const theme = { palette, color, zebra, fonts, type, space, layout, radius, shadow, size, motion, siteType, siteText };
+export const theme = { palette, color, zebra, fonts, type, space, layout, radius, shadow, size, motion, chart, pasture, storyTint, outfit, siteType, siteText };
 export type Theme = typeof theme;
 export default theme;
