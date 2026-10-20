@@ -1,12 +1,13 @@
-import { countDone, formatCents, formatDateRange, zebraMoodFor, type ZebraMood } from "@bunktab/core";
+import { countDone, formatCents, formatDateRange, herdPick, normalizeOutfit, zebraMoodFor, type Outfit, type ZebraMood } from "@bunktab/core";
 import { color, layout, radius, size, space } from "@bunktab/theme";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { FlatList, Image, RefreshControl, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { AmountPill, Button, Card, CountUp, Icon, IconButton, Input, InsetPanel, HeroCard, Money, ScreenBackground, SegmentedControl, StripeMeter, TopBar, Zebra, ZText, useToast } from "@/ui";
+import { AmountPill, Button, Card, CountUp, Icon, IconButton, Input, InsetPanel, HeroCard, Money, ScreenBackground, SegmentedControl, TopBar, Zebra, ZText, useToast } from "@/ui";
 import { trackOnboardingFinishedOnce } from "@/lib/analytics";
 import { useAuth } from "@/lib/auth";
+import { useForegroundSeed } from "@/lib/foreground";
 import { useSignedUrl } from "@/lib/media";
 import { supabase } from "@/lib/supabase";
 import { fetchUnseenNotifications, markNotificationsSeen } from "@/lib/notifications";
@@ -21,7 +22,7 @@ import { sortMembers } from "@/lib/trips";
  * paid minus share), so the two screens can never disagree. Reloads whenever the
  * screen regains focus, so a dazzle created or edited elsewhere shows at once.
  */
-type MemberRow = { user_id: string; role: "owner" | "member"; joined_at: string | null; done_at: string | null; display_name: string | null; photo_url: string | null };
+type MemberRow = { user_id: string; role: "owner" | "member"; joined_at: string | null; done_at: string | null; display_name: string | null; photo_url: string | null; outfit: Outfit };
 type TripRow = { id: string; title: string; status: "open" | "settled" | "archived"; start_date: string; end_date: string; base_currency: string; cover_photo_url: string | null; last_activity_at: string; members: MemberRow[]; net_cents: number };
 
 export default function HomeScreen() {
@@ -37,6 +38,7 @@ export default function HomeScreen() {
   useEffect(() => { if (params.tab === "open" || params.tab === "past") setTab(params.tab); }, [params.tab]); // a link can open either tab
   const [searching, setSearching] = useState(false);
   const [query, setQuery] = useState("");
+  const herdSeed = useForegroundSeed();
   const [trips, setTrips] = useState<TripRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [footerH, setFooterH] = useState(size.ctaHeight + layout.bottomCtaPadding);
@@ -45,13 +47,14 @@ export default function HomeScreen() {
     const [t, m, e] = await Promise.all([
       supabase.from("trips").select("id, title, status, start_date, end_date, base_currency, cover_photo_url, last_activity_at").order("last_activity_at", { ascending: false }),
       // done_at is read here only for the stripe meter ("3 of 6 stripes"); nothing on Home writes it
-      supabase.from("trip_members").select("trip_id, user_id, role, joined_at, done_at, users(display_name, photo_url)").is("removed_at", null),
+      supabase.from("trip_members").select("trip_id, user_id, role, joined_at, done_at, users(display_name, photo_url, user_outfit(head, faceneck, body))").is("removed_at", null),
       supabase.from("expenses").select("trip_id, expense_payers(user_id, base_amount_cents), expense_shares(user_id, base_share_cents)").is("deleted_at", null),
     ]);
-    type M = { trip_id: string; user_id: string; role: "owner" | "member"; joined_at: string | null; done_at: string | null; users: { display_name: string | null; photo_url: string | null } | null };
+    type OutfitRow = { head: string | null; faceneck: string | null; body: string | null };
+    type M = { trip_id: string; user_id: string; role: "owner" | "member"; joined_at: string | null; done_at: string | null; users: { display_name: string | null; photo_url: string | null; user_outfit: OutfitRow | OutfitRow[] | null } | null };
     type E = { trip_id: string; expense_payers: { user_id: string; base_amount_cents: number }[]; expense_shares: { user_id: string; base_share_cents: number }[] };
     const membersBy = new Map<string, MemberRow[]>();
-    for (const r of (m.data ?? []) as unknown as M[]) membersBy.set(r.trip_id, [...(membersBy.get(r.trip_id) ?? []), { user_id: r.user_id, role: r.role, joined_at: r.joined_at, done_at: r.done_at, display_name: r.users?.display_name ?? null, photo_url: r.users?.photo_url ?? null }]);
+    for (const r of (m.data ?? []) as unknown as M[]) membersBy.set(r.trip_id, [...(membersBy.get(r.trip_id) ?? []), { user_id: r.user_id, role: r.role, joined_at: r.joined_at, done_at: r.done_at, display_name: r.users?.display_name ?? null, photo_url: r.users?.photo_url ?? null, outfit: normalizeOutfit((Array.isArray(r.users?.user_outfit) ? r.users?.user_outfit[0] : r.users?.user_outfit) as Outfit | null) }]);
     const netBy = new Map<string, number>();
     for (const x of (e.data ?? []) as unknown as E[]) {
       const paid = x.expense_payers.filter((p) => p.user_id === me).reduce((s, p) => s + p.base_amount_cents, 0);
@@ -172,7 +175,7 @@ export default function HomeScreen() {
         ListHeaderComponent={header}
         ItemSeparatorComponent={() => <View style={{ height: layout.listGap }} />}
         ListEmptyComponent={empty}
-        renderItem={({ item }) => <DazzleCard trip={item} me={me} onPress={() => router.push(`/(app)/trip/${item.id}`)} />}
+        renderItem={({ item }) => <DazzleCard trip={item} me={me} seed={herdSeed} onPress={() => router.push(`/(app)/trip/${item.id}`)} />}
         contentContainerStyle={[styles.list, { paddingBottom: footerH + space[16] }]}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
@@ -199,12 +202,17 @@ function shortRange(start: string, end: string) {
   return formatDateRange(start, end).replace(new RegExp(`, ${new Date().getFullYear()}$`), "");
 }
 
-function DazzleCard({ trip, me, onPress }: { trip: TripRow; me: string; onPress: () => void }) {
+function DazzleCard({ trip, me, seed, onPress }: { trip: TripRow; me: string; seed: number; onPress: () => void }) {
   const cover = useSignedUrl("covers", trip.cover_photo_url); // object path in the private bucket
   const settled = trip.status === "settled";
   const youOwe = !settled && trip.net_cents < 0;
   const { done } = countDone(trip.members);
   const notDone = trip.members.length - done;
+  // up to eight busts, picked the same way the field picks twelve: you always among them
+  const MINI = 8;
+  const pick = herdPick(trip.members, me, seed);
+  const shown = pick.shown.slice(0, MINI);
+  const hidden = trip.members.length - shown.length;
   const cardMood = zebraMoodFor({ place: "home-card", youOwe });
   const caption = `${shortRange(trip.start_date, trip.end_date)} · ${trip.members.length} in the Dazzle`;
   const status = settled ? "settled" : trip.net_cents > 0 ? `owed ${formatCents(trip.net_cents, trip.base_currency)}` : trip.net_cents < 0 ? `you owe ${formatCents(-trip.net_cents, trip.base_currency)}` : "even";
@@ -221,10 +229,18 @@ function DazzleCard({ trip, me, onPress }: { trip: TripRow; me: string; onPress:
       </View>
       <InsetPanel style={styles.inset}>
         <View style={styles.meterRow}>
-          <StripeMeter members={trip.members.length} done={done} allInk={settled} />
+          {/* A11: a mini herd, not a meter. A bust can't show body stripes, so the fade
+              and the dashed ring carry "not done" instead. */}
+          <View style={styles.miniHerd} accessibilityLabel={`${done} of ${trip.members.length} have their stripes`}>
+            {shown.map((m) => (
+              <View key={m.user_id} style={[styles.miniBust, m.done_at ? null : styles.miniAdding]}>
+                <Zebra variant="bust" size={34} striped={!!m.done_at} outfit={m.outfit} mood={m.done_at ? "happy" : "hi"} decorative />
+              </View>
+            ))}
+            {hidden > 0 ? <ZText variant="micro" color={color.textMuted}>+{hidden}</ZText> : null}
+          </View>
           <View style={styles.adding}>
             <ZText variant="small" color={settled ? color.text : color.textMuted}>{stillAdding}</ZText>
-            {cardMood ? <Zebra variant="bust" mood={cardMood} size={30} animate={{ blink: true }} decorative /> : null}
           </View>
         </View>
       </InsetPanel>
@@ -260,6 +276,9 @@ const styles = StyleSheet.create({
   cardText: { flex: 1, gap: 2 },
   inset: { marginTop: space[10] },
   meterRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: space[8] },
+  miniHerd: { flexDirection: "row", alignItems: "center", gap: 2, flex: 1, flexWrap: "nowrap" },
+  miniBust: { marginRight: -8 },
+  miniAdding: { opacity: 0.4 },
   adding: { flexDirection: "row", alignItems: "center", gap: space[6] },
   empty: { alignItems: "center", gap: space[8], paddingVertical: space[32], paddingHorizontal: layout.textGutter },
   center: { textAlign: "center" },

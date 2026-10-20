@@ -1,11 +1,12 @@
-import { CATEGORIES, categoryLabel, closeoutUnlocked, countDone, formatCents, formatDateRange, memberState, nightsBetween, shortName, shortNameFromDisplay, zebraMoodFor } from "@bunktab/core";
+import { CATEGORIES, categoryLabel, closeoutUnlocked, countDone, formatCents, formatDateRange, herdPick, memberState, nightsBetween, shortName, shortNameFromDisplay, type ZebraMood } from "@bunktab/core";
 import { color, layout, palette, radius, shadow, size, space } from "@bunktab/theme";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Image, ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { ActionSheet, AmountPill, Avatar, Button, Card, CountUp, Icon, IconButton, InsetPanel, HeroCard, MemberPill, Money, Press, Rise, RowCard, ScreenBackground, SegmentedControl, Toggle, TopBar, Zebra, ZText, useToast, type SheetAction, ErrorPanel, ScreenSkeleton } from "@/ui";
+import { ActionSheet, AmountPill, Avatar, Button, Card, CountUp, Icon, IconButton, InsetPanel, HeroCard, MemberPill, Money, Pasture, Press, Rise, RowCard, ScreenBackground, SegmentedControl, Toggle, TopBar, ZText, useToast, type SheetAction, ErrorPanel, ScreenSkeleton } from "@/ui";
 import { useAuth } from "@/lib/auth";
+import { useForegroundSeed } from "@/lib/foreground";
 import { uploadPrivateImage, useSignedUrl } from "@/lib/media";
 import { captureReceipt } from "@/lib/receipts";
 import { pickImage } from "@/lib/storage";
@@ -35,6 +36,7 @@ export default function TripScreen() {
   const insets = useSafeAreaInsets();
   const { show } = useToast();
   const { session } = useAuth();
+  const herdSeed = useForegroundSeed();
   const me = session!.user.id;
   const { data, loading, error, reload } = useTrip(id);
   // DEV-only `?tab=people|summary` opens a tab directly (screenshots)
@@ -100,7 +102,24 @@ export default function TripScreen() {
   const closed = trip.status !== "open";
   const cur = trip.base_currency;
   const nights = nightsBetween(trip.start_date, trip.end_date);
-  const mood = zebraMoodFor({ place: "dazzle-hero", members: figures.members.length, done: doneCount }) ?? "hi";
+  /**
+   * The herd: at most twelve drawn, you always among them, reshuffled whenever the app
+   * comes back to the foreground (A10b). `herdSeed` is bumped by that, never by a
+   * re-render, so the field doesn't reshuffle under your thumb while you read it.
+   */
+  // not memoised on purpose: this sits after the loading guard, where a hook would be
+  // conditional, and herdPick is a filter plus a seeded shuffle of at most a few dozen
+  const herd = herdPick(figures.members, me, herdSeed);
+  /**
+   * One mood per zebra (B2). Yours tracks the money — worried when you owe on this
+   * dazzle, happy when you're owed — and everyone else's tracks their Done. When the
+   * whole herd is striped they all go starry.
+   */
+  const herdMood = (m: { user_id: string; done_at: string | null }): ZebraMood => {
+    if (toGo === 0) return "starry";
+    if (m.user_id === me) return figures.mine < 0 ? "worried" : figures.mine > 0 ? "happy" : "hi";
+    return m.done_at ? "happy" : "hi";
+  };
   const stillAdding = figures.members.filter((m) => !m.done_at).map((m) => (m.user_id === me ? "you" : (m.display_name ?? "someone").split(/\s+/)[0]!));
 
   async function toggleDone(v: boolean) {
@@ -151,7 +170,6 @@ export default function TripScreen() {
   if (isOwner && !unlocked && !closed) menuActions.push({ label: "Close out anyway", destructive: true, onPress: closeOutAnyway });
   if (isOwner && !closed && data.expenses.length === 0) menuActions.push({ label: "Delete Dazzle", destructive: true, onPress: deleteTrip });
 
-  const openStripes = readonly ? undefined : () => router.push(`/(app)/trip/${trip.id}/closeout`);
   // Nudge (creator only): the same screen with a small Nudge CTA beside each person still adding
   const openNudge = () => router.push(`/(app)/trip/${trip.id}/closeout?nudge=1`);
   const pillLabel = (m: Member) => (m.first_name || m.last_name ? shortName(m.first_name, m.last_name) : shortNameFromDisplay(m.display_name, m.phone ? "Invited" : "Member"));
@@ -187,19 +205,40 @@ export default function TripScreen() {
               {balanceState === "amount" ? <CountUp cents={Math.abs(figures.mine)} variant="amountL" underline={figures.mine !== 0} underlineColor={figures.mine > 0 ? color.owedToYou : color.youOwe} /> : <ZText variant="amountL">{balanceState === "settled" ? "Settled up" : balanceState === "none" ? "Nothing yet" : "All square"}</ZText>}
               {balanceState === "amount" ? <LabelPill tone={figures.mine > 0 ? "volt" : "blush"} label={figures.mine > 0 ? "owed to you" : "you owe"} /> : null}
             </View>
-            <Press onPress={openStripes} disabled={!openStripes} scaleTo={0.97} accessibilityRole="button" accessibilityLabel={`Zebra with ${doneCount} of ${figures.members.length} stripes, ${mood}. Opens Earn your stripes`}>
-              <Zebra variant="full" mood={mood} members={figures.members.length} done={doneCount} size={128} animate={{ blink: true, swish: true }} decorative />
+            {/* the herd, not a meter: "The herd ->" opens the page that lists everyone */}
+            <Press onPress={() => router.push(`/(app)/trip/${trip.id}/herd`)} scaleTo={0.97} accessibilityRole="button" accessibilityLabel={`The herd. ${doneCount} of ${figures.members.length} zebras have their stripes`} style={styles.herdChip}>
+              <ZText variant="captionStrong">The herd</ZText>
+              <Icon name="chevronRight" size={14} />
             </Press>
           </View>
-          <InsetPanel style={styles.stripesPanel}>
+          {/* status row: who is holding the dazzle up, or that nobody is */}
+          <InsetPanel tone={toGo === 0 ? "cream" : "cream"} style={[styles.stripesPanel, toGo === 0 ? styles.statusDone : null]}>
             <View style={styles.stripesRow}>
               <ZText variant="caption" style={styles.flex}>
-                <ZText variant="captionStrong">{doneCount === figures.members.length ? `All ${figures.members.length} stripes.` : `${doneCount} of ${figures.members.length} stripes.`}</ZText>
-                {" "}{toGo === 0 ? "Everyone's done." : `${listNames(stillAdding)} still adding.`}
+                <ZText variant="captionStrong">
+                  {toGo === 0 ? "Every zebra has its stripes." : `${toGo} of ${figures.members.length} zebras still adding.`}
+                </ZText>
+                {" "}{toGo === 0 ? "Time to settle." : `${listNames(stillAdding)}.`}
               </ZText>
               {toGo > 0 && !readonly && !closed && isOwner ? <Button kind="nudge" label="Nudge" onPress={openNudge} accessibilityLabel={`Nudge, ${toGo} still adding`} /> : null}
             </View>
           </InsetPanel>
+          {/* the field. Tapping a zebra opens its member sheet; a zebra's stripes only
+              ever change when its own owner taps Done, so the field is not a control. */}
+          <Pasture
+            members={herd.shown.map((m) => ({
+              user_id: m.user_id,
+              name: memberName(data, m.user_id, me),
+              isMe: m.user_id === me,
+              done: !!m.done_at,
+              mood: herdMood(m),
+              outfit: m.outfit,
+            }))}
+            more={herd.more}
+            height={250}
+            onPressMember={readonly ? undefined : (m) => router.push(`/(app)/trip/${trip.id}/members?user=${m.user_id}`)}
+            style={styles.pasture}
+          />
         </HeroCard>
 
         {/* member pills: grey = nothing added, volt wash = adding, ink + volt stripe = done; tap → member sheet */}
@@ -444,6 +483,9 @@ const styles = StyleSheet.create({
   heroText: { gap: space[8], alignItems: "flex-start" },
   labelPill: { borderRadius: radius.pill, paddingVertical: 5, paddingHorizontal: 11 },
   stripesPanel: { marginTop: space[12] },
+  herdChip: { flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: palette.white, borderRadius: radius.pill, paddingVertical: 6, paddingHorizontal: 12, ...shadow.hairline },
+  statusDone: { backgroundColor: palette.volt },
+  pasture: { marginTop: space[12], marginHorizontal: -layout.heroPadding, marginBottom: -22, borderRadius: radius.hero },
   stripesRow: { flexDirection: "row", alignItems: "center", gap: space[10] },
   plan: { paddingVertical: space[4] },
   planRow: { flexDirection: "row", alignItems: "center", gap: space[8], minHeight: layout.minTapTarget },
