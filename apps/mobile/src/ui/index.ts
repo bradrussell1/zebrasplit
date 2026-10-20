@@ -19,5 +19,6 @@ export { MemberPill } from "./Pills";
 export { Receipt } from "./Receipt";
 export { Zebra, useDanceTrigger } from "./zebra/Zebra";
 export { PayZipButton, ZebraFarewell } from "./zebra/ZebraMoments";
+export { Pasture, type PastureMember } from "./zebra/Pasture";
 export * from "./motion";
 export { PlatformMark, PlatformChip } from "./Payments";

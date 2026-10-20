@@ -24,6 +24,8 @@ export function Defs_() {
     <Defs>
       <ClipPath id="zs-torso"><Rect x="112" y="168" width="162" height="90" rx="45" /></ClipPath>
       <ClipPath id="zs-body"><Path d={BODY_PATH} /></ClipPath>
+      {/* torso outfit items are held to the body on a full zebra and the neck on a bust */}
+      <ClipPath id="zs-neck"><Path d={NECK_PATH} /></ClipPath>
     </Defs>
   );
 }

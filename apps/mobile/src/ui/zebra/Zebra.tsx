@@ -1,10 +1,11 @@
-import { stripeLayout, zebraLabel, type ZebraMood, ZEBRA_STRIPE } from "@bunktab/core";
-import { motion, zebra as z } from "@bunktab/theme";
+import { outfitLayers, stripeLayout, zebraLabel, type Outfit, type OutfitLayerSpec, type ZebraMood, ZEBRA_STRIPE } from "@bunktab/core";
+import { fonts, motion, zebra as z } from "@bunktab/theme";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { StyleSheet, View, type StyleProp, type ViewStyle } from "react-native";
 import Animated, { Easing, cancelAnimation, useAnimatedProps, useAnimatedStyle, useSharedValue, withDelay, withRepeat, withSequence, withTiming, type SharedValue } from "react-native-reanimated";
 import Svg, { G, Rect } from "react-native-svg";
 import { useReducedMotion } from "../motion/useReducedMotion";
+import { OUTFIT_LAYERS } from "./outfits.generated";
 import { BUST_VIEWBOX, Defs_, Ears, EYE_CY, Eyes, FULL_VIEWBOX, Head, Legs, Mane, BodyFill, NeckStripes, Outline, Shadow, Sparkles, SweatDrop, Tail, TAIL_ROOT, Tuft, Zs } from "./parts";
 
 const AG = Animated.createAnimatedComponent(G);
@@ -20,6 +21,13 @@ export type ZebraProps = {
   /** Full only: members in the dazzle and how many are done. */
   members?: number;
   done?: number;
+  /**
+   * One zebra, striped or plain — the herd model (A1). Overrides members/done, which
+   * are the old one-zebra-per-trip meter and will go when the herd lands everywhere.
+   */
+  striped?: boolean;
+  /** What this zebra is wearing: one item each in head, faceneck and body. */
+  outfit?: Outfit | null;
   /** Rendered width; height follows the viewBox. */
   size?: number;
   animate?: { blink?: boolean; bob?: boolean; swish?: boolean; dance?: boolean; sparkles?: boolean };
@@ -51,15 +59,32 @@ export type ZebraProps = {
  *  - the z's float the same way.
  * Opacity crossfades stay on the G (opacity is a native prop).
  */
-export function Zebra({ variant = "full", mood = "hi", members = 6, done = 0, size = 244, animate, tailUp, accessibilityLabel, decorative, style }: ZebraProps) {
+export function Zebra({ variant = "full", mood = "hi", members = 6, done = 0, striped, outfit, size = 244, animate, tailUp, accessibilityLabel, decorative, style }: ZebraProps) {
   const reduced = useReducedMotion();
   const vb = variant === "bust" ? BUST_VIEWBOX : FULL_VIEWBOX;
   const scale = size / vb.w;
   const height = size * (vb.h / vb.w);
   // Outline stays crisp at small sizes: thicker strokes below ~200 px.
   const sw = size >= 200 ? 1 : size >= 120 ? 1.25 : 1.6;
-  const stripes = useMemo(() => stripeLayout(members, done), [members, done]);
-  const allIn = members > 0 && done >= members;
+  // `striped` is one zebra in a herd: all six stripes or none. members/done is the old
+  // per-trip meter, still used by the screens the herd hasn't reached yet.
+  const m = striped === undefined ? members : ZEBRA_STRIPE.six.length;
+  const d = striped === undefined ? done : (striped ? ZEBRA_STRIPE.six.length : 0);
+  const stripes = useMemo(() => stripeLayout(m, d), [m, d]);
+  const allIn = m > 0 && d >= m;
+  // What it's wearing, in paint order. The torso and skirt go inside the body layer;
+  // the hood, throat, face and head go above the blinking eyes, or glasses would sit
+  // behind them.
+  const look = useMemo(() => outfitLayers(outfit), [outfit]);
+  const clipId = variant === "bust" ? "url(#zs-neck)" : "url(#zs-body)";
+  const wears = (spec: OutfitLayerSpec) => {
+    const Art = OUTFIT_LAYERS[spec.id];
+    // `hood` has no master yet (the pack ships the hoodie torso only), so it draws nothing
+    return Art ? <G key={spec.id}>{Art({ k: sw, clip: clipId, black: fonts.black })}</G> : null;
+  };
+  const worn = (order: number) => look.filter((l) => l.drawOrder === order).map(wears);
+  const overEyes = look.filter((l) => l.drawOrder >= 3);
+  const hasExtras = mood === "worried" || mood === "sleepy" || !!animate?.sparkles || (allIn && mood === "starry");
   const up = tailUp ?? (variant === "full" && mood === "starry");
   // a viewBox point → pixels inside this component (for transformOrigin)
   const px = (x: number, y: number) => [(x - vb.x) * scale, (y - vb.y) * scale] as const;
@@ -168,25 +193,42 @@ export function Zebra({ variant = "full", mood = "hi", members = 6, done = 0, si
           </G>
         ) : null}
         <NeckStripes bust={variant === "bust"} sw={sw} />
+        {/* torso items clip to the body (or the neck on a bust), under the outline */}
+        {worn(1)}
         <Outline bust={variant === "bust"} sw={sw} />
+        {worn(2)}
         <G>
           <Ears mood={mood} sw={sw} />
           <Head mood={mood} sw={sw} />
-          {MOODS.map((m, i) => (BLINKING.includes(m) ? (
-            // the blinking eyes live in layer 3; the sweat drop (worried) stays here under the same fade
-            m === "worried" ? <MoodFade key={m} opacity={opac[i]}><SweatDrop sw={sw} /></MoodFade> : null
-          ) : (
+          {MOODS.map((m, i) => (BLINKING.includes(m) ? null : (
             <MoodFade key={m} opacity={opac[i]}><Eyes mood={m} sw={sw} /></MoodFade>
           )))}
           <Tuft sw={sw} />
         </G>
-        {variant === "full" && (animate?.sparkles || (allIn && mood === "starry")) ? <Sparkles sw={sw} /> : null}
       </Svg>
       {/* layer 3: the eyes that blink, scaled as a view about the eye line */}
       <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { transformOrigin: [eyeOx, eyeOy, 0] }, blinkStyle]}>
         {layer(MOODS.map((m, i) => (BLINKING.includes(m) ? <MoodFade key={m} opacity={opac[i]}><Eyes mood={m} sw={sw} /></MoodFade> : null)))}
       </Animated.View>
-      {/* layer 4: the floating z's (sleepy) */}
+      {/* layer 4: hood, throat, face and head items. Above the eyes, so glasses cover
+          them rather than hiding behind them; only mounted when something is worn. */}
+      {overEyes.length ? (
+        <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+          {layer(overEyes.map(wears))}
+        </View>
+      ) : null}
+      {/* layer 5: mood extras draw above the outfit, never under it */}
+      {hasExtras ? (
+        <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+          {layer(
+            <>
+              {MOODS.map((m, i) => (m === "worried" ? <MoodFade key={m} opacity={opac[i]}><SweatDrop sw={sw} /></MoodFade> : null))}
+              {variant === "full" && (animate?.sparkles || (allIn && mood === "starry")) ? <Sparkles sw={sw} /> : null}
+            </>,
+          )}
+        </View>
+      ) : null}
+      {/* layer 6: the floating z's (sleepy) */}
       {mood === "sleepy" ? (
         <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, zzStyle]}>
           {layer(<Zs />)}

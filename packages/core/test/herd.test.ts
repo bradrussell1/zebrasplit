@@ -33,24 +33,40 @@ describe("herdRows", () => {
 });
 
 describe("herdLayout", () => {
+  // Measured off design/reference/herd/Trip-Herd.dc.html, which hand-places six zebras
+  // in a 358 x 250 field. These are the board's own numbers, not the constants, so the
+  // assertion isn't circular: change a constant and this test says so.
   it("reproduces the board's six-zebra geometry", () => {
     const slots = herdLayout(6, FIELD.w, FIELD.h);
     expect(slots).toHaveLength(6);
     const front = slots.filter((s) => s.row === 0);
     const back = slots.filter((s) => s.row === 1);
-    // board: front row 104 pt wide on a 358 pt field
-    expect(front[0]!.width).toBeCloseTo(104, 0);
-    // board: back row is exactly 0.82 of the front
-    expect(back[0]!.width / front[0]!.width).toBeCloseTo(HERD.depthScale, 5);
-    // board: the back row sits 0.42 of a front-row height higher
-    const lift = front[0]!.y + front[0]!.height - (back[0]!.y + back[0]!.height);
-    expect(lift / front[0]!.height).toBeCloseTo(HERD.rowLift, 5);
+
+    expect(front[0]!.width).toBeCloseTo(104.0, 0);   // board: 104.0
+    expect(front[0]!.y).toBeCloseTo(120.8, 0);       // board: 120.8
+    expect(back[0]!.width).toBeCloseTo(85.3, 0);     // board: 85.3
+    expect(back[0]!.y).toBeCloseTo(75.6, 0);         // board: 75.6
+
+    // and the front row's centres, which the board spaces evenly: 63.5, 179.0, 294.5
+    expect(front.map((s) => Math.round(s.x + s.width / 2))).toEqual([63, 179, 295]);
   });
 
-  it("stands the front row's feet on the bottom edge", () => {
+  it("leaves the board's margin under the front row, for the name tags at their feet", () => {
     for (const n of [1, 4, 6, 9, 12]) {
       const front = herdLayout(n, FIELD.w, FIELD.h).filter((s) => s.row === 0);
-      for (const s of front) expect(s.y + s.height).toBeCloseTo(FIELD.h, 5);
+      for (const s of front) expect(s.y + s.height).toBeCloseTo(FIELD.h * (1 - HERD.bottomFactor), 5);
+    }
+    // the board's own margin is 250 - 228 = 22 pt
+    expect(FIELD.h * HERD.bottomFactor).toBeCloseTo(22, 0);
+  });
+
+  it("never lets a row of three on a wide field size itself from the width alone", () => {
+    // the bug this replaces: a 3-wide row on a 424 pt field came out 131 pt tall in a
+    // 250 pt band, filling the sky and clipping its own name tags
+    for (const w of [358, 424, 500, 744]) {
+      for (const s of herdLayout(6, w, FIELD.h)) {
+        expect(s.height, `${w} wide`).toBeLessThanOrEqual(FIELD.h * HERD.maxFrontFactor + 0.001);
+      }
     }
   });
 
@@ -86,6 +102,17 @@ describe("herdLayout", () => {
     const squat = herdLayout(12, FIELD.w, 140);
     expect(squat[0]!.width).toBeLessThan(tall[0]!.width);
     for (const s of squat) expect(s.y).toBeGreaterThanOrEqual(-0.001);
+  });
+
+  it("lifts each row back by a constant step measured at the feet, not the tops", () => {
+    // tops drift apart as rows shrink, so measuring the lift there understates it; the
+    // board's back row stands 64.5 pt higher at the feet, which is 0.60 of a front zebra
+    const slots = herdLayout(9, FIELD.w, FIELD.h);
+    const feet = (row: number) => { const s = slots.find((x) => x.row === row)!; return s.y + s.height; };
+    const step = feet(0) - feet(1);
+    expect(feet(1) - feet(2)).toBeCloseTo(step, 5);
+    expect(step / slots[0]!.height).toBeCloseTo(HERD.rowLift, 5);
+    expect(feet(0) - feet(1)).toBeCloseTo(64.4, 0); // board: 228.0 - 163.5
   });
 
   it("gives nothing back for an empty or collapsed field", () => {

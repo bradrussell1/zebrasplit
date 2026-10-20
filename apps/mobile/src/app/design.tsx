@@ -8,11 +8,28 @@ import { Redirect, useLocalSearchParams } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { COSMETICS, OUTFIT_SLOTS, SLOT_LABELS, type Outfit } from "@bunktab/core";
 import {
-  ActionSheet, AmountPill, Avatar, AvatarRow, Banner, Boop, BottomSheet, Button, Card, Chip, Confetti, ContextPill, CountUp, Dance, HeroCard, Icon, IconButton, InsetPanel, Input, LiveDot, Money, MoonPop, NightCell, PersonPill, Receipt, Rise, RowCard, ScreenBackground, SegmentedControl, SpeechBubble, StatusPill, StripeGrow, StripeMeter, TextArea, Toggle, TopBar, Twinkle, PayZipButton, Zebra, ZebraFarewell, ZText, ZzFloat, useToast, ErrorPanel, HeroSkeleton, RowSkeleton, type IconName,
+  ActionSheet, AmountPill, Avatar, AvatarRow, Banner, Boop, BottomSheet, Button, Card, Chip, Confetti, ContextPill, CountUp, Dance, HeroCard, Icon, IconButton, InsetPanel, Input, LiveDot, Money, MoonPop, NightCell, PersonPill, Receipt, Rise, RowCard, ScreenBackground, SegmentedControl, SpeechBubble, StatusPill, StripeGrow, StripeMeter, TextArea, Toggle, TopBar, Twinkle, Pasture, PayZipButton, Zebra, ZebraFarewell, ZText, ZzFloat, useToast, ErrorPanel, HeroSkeleton, RowSkeleton, type IconName,
 } from "@/ui";
 
 const MOODS = ["hi", "happy", "wink", "sleepy", "starry", "love", "worried"] as const;
+
+// A herd big enough to show every layout rule, and a look per zebra so outfits get
+// exercised at herd size rather than only on the big closet stage.
+const HERD_SIZES = [1, 2, 4, 6, 9, 12, 20] as const;
+const NAMES = ["You", "Priya Patel", "Mike Chen", "Jess Kim", "Jordan Lee", "Bradley Russell", "Sam Rivera", "Jen Alvarez", "Alex Doyle", "Robin Shaw", "Nico Ferri", "Dani Moss"];
+const LOOKS: Outfit[] = [
+  {}, { head: "tiara", faceneck: "hearts" }, { head: "cap", body: "jersey" }, { body: "hoodie", head: "beanie" },
+  { faceneck: "shades", body: "tee" }, { head: "crown", faceneck: "chain", body: "suit" },
+  { faceneck: "sash", body: "skirt", head: "party" }, { body: "flannel", faceneck: "specs" },
+  { head: "mohawk", faceneck: "stars" }, { head: "joker", body: "scarf" },
+  { head: "cap_red", body: "jersey_red" }, { faceneck: "lei", body: "tee" },
+];
+const herdOf = (n: number) => Array.from({ length: Math.min(n, 12) }, (_, i) => ({
+  user_id: `z${i}`, name: NAMES[i % NAMES.length]!, isMe: i === 0,
+  done: i % 3 !== 2, outfit: LOOKS[i % LOOKS.length]!,
+}));
 const ICONS: IconName[] = ["chevronLeft", "chevronRight", "chevronDown", "chevronUp", "plus", "search", "person", "more", "camera", "check", "close", "link", "moon", "send", "share", "bell"];
 
 const sectionYs: Record<string, number> = {};
@@ -60,6 +77,7 @@ function Sheet() {
   const [actions, setActions] = useState(false);
   const [play, setPlay] = useState({ dance: 0, confetti: 0, rise: 0, receipt: 0, count: 0, moon: 0, boop: 0, bye: 0, stripe: true, swipe: true });
   const [paid, setPaid] = useState(false);
+  const [herdSize, setHerdSize] = useState<number>(6);
   const [text, setText] = useState("");
   const replay = (k: keyof typeof play) => setPlay((p) => ({ ...p, [k]: typeof p[k] === "number" ? (p[k] as number) + 1 : !p[k] }));
 
@@ -70,6 +88,39 @@ function Sheet() {
       <ScrollView ref={scroll} contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 80 }]}>
         <ZText variant="title1">Design sheet</ZText>
         <ZText variant="caption" color={color.textMuted}>Zebrasplit design system v1.0 · every primitive, every state · DEV only</ZText>
+
+        <Section title="The herd · Pasture">
+          <Row>
+            {HERD_SIZES.map((n) => (
+              <Button key={n} label={`${n}`} kind={herdSize === n ? "ink" : "secondary"} height={32} onPress={() => setHerdSize(n)} />
+            ))}
+          </Row>
+          <ZText variant="caption" color={color.textMuted}>
+            {herdSize} in the dazzle · {Math.min(herdSize, 12)} drawn{herdSize > 12 ? ` · +${herdSize - 12} more` : ""}
+          </ZText>
+          <Pasture members={herdOf(herdSize)} more={Math.max(0, herdSize - 12)} height={250} onPressMember={(m) => show({ message: `${m.name}'s zebra` })} />
+        </Section>
+
+        <Section title="The wardrobe · 32 items">
+          <Row>
+            {MOODS.map((m) => (
+              <Button key={m} label={m} kind={mood === m ? "ink" : "secondary"} height={32} onPress={() => setMood(m)} />
+            ))}
+          </Row>
+          {OUTFIT_SLOTS.map((slot) => (
+            <View key={slot} style={styles.wardrobe}>
+              <ZText variant="overline" color={color.textMuted}>{SLOT_LABELS[slot]}</ZText>
+              <View style={styles.tiles}>
+                {COSMETICS.filter((c) => c.slot === slot).map((c) => (
+                  <View key={c.id} style={styles.tile}>
+                    <Zebra variant={slot === "body" ? "full" : "bust"} size={84} striped mood={mood} outfit={{ [slot]: c.id }} decorative />
+                    <ZText variant="micro" numberOfLines={1}>{c.name}</ZText>
+                  </View>
+                ))}
+              </View>
+            </View>
+          ))}
+        </Section>
 
         <Section title="Type scale">
           {(["wordmark", "display", "amountL", "title1", "title2", "headline", "button", "buttonS", "body", "bodyStrong", "label", "caption", "captionStrong", "small", "micro", "overline"] as const).map((v) => (
@@ -216,6 +267,9 @@ function Sheet() {
 }
 
 const styles = StyleSheet.create({
+  wardrobe: { gap: 8 },
+  tiles: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
+  tile: { width: 92, alignItems: "center", gap: 2 },
   screen: { flex: 1 },
   content: { paddingHorizontal: layout.screenGutter, gap: space[12] },
   section: { gap: space[10], marginTop: space[20] },
