@@ -216,7 +216,7 @@ export function TripView({ tripId, me }: { tripId: string; me: string }) {
           <div className="inner">
             <div className="grabber" aria-hidden="true" />
             <div className="row between">
-              <span className="t-body-strong">{meMember?.done_at ? "Done adding expenses" : "I'm done adding expenses"}</span>
+              <span className="t-body-strong">Done adding expenses</span>
               <button type="button" role="switch" aria-checked={!!meMember?.done_at} className="switch" onClick={toggleDone} disabled={busy || !meMember} aria-label="Done adding expenses" />
             </div>
             <div className="row">

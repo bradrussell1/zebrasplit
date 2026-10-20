@@ -128,3 +128,31 @@ export function choosePlatform(handles: Handles, recipientDefault?: PayPlatform 
 export function availablePlatforms(handles: Handles): PayPlatform[] {
   return PAY_PLATFORMS.filter((p) => !!handles[p]);
 }
+
+/**
+ * A creditor's "Request from everyone" at close-out.
+ *
+ * Venmo's charge link carries several recipients but only ONE amount (see
+ * venmoChargeLink), so batching several debts into one charge is only honest when
+ * every debt is the identical figure. Anything else has to go one request at a
+ * time, or somebody gets charged somebody else's balance.
+ *
+ * `coversAll` is false when at least one debtor has no Venmo username, so no label
+ * built on this plan may say "everyone" when it doesn't mean everyone.
+ */
+export type VenmoRequestPlan<T> = {
+  mode: "none" | "batch" | "each";
+  /** The debts that can actually be requested, in the order given. */
+  requests: T[];
+  coversAll: boolean;
+};
+
+export function planVenmoRequests<T extends { recipient: string | null | undefined; amountCents: Cents }>(
+  debts: readonly T[],
+): VenmoRequestPlan<T> {
+  const requests = debts.filter((d) => !!d.recipient && d.amountCents > 0);
+  const coversAll = requests.length === debts.length;
+  if (requests.length === 0) return { mode: "none", requests, coversAll };
+  const same = requests.every((d) => d.amountCents === requests[0]!.amountCents);
+  return { mode: same ? "batch" : "each", requests, coversAll };
+}

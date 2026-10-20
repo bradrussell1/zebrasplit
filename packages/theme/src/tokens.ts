@@ -209,6 +209,18 @@ export const motion = {
   boop: { duration: 900, bezier: [0.3, 1.4, 0.5, 1], bubbleDelay: 350, bubbleDuration: 450 },
   pop: { duration: 450, scale: 1.4 },
   venmoZip: { stripePx: 14, angleDeg: 115, loopMs: 500, travelPx: 56, landDelay: 1300 },
+  // the zebra gallops across a paid button, dragging the volt fill and "Paid, nice!" behind it
+  paidRun: { duration: 1150, bezier: [0.25, 0.65, 0.3, 1], zebraSize: 64, gallopHops: 5, gallopPx: 5, leanDeg: 7, pullAt: 0.5 },
+  // the send-off when you tap Settled up: rear, neigh, spin, run off screen, then Home
+  farewell: {
+    scrimIn: 220,
+    rear: { at: 140, duration: 520, deg: -32, liftPx: 14 },
+    neigh: { at: 430, duration: 620 },
+    spin: { at: 1080, duration: 660, deg: 360, dipScale: 0.9 },
+    exit: { at: 1700, duration: 640 },
+    total: 2420,
+    reducedTotal: 760,
+  },
   skeleton: { period: 1400 },                                     // loading bars shimmer ghost ↔ cream
   twinkle: { period: 2600, minOpacity: 0.45 },
   zz: { period: 2400, travelY: -6 },

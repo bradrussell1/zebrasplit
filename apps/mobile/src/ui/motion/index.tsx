@@ -3,12 +3,11 @@
  * curve comes from `motion` tokens; every loop stops under Reduce Motion (one shared
  * check, useReducedMotion); dance / confetti / boop become a 250 ms fade.
  */
-import { color, motion, palette, radius, size } from "@bunktab/theme";
+import { color, motion, palette } from "@bunktab/theme";
 import * as Haptics from "expo-haptics";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { StyleSheet, View, type StyleProp, type ViewStyle } from "react-native";
 import Animated, { Easing, cancelAnimation, useAnimatedStyle, useSharedValue, withDelay, withRepeat, withSequence, withSpring, withTiming } from "react-native-reanimated";
-import { Press } from "../Press";
 import { ZText, formatMoney } from "../Text";
 import { useReducedMotion } from "./useReducedMotion";
 
@@ -213,36 +212,6 @@ export function LiveDot({ size: s = 8, enabled = true, style }: { size?: number;
   return <Animated.View accessibilityLabel="live" style={[{ width: s, height: s, borderRadius: s / 2, backgroundColor: color.attention }, a, style]} />;
 }
 
-/**
- * VenmoZipButton: tap → "Opening Venmo…" with moving diagonal ink/white stripes; `paid`
- * → volt fill, "Paid, nice". Success haptic when paid lands.
- */
-export function VenmoZipButton({ label, openingLabel = "Opening Venmo…", paidLabel = "Paid, nice", paid, onPress, style }: { label: string; openingLabel?: string; paidLabel?: string; paid: boolean; onPress: () => void; style?: StyleProp<ViewStyle> }) {
-  const reduced = useReducedMotion();
-  const [opening, setOpening] = useState(false);
-  const shift = useSharedValue(0);
-  useEffect(() => {
-    if (!opening || paid || reduced) { cancelAnimation(shift); shift.value = 0; return; }
-    shift.value = withRepeat(withTiming(motion.venmoZip.travelPx, { duration: motion.venmoZip.loopMs, easing: Easing.linear }), -1, false);
-    return () => cancelAnimation(shift);
-  }, [opening, paid, reduced, shift]);
-  useEffect(() => { if (paid) { setOpening(false); haptic.success(); } }, [paid]);
-  // Venmo has the user now; if they come back without marking it paid, offer the button again
-  useEffect(() => { if (!opening || paid) return; const t = setTimeout(() => setOpening(false), motion.venmoZip.landDelay * 3); return () => clearTimeout(t); }, [opening, paid]);
-  const stripes = useAnimatedStyle(() => ({ transform: [{ translateX: shift.value - motion.venmoZip.travelPx }] }));
-  const text = paid ? paidLabel : opening ? openingLabel : label;
-  return (
-    <Press onPress={() => { if (paid) return; setOpening(true); onPress(); }} scaleTo={0.97} accessibilityRole="button" accessibilityLabel={text} accessibilityState={{ disabled: paid, busy: opening && !paid }} style={[styles.zip, { backgroundColor: paid ? palette.volt : palette.ink }, style]}>
-      {opening && !paid ? (
-        <Animated.View pointerEvents="none" style={[styles.zipStripes, stripes]}>
-          {Array.from({ length: 24 }, (_, i) => <View key={i} style={[styles.zipStripe, { left: i * motion.venmoZip.stripePx * 2 }]} />)}
-        </Animated.View>
-      ) : null}
-      <ZText variant="button" color={paid ? color.textOnVolt : color.textOnInk}>{text}</ZText>
-    </Press>
-  );
-}
-
 /** Boop: the nudge bust rises 46 px from behind the avatar with a wobble (900 ms); bubble pops in after 350 ms. Light haptic. */
 export function Boop({ play, children, bubble }: { play: number; children: ReactNode; bubble?: ReactNode }) {
   const reduced = useReducedMotion();
@@ -288,9 +257,6 @@ const styles = StyleSheet.create({
   countUp: { alignSelf: "flex-start" },
   countUpFit: { alignSelf: "stretch" },
   underline: { height: 6, borderRadius: 3, backgroundColor: palette.volt, marginTop: 4, transformOrigin: "0% 50%" },
-  zip: { height: size.ctaHeight, borderRadius: radius.pill, alignItems: "center", justifyContent: "center", overflow: "hidden", alignSelf: "stretch" },
-  zipStripes: { position: "absolute", top: -20, bottom: -20, left: 0, right: -200, flexDirection: "row" },
-  zipStripe: { position: "absolute", top: 0, bottom: 0, width: 14, backgroundColor: color.glassOnInk, transform: [{ rotate: "25deg" }] },
   boopHost: { alignItems: "center" },
   boopBubble: { position: "absolute", bottom: "100%", left: "55%" },
 });

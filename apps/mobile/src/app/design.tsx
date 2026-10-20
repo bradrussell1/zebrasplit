@@ -9,7 +9,7 @@ import { useEffect, useRef, useState } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
-  ActionSheet, AmountPill, Avatar, AvatarRow, Banner, Boop, BottomSheet, Button, Card, Chip, Confetti, ContextPill, CountUp, Dance, HeroCard, Icon, IconButton, InsetPanel, Input, LiveDot, Money, MoonPop, NightCell, PersonPill, Receipt, Rise, RowCard, ScreenBackground, SegmentedControl, SpeechBubble, StatusPill, StripeGrow, StripeMeter, TextArea, Toggle, TopBar, Twinkle, VenmoZipButton, Zebra, ZText, ZzFloat, useToast, ErrorPanel, HeroSkeleton, RowSkeleton, type IconName,
+  ActionSheet, AmountPill, Avatar, AvatarRow, Banner, Boop, BottomSheet, Button, Card, Chip, Confetti, ContextPill, CountUp, Dance, HeroCard, Icon, IconButton, InsetPanel, Input, LiveDot, Money, MoonPop, NightCell, PersonPill, Receipt, Rise, RowCard, ScreenBackground, SegmentedControl, SpeechBubble, StatusPill, StripeGrow, StripeMeter, TextArea, Toggle, TopBar, Twinkle, PayZipButton, Zebra, ZebraFarewell, ZText, ZzFloat, useToast, ErrorPanel, HeroSkeleton, RowSkeleton, type IconName,
 } from "@/ui";
 
 const MOODS = ["hi", "happy", "wink", "sleepy", "starry", "love", "worried"] as const;
@@ -58,7 +58,7 @@ function Sheet() {
   const [mood, setMood] = useState<(typeof MOODS)[number]>("hi");
   const [sheet, setSheet] = useState(false);
   const [actions, setActions] = useState(false);
-  const [play, setPlay] = useState({ dance: 0, confetti: 0, rise: 0, receipt: 0, count: 0, moon: 0, boop: 0, stripe: true, swipe: true });
+  const [play, setPlay] = useState({ dance: 0, confetti: 0, rise: 0, receipt: 0, count: 0, moon: 0, boop: 0, bye: 0, stripe: true, swipe: true });
   const [paid, setPaid] = useState(false);
   const [text, setText] = useState("");
   const replay = (k: keyof typeof play) => setPlay((p) => ({ ...p, [k]: typeof p[k] === "number" ? (p[k] as number) + 1 : !p[k] }));
@@ -118,7 +118,7 @@ function Sheet() {
         <Section title="Controls">
           <SegmentedControl options={[{ key: "open", label: "Open" }, { key: "past", label: "Past" }]} value={seg} onChange={setSeg} />
           <SegmentedControl options={[{ key: "expenses", label: "Expenses" }, { key: "people", label: "People" }, { key: "summary", label: "Summary" }]} value={tabs} onChange={setTabs} />
-          <Row><Toggle value={on} onChange={setOn} label="I'm done adding expenses" /><ZText variant="bodyStrong">{on ? "Done adding" : "Still adding"}</ZText></Row>
+          <Row><Toggle value={on} onChange={setOn} label="Done adding expenses" /><ZText variant="bodyStrong">{on ? "Done adding" : "Still adding"}</ZText></Row>
           <Input label="Phone number" placeholder="(555) 555-0100" keyboardType="phone-pad" />
           <Input label="Venmo username" placeholder="@bradley" value={text} onChangeText={setText} error={text.length > 0 && !text.startsWith("@") ? "Starts with @" : null} />
           <TextArea label="Description" placeholder="Four nights at the villa" counter={{ value: 12, max: 250 }} />
@@ -193,14 +193,17 @@ function Sheet() {
           <Row><Button label="Rise" kind="secondary" height={40} onPress={() => replay("rise")} /><Rise key={play.rise}><Card><ZText variant="bodyStrong">Mike pays you $690.90</ZText></Card></Rise></Row>
           <Row><Button label="Moon pop" kind="secondary" height={40} onPress={() => replay("moon")} /><MoonPop play={play.moon}><Twinkle><Icon name="moon" size={28} /></Twinkle></MoonPop></Row>
           <Row><ZzFloat><ZText variant="title2">z</ZText></ZzFloat><Twinkle><ZText variant="title2">☾</ZText></Twinkle><LiveDot size={10} /></Row>
-          <VenmoZipButton label="Pay Mike $84.50 in Venmo" paid={paid} onPress={() => setTimeout(() => setPaid(true), 1800)} />
+          <PayZipButton label="Pay Mike $84.50 in Venmo" paid={paid} onPress={() => setTimeout(() => setPaid(true), 1800)} />
           <Row><Button label="Reset pay" kind="secondary" height={40} onPress={() => setPaid(false)} /><Zebra variant="bust" mood={paid ? "love" : "hi"} size={84} animate={{ blink: true }} /></Row>
+          <Row><Button label="Settled-up send-off" kind="secondary" height={40} onPress={() => replay("bye")} /><ZText variant="caption">rear · neigh · spin · gallop off</ZText></Row>
           <View style={styles.boopStage}>
             <Boop play={play.boop} bubble={<SpeechBubble>psst, add your receipts</SpeechBubble>}><Zebra variant="bust" mood="happy" size={92} decorative /></Boop>
             <Avatar name="Jordan Lee" notDone />
           </View>
         </Section>
       </ScrollView>
+
+      <ZebraFarewell play={play.bye} onDone={() => setPlay((p) => ({ ...p, bye: 0 }))} />
 
       <BottomSheet open={sheet} onClose={() => setSheet(false)} title="Add expense">
         <Input placeholder="$0.00" keyboardType="decimal-pad" />

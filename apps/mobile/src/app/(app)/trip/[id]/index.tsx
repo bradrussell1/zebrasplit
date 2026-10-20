@@ -321,8 +321,8 @@ export default function TripScreen() {
           </View>
           {/* the Done toggle sits below the two CTAs (feedback round 1, item 10) */}
           <View style={styles.doneRow}>
-            <ZText variant="bodyStrong" style={styles.flex}>I&apos;m done adding expenses</ZText>
-            <Toggle value={myDone} onChange={toggleDone} disabled={busy} label="I'm done adding expenses" />
+            <ZText variant="bodyStrong" style={styles.flex}>Done adding expenses</ZText>
+            <Toggle value={myDone} onChange={toggleDone} disabled={busy} label="Done adding expenses" />
           </View>
         </View>
       ) : null}

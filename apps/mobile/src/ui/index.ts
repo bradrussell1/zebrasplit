@@ -18,5 +18,6 @@ export { useKeyboard, useKeyboardVisible, KeyboardDoneBar, KEYBOARD_BAR_HEIGHT }
 export { MemberPill } from "./Pills";
 export { Receipt } from "./Receipt";
 export { Zebra, useDanceTrigger } from "./zebra/Zebra";
+export { PayZipButton, ZebraFarewell } from "./zebra/ZebraMoments";
 export * from "./motion";
 export { PlatformMark, PlatformChip } from "./Payments";
