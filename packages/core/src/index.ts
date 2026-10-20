@@ -14,3 +14,4 @@ export * from "./receipt";
 export * from "./faq";
 export * from "./payments";
 export * from "./herd";
+export * from "./outfits";

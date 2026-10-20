@@ -109,6 +109,8 @@ export const fonts = {
   semibold: 'Figtree_600SemiBold',
   bold: 'Figtree_700Bold',
   extrabold: 'Figtree_800ExtraBold',
+  // outfit art only: the jersey number and the gold chain's pendant are drawn at 900
+  black: 'Figtree_900Black',
   // Receipt read-out only (the "receipt prints in" moment). Nowhere else.
   mono: 'IBMPlexMono_400Regular',
   monoBold: 'IBMPlexMono_700Bold',
