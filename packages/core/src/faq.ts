@@ -15,8 +15,9 @@ const S = (id: string, title: string, items: [string, string, string, (readonly 
 export const faqSections: FaqSection[] = [
   S("start", "Getting started", [
     ["what-is-zebrasplit", "What is Zebrasplit?", "An app for splitting group trip costs. Everyone logs what they paid, taps Done when they’re finished, and the group settles up in Venmo, Cash App or PayPal with the fewest payments possible."],
-    ["what-is-a-dazzle", "What’s a “Dazzle”?", "A group of zebras is called a Dazzle. In Zebrasplit, it’s your trip: the people, the expenses and the stripes."],
-    ["what-do-the-stripes-mean", "What do the stripes mean?", "Each stripe on the zebra is a person who’s finished adding expenses. When the zebra has all its stripes, the group can settle up."],
+    ["what-is-a-dazzle", "What’s a “Dazzle”?", "A group of zebras is called a Dazzle. In Zebrasplit, it’s your trip: the people, the expenses and the herd."],
+    ["what-is-the-herd", "What’s the herd?", "Everyone in the Dazzle is their own zebra, standing in a field on the trip page. A zebra is plain until its owner has finished adding expenses, then it earns its stripes. When every zebra is striped, the group can settle up."],
+    ["what-do-the-stripes-mean", "What do the stripes mean?", "That person has finished adding their expenses. Stripes never mean money — what you owe or are owed is always shown as a number."],
     ["how-do-i-invite-people", "How do I invite people?", "Pick them from your contacts or type a phone number. They get a text with a link and can join from the app or straight from their browser."],
     ["do-my-friends-need-to-download-the-app", "Do my friends need to download the app?", "No. They can open the invite link in a browser, verify their phone number, add expenses and tap Done. The app adds nudges and the one-tap payments."],
   ]),
@@ -30,8 +31,8 @@ export const faqSections: FaqSection[] = [
     ["can-i-add-expenses-with-no-signal", "Can I add expenses with no signal?", "Yes. They’re saved on your phone and sync when you’re back online."],
   ]),
   S("done", "Done and closing out", [
-    ["what-does-tapping-done-do", "What does tapping “Done” do?", "It tells the group you’ve finished adding expenses and earns your stripe. Close-out unlocks when everyone has tapped Done."],
-    ["why-did-my-stripe-disappear", "Someone added an expense after I tapped Done. Why did my stripe disappear?", "The totals changed, so Zebrasplit asks you to take another look before signing off. That way nobody agrees to numbers they haven’t seen."],
+    ["what-does-tapping-done-do", "What does tapping “Done” do?", "It tells the group you’ve finished adding expenses, and your zebra earns its stripes. Close-out unlocks when every zebra is striped."],
+    ["why-did-my-stripes-disappear", "Someone added an expense after I tapped Done. Why did my zebra lose its stripes?", "The totals changed, so Zebrasplit asks you to take another look before signing off. That way nobody agrees to numbers they haven’t seen."],
     ["what-if-someone-never-taps-done", "What if someone never taps Done?", "Send a nudge, and Zebrasplit sends gentle reminders too. If they still don’t respond, the trip owner can close out anyway."],
     ["why-only-one-or-two-payments", "Why do I only have one or two payments to make?", "Zebrasplit works out the smallest number of payments that settles everyone up, so you usually pay one person instead of five."],
   ]),
@@ -46,8 +47,14 @@ export const faqSections: FaqSection[] = [
     ["does-the-ai-keep-my-receipt-photos", "Does the AI keep my receipt photos?", "The photo is read to pull out the total and isn’t used to train AI models."],
     ["do-you-sell-my-data-or-contacts", "Do you sell my data or contacts?", "No. Contacts are used only to invite people you choose."],
   ]),
+  S("zebra", "Your zebra", [
+    ["can-i-customise-my-zebra", "Can I change how my zebra looks?", "Yes. Open Account → Zebra and pick one item for the head, one for the face and neck, and one for the body. Everyone in your Dazzles sees what you’re wearing."],
+    ["how-do-i-get-outfits", "How do I get outfits?", "Some are free from the start, some you earn, and the rest are small one-off purchases. You earn the yellow cap by settling your first trip, the party hat at five, and the tiara by sending your first gift."],
+    ["do-outfits-cost-real-money", "Do outfits cost real money?", "The paid ones do, and they’re bought through the App Store or Google Play like any other in-app purchase — never through Venmo, Cash App or PayPal. Those are only ever used to pay the people you travelled with, and Zebrasplit never touches that money."],
+    ["does-an-outfit-change-my-split", "Does what I wear affect my share?", "No. Outfits are decoration. They change nothing about who owes what."],
+  ]),
   S("pricing", "Pricing", [
-    ["is-zebrasplit-free", "Is Zebrasplit free?", "Yes, everything described here is free. Paid extras may come later, but splitting and settling will stay easy."],
+    ["is-zebrasplit-free", "Is Zebrasplit free?", "Splitting, stripes and settling up are free, and always will be. Outfits for your zebra are optional extras you can buy or earn; nothing about sharing costs with your group is behind them."],
   ]),
   S("after", "After the trip", [
     ["what-happens-when-the-trip-is-over", "What happens when the trip is over?", "Once everyone’s settled, the trip moves to Past and you get a recap: total, cost per person, biggest expense and who fronted the most. Inactive trips also move to Past automatically after 14 days."],
