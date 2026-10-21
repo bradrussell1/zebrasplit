@@ -118,6 +118,17 @@ export default function HerdScreen() {
                   <ZText variant="caption" color={color.textMuted} numberOfLines={2}>
                     {wearing ? `Wearing ${wearing}` : "Not wearing anything yet"}
                   </ZText>
+                  {isMe ? (
+                    <Button
+                      kind="secondary"
+                      onWhite
+                      height={32}
+                      label="Customize"
+                      onPress={() => router.push("/(app)/zebra")}
+                      accessibilityLabel="Customize your zebra"
+                      style={styles.nudge}
+                    />
+                  ) : null}
                   {!m.done_at && !isMe && isOwner && !closed ? (
                     <Button
                       kind="nudge"

@@ -6,7 +6,7 @@ import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from "re
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { PaymentMethodsEditor, savePaymentMethods, type PaymentMethodsValue } from "@/components/PaymentMethods";
 import { TripHistoryList } from "@/components/TripHistoryList";
-import { ActionSheet, Avatar, Button, Card, Icon, Input, InsetPanel, Press, RowCard, ScreenBackground, SegmentedControl, Skeleton, TextLink, TopBar, ZText, useToast } from "@/ui";
+import { ActionSheet, Avatar, Button, Card, Icon, Input, InsetPanel, Press, RowCard, ScreenBackground, SegmentedControl, Skeleton, TextLink, TopBar, Zebra, ZText, useToast } from "@/ui";
 import { useAuth } from "@/lib/auth";
 import { pickImage, uploadImage } from "@/lib/storage";
 import { supabase } from "@/lib/supabase";
@@ -178,6 +178,14 @@ export default function ProfileScreen() {
               <TripHistoryList trips={trips} loading={loading} />
             )}
           </View>
+
+          <RowCard
+            title="Your zebra"
+            caption="Dress it up. Everyone in your Dazzles sees what you wear"
+            tile={<Zebra variant="bust" size={34} striped mood="happy" decorative />}
+            right={<Icon name="chevronRight" size={18} color={color.textMuted} />}
+            onPress={() => router.push("/(app)/zebra")}
+          />
 
           {/* 8: FAQ */}
           <RowCard title="FAQ" caption="How splitting, Done and close-out work" right={<Icon name="chevronRight" size={18} color={color.textMuted} />} onPress={() => router.push("/(app)/faq")} />
