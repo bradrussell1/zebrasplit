@@ -1,10 +1,10 @@
-import { countDone, formatCents, formatDateRange, herdPick, normalizeOutfit, zebraMoodFor, type Outfit, type ZebraMood } from "@bunktab/core";
-import { color, layout, radius, size, space } from "@bunktab/theme";
+import { cosmeticById, countDone, formatCents, formatDateRange, herdPick, normalizeOutfit, zebraMoodFor, type Outfit, type ZebraMood } from "@bunktab/core";
+import { color, layout, palette, radius, size, space } from "@bunktab/theme";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { FlatList, Image, RefreshControl, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { AmountPill, Button, Card, CountUp, Icon, IconButton, Input, InsetPanel, HeroCard, Money, ScreenBackground, SegmentedControl, TopBar, Zebra, ZText, useToast } from "@/ui";
+import { AmountPill, Button, Card, CountUp, Icon, IconButton, Input, InsetPanel, HeroCard, Money, Press, ScreenBackground, SegmentedControl, TopBar, Zebra, ZText, useToast } from "@/ui";
 import { trackOnboardingFinishedOnce } from "@/lib/analytics";
 import { useAuth } from "@/lib/auth";
 import { useForegroundSeed } from "@/lib/foreground";
@@ -39,6 +39,26 @@ export default function HomeScreen() {
   const [searching, setSearching] = useState(false);
   const [query, setQuery] = useState("");
   const herdSeed = useForegroundSeed();
+  /**
+   * The drop banner (A17): built, and shipped switched off. `active_drop` returns the
+   * newest live drop this person hasn't dismissed, and with no rows in `drops` — which
+   * is launch — it always returns nothing, so neither the banner nor the dot appears.
+   */
+  const [drop, setDrop] = useState<{ id: string; title: string; subtitle: string | null; item_ids: string[] } | null>(null);
+  useEffect(() => {
+    let live = true;
+    supabase.rpc("active_drop").then(({ data: rows }) => {
+      const d = Array.isArray(rows) ? rows[0] : null;
+      if (live && d) setDrop(d);
+    });
+    return () => { live = false; };
+  }, []);
+  async function dismissDrop() {
+    if (!drop) return;
+    const id = drop.id;
+    setDrop(null);
+    await supabase.from("drop_seen").insert({ drop_id: id });
+  }
   const [trips, setTrips] = useState<TripRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [footerH, setFooterH] = useState(size.ctaHeight + layout.bottomCtaPadding);
@@ -125,6 +145,23 @@ export default function HomeScreen() {
           <Zebra variant="bust" mood={heroMood} size={108} animate={{ bob: true }} accessibilityLabel={`Zebra, ${heroMood}`} />
         </View>
       </HeroCard>
+      {/* the drop banner sits between the balance and Your Dazzles, and only when a
+          drop is live and undismissed — which is never, until there is drop content */}
+      {drop ? (
+        <Press onPress={() => router.push("/(app)/shop")} scaleTo={0.98} accessibilityRole="button" accessibilityLabel={`${drop.title}. ${drop.subtitle ?? ""} Opens the Shop`} style={styles.drop}>
+          {cosmeticById(drop.item_ids[0]) ? (
+            <Zebra variant="bust" size={44} striped mood="happy" outfit={{ [cosmeticById(drop.item_ids[0])!.slot]: drop.item_ids[0]! }} decorative />
+          ) : null}
+          <View style={styles.dropText}>
+            <ZText variant="bodyStrong" color={color.textOnInk} numberOfLines={1}>{drop.title}</ZText>
+            {drop.subtitle ? <ZText variant="caption" color={palette.hide} numberOfLines={1}>{drop.subtitle}</ZText> : null}
+          </View>
+          <View style={styles.dropChip}><ZText variant="captionStrong">Shop</ZText></View>
+          <Press onPress={dismissDrop} scaleTo={0.97} accessibilityRole="button" accessibilityLabel="Dismiss" hitSlop={10}>
+            <Icon name="close" size={16} color={palette.hide} />
+          </Press>
+        </Press>
+      ) : null}
       <View style={styles.titleRow}>
         <ZText variant="title2" accessibilityRole="header">Your Dazzles</ZText>
         <SegmentedControl options={[{ key: "open", label: "Open" }, { key: "past", label: "Past" }]} value={tab} onChange={setTab} style={styles.segment} />
@@ -148,6 +185,11 @@ export default function HomeScreen() {
         right={
           <>
             <IconButton name={searching ? "close" : "search"} label={searching ? "Close search" : "Search Dazzles"} onPress={toggleSearch} accessibilityState={{ expanded: searching }} />
+            <View>
+              <IconButton name="bag" label="Shop" onPress={() => router.push("/(app)/shop")} />
+              {/* the dot is a live drop nobody has dismissed; with no drops it never shows */}
+              {drop ? <View style={styles.shopDot} pointerEvents="none" /> : null}
+            </View>
             <IconButton name="person" label="Profile" onPress={() => router.push("/(app)/settings")} />
           </>
         }
@@ -277,6 +319,10 @@ const styles = StyleSheet.create({
   inset: { marginTop: space[10] },
   meterRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: space[8] },
   miniHerd: { flexDirection: "row", alignItems: "center", gap: 2, flex: 1, flexWrap: "nowrap" },
+  shopDot: { position: "absolute", top: 2, right: 2, width: 10, height: 10, borderRadius: 5, backgroundColor: color.attention, borderWidth: 2, borderColor: palette.white },
+  drop: { flexDirection: "row", alignItems: "center", gap: space[10], backgroundColor: palette.ink, borderRadius: radius.pill, paddingVertical: 10, paddingHorizontal: 14 },
+  dropText: { flex: 1, gap: 1 },
+  dropChip: { backgroundColor: palette.volt, borderRadius: radius.pill, paddingVertical: 5, paddingHorizontal: 12 },
   miniBust: { marginRight: -8 },
   miniAdding: { opacity: 0.4 },
   adding: { flexDirection: "row", alignItems: "center", gap: space[6] },
