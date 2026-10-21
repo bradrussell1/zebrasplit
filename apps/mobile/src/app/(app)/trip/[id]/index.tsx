@@ -4,7 +4,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Image, ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { ActionSheet, AmountPill, Avatar, Button, Card, CountUp, Icon, IconButton, InsetPanel, HeroCard, MemberPill, Money, Pasture, Press, Rise, RowCard, ScreenBackground, SegmentedControl, Toggle, TopBar, ZText, useToast, type SheetAction, ErrorPanel, ScreenSkeleton } from "@/ui";
+import { ActionSheet, AmountPill, Avatar, Button, Card, CountUp, Icon, IconButton, InsetPanel, HeroCard, MemberPill, Money, Pasture, Press, Rise, RowCard, ScreenBackground, SegmentedControl, Toggle, TopBar, ZText, haptic, useToast, type PastureCheer, type SheetAction, ErrorPanel, ScreenSkeleton } from "@/ui";
 import { useAuth } from "@/lib/auth";
 import { useForegroundSeed } from "@/lib/foreground";
 import { uploadPrivateImage, useSignedUrl } from "@/lib/media";
@@ -37,6 +37,8 @@ export default function TripScreen() {
   const { show } = useToast();
   const { session } = useAuth();
   const herdSeed = useForegroundSeed();
+  const [cheer, setCheer] = useState<PastureCheer>({ key: 0 });
+  const wasComplete = useRef<boolean | null>(null);
   const me = session!.user.id;
   const { data, loading, error, reload } = useTrip(id);
   // DEV-only `?tab=people|summary` opens a tab directly (screenshots)
@@ -83,6 +85,27 @@ export default function TripScreen() {
     prevDone.current = myDone;
   }, [myDone, data, show]);
 
+  /**
+   * Herd moments. Both of these sit above the loading guard, because a hook below it
+   * is a conditional hook — the trap that already bit once on this screen.
+   *
+   * The solo hop is fired from the tap itself rather than from watching `done_at`,
+   * because a Done that arrives any other way — someone else's late expense clearing
+   * it, a force close-out — is not yours to celebrate. If your Done also completes the
+   * herd, the wave lands right behind the hop, which reads as the others joining in.
+   */
+  const active = (data?.members ?? []).filter((m) => !m.removed_at);
+  const complete = active.length > 0 && active.every((m) => m.done_at);
+  useEffect(() => {
+    if (!data) return;
+    if (wasComplete.current === null) { wasComplete.current = complete; return; }
+    if (!wasComplete.current && complete) {
+      setCheer((c) => ({ key: c.key + 1, confetti: true }));
+      haptic.success();
+    }
+    wasComplete.current = complete;
+  }, [complete, data]);
+
   if (loading || !data || !figures) {
     return (
       <View style={styles.screen}>
@@ -127,6 +150,7 @@ export default function TripScreen() {
     await supabase.rpc("set_done", { p_trip: trip.id, p_done: v });
     await reload();
     toggling.current = false; setBusy(false);
+    if (v) setCheer((c) => ({ key: c.key + 1, only: me }));
   }
   // the creator's force close-out: every remaining member is marked Done (force_close_out),
   // they're notified, the override is logged (feedback round 1, item 14)
@@ -236,6 +260,7 @@ export default function TripScreen() {
             }))}
             more={herd.more}
             height={250}
+            cheer={cheer}
             onPressMember={readonly ? undefined : (m) => router.push(`/(app)/trip/${trip.id}/members?user=${m.user_id}`)}
             style={styles.pasture}
           />

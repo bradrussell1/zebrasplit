@@ -1,9 +1,10 @@
 import { herdLayout, herdZebraLabel, type HerdSlot, type Outfit, type ZebraMood } from "@bunktab/core";
 import { color, pasture as p, radius, space } from "@bunktab/theme";
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from "react-native";
-import Animated, { cancelAnimation, Easing, useAnimatedStyle, useSharedValue, withRepeat, withTiming, type SharedValue } from "react-native-reanimated";
+import Animated, { cancelAnimation, Easing, useAnimatedStyle, useSharedValue, withDelay, withRepeat, withSequence, withTiming, type SharedValue } from "react-native-reanimated";
 import Svg, { Circle, Path, Rect } from "react-native-svg";
+import { Confetti } from "../motion";
 import { useReducedMotion } from "../motion/useReducedMotion";
 import { ZText } from "../Text";
 import { Zebra } from "./Zebra";
@@ -32,6 +33,11 @@ const GRAZE_DEG = -4;
 /** The graze dip runs over this slice of its cycle, eased in and out. */
 const GRAZE_FROM = 0.62;
 const GRAZE_TO = 0.9;
+/** The celebration hop: one zebra, or the whole herd in a wave. */
+const HOP_PX = -22;
+const HOP_MS = 420;
+/** Each zebra in the wave starts this long after the one in front of it. */
+const WAVE_STAGGER = 120;
 
 export type PastureMember = {
   user_id: string;
@@ -43,6 +49,13 @@ export type PastureMember = {
   outfit?: Outfit | null;
 };
 
+/**
+ * A moment the herd plays: `key` bumps to fire it. Without `only` the whole herd hops
+ * in a wave, 120 ms apart; with it, just that one zebra — which is what tapping Done
+ * does to yours.
+ */
+export type PastureCheer = { key: number; only?: string; confetti?: boolean };
+
 export type PastureProps = {
   /** Already picked and ordered — you first. Use `herdPick` for herds over 12. */
   members: PastureMember[];
@@ -52,10 +65,12 @@ export type PastureProps = {
   onPressMember?: (m: PastureMember) => void;
   /** Tags cost a view each and read as clutter on a small card. */
   showTags?: boolean;
+  /** Bump to make the herd hop: the whole field in a wave, or one zebra. */
+  cheer?: PastureCheer;
   style?: StyleProp<ViewStyle>;
 };
 
-export function Pasture({ members, more = 0, height = 250, onPressMember, showTags = true, style }: PastureProps) {
+export function Pasture({ members, more = 0, height = 250, onPressMember, showTags = true, cheer, style }: PastureProps) {
   const reduced = useReducedMotion();
   const [width, setWidth] = useState(0);
   const clock = useSharedValue(0);
@@ -85,7 +100,14 @@ export function Pasture({ members, more = 0, height = 250, onPressMember, showTa
             const m = members[slot.index];
             if (!m) return null;
             return (
-              <Grazer key={m.user_id} slot={slot} clock={clock} index={slot.index}>
+              <Grazer
+                key={m.user_id}
+                slot={slot}
+                clock={clock}
+                index={slot.index}
+                hop={cheer && (!cheer.only || cheer.only === m.user_id) ? cheer.key : 0}
+                hopDelay={cheer?.only ? 0 : slot.index * WAVE_STAGGER}
+              >
                 <Pressable
                   onPress={onPressMember ? () => onPressMember(m) : undefined}
                   disabled={!onPressMember}
@@ -129,6 +151,8 @@ export function Pasture({ members, more = 0, height = 250, onPressMember, showTa
             })
             : null}
 
+          {cheer?.confetti ? <Confetti play={cheer.key} style={StyleSheet.absoluteFill} /> : null}
+
           {more > 0 ? (
             <View style={styles.more} pointerEvents="none">
               <ZText variant="captionStrong" color={color.textSecondary}>+{more} more</ZText>
@@ -145,11 +169,26 @@ export function Pasture({ members, more = 0, height = 250, onPressMember, showTa
  * derived from the shared clock inside a worklet, so nothing here touches the JS thread
  * once it's mounted.
  */
-function Grazer({ slot, clock, index, children }: { slot: HerdSlot; clock: SharedValue<number>; index: number; children: ReactNode }) {
+function Grazer({ slot, clock, index, hop, hopDelay, children }: { slot: HerdSlot; clock: SharedValue<number>; index: number; hop: number; hopDelay: number; children: ReactNode }) {
   const r = ROAM_PX[index % ROAM_PX.length]!;
   const d = ROAM_SECS[index % ROAM_SECS.length]!;
   const off = ((index * 0.37) % 1);
   const grazes = index % 3 === 1; // the board's rule: every third zebra grazes, the rest trot
+  const reduced = useReducedMotion();
+
+  // the celebration hop rides on top of the idle rather than replacing it
+  const cheer = useSharedValue(0);
+  const first = useRef(true);
+  useEffect(() => {
+    if (hop === 0) return;
+    if (first.current) { first.current = false; return; } // don't hop on first mount
+    if (reduced) return;
+    cheer.value = withDelay(hopDelay, withSequence(
+      withTiming(1, { duration: HOP_MS * 0.45, easing: Easing.out(Easing.quad) }),
+      withTiming(0, { duration: HOP_MS * 0.55, easing: Easing.in(Easing.quad) }),
+    ));
+  }, [hop, hopDelay, reduced, cheer]);
+
   const anim = useAnimatedStyle(() => {
     const secs = clock.value * CLOCK_SECONDS;
     const roam = r * Math.sin((((secs / d) + off) % 1) * 2 * Math.PI);
@@ -166,7 +205,7 @@ function Grazer({ slot, clock, index, children }: { slot: HerdSlot; clock: Share
       const ph = ((secs / TROT_SECS) + off) % 1;
       y = TROT_PX * (0.5 - 0.5 * Math.cos(ph * 2 * Math.PI));
     }
-    return { transform: [{ translateX: roam }, { translateY: y }, { rotate: `${rot}deg` }] };
+    return { transform: [{ translateX: roam }, { translateY: y + cheer.value * HOP_PX }, { rotate: `${rot}deg` }] };
   });
   return (
     <Animated.View

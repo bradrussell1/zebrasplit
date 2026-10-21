@@ -40,6 +40,8 @@ export default function HerdScreen() {
   const closed = trip.status !== "open";
   const cur = trip.base_currency;
   const plan = previewPayments(data);
+  // the boop is YOUR zebra leaning in, so it wears what you're wearing
+  const myOutfit = data.members.find((m) => m.user_id === me)?.outfit ?? {};
   // you first, then everyone else in the usual order
   const ordered = [...members].sort((a, b) => (a.user_id === me ? -1 : b.user_id === me ? 1 : 0));
 
@@ -62,7 +64,7 @@ export default function HerdScreen() {
     show({
       message: sent ? `Nudged ${name}. They'll get a push and see it next time they open the app.` : `${name} was already nudged today. One a day keeps it friendly.`,
       duration: 3500,
-      bust: <Zebra variant="bust" mood="wink" size={28} decorative />,
+      bust: <Zebra variant="bust" mood="wink" size={28} outfit={myOutfit} decorative />,
     });
     reload();
   }

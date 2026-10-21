@@ -124,6 +124,8 @@ export default function CloseoutScreen() {
   const settledUp = !!data.members.find((m) => m.user_id === me)?.settled_up_at;
   const allMinePaid = mine.length > 0 && mine.every((s) => s.status !== "pending");
   const who = (uid: string) => memberName(data, uid, me);
+  // the boop is YOUR zebra leaning in, so it wears what you're wearing
+  const myOutfit = data.members.find((m) => m.user_id === me)?.outfit ?? {};
   const minePaidCount = mine.filter((s) => s.status !== "pending").length;
   const mineLeftCents = mine.filter((s) => s.status === "pending").reduce((t, s) => t + s.amount_cents, 0);
   /** When every one of your payments opens the same app, the card says so once instead of per row. */
@@ -164,7 +166,7 @@ export default function CloseoutScreen() {
     setNudging(null);
     if (e) { show({ message: friendly(e.message) }); return; }
     setNudged((n) => ({ ...n, [uid]: true }));
-    show({ message: sent ? `Nudged ${name}. They'll get a push and see it next time they open the app.` : `${name} was already nudged today. One a day keeps it friendly.`, duration: 3500, bust: <Zebra variant="bust" mood="wink" size={28} decorative /> });
+    show({ message: sent ? `Nudged ${name}. They'll get a push and see it next time they open the app.` : `${name} was already nudged today. One a day keeps it friendly.`, duration: 3500, bust: <Zebra variant="bust" mood="wink" size={28} outfit={myOutfit} decorative /> });
   }
   async function toggleSettledUp(v: boolean) {
     setSettling(true);
