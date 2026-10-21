@@ -42,9 +42,10 @@
         "screenshots": {
           "APP_IPHONE_67": [
             "./screenshots/en-US/1-home.png",
-            "./screenshots/en-US/2-trip.png",
-            "./screenshots/en-US/3-settle.png",
-            "./screenshots/en-US/4-add-expense.png"
+            "./screenshots/en-US/2-herd.png",
+            "./screenshots/en-US/3-wardrobe.png",
+            "./screenshots/en-US/4-shop.png",
+            "./screenshots/en-US/5-settle.png"
           ]
         }
       }
