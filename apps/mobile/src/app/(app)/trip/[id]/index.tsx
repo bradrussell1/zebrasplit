@@ -259,8 +259,15 @@ export default function TripScreen() {
               ) : null}
             </InsetPanel>
           ) : null}
-          {/* the field. Tapping a zebra opens its member sheet; a zebra's stripes only
-              ever change when its own owner taps Done, so the field is not a control. */}
+          {/* The herd names the field rather than linking to it: the field itself is
+              what you tap. A zebra's stripes only ever change when its own owner taps
+              Done, so nothing in here is a control over anyone else. */}
+          <View style={styles.herdHead}>
+            <ZText variant="overline" color={color.textMuted}>The herd</ZText>
+            <ZText variant="caption" color={color.textMuted}>
+              {figures.members.length} {figures.members.length === 1 ? "zebra" : "zebras"}{herd.more > 0 ? ` · ${herd.more} not shown` : ""}
+            </ZText>
+          </View>
           <Pasture
             members={herd.shown.map((m) => ({
               user_id: m.user_id,
@@ -274,7 +281,7 @@ export default function TripScreen() {
             cheer={cheer}
             height={300}
             onPressField={() => router.push(`/(app)/trip/${trip.id}/herd`)}
-            style={styles.pasture}
+            style={styles.pastureTitled}
           />
         </HeroCard>
 
@@ -481,7 +488,8 @@ const styles = StyleSheet.create({
   stripesPanel: { marginTop: space[12] },
   statusDone: { backgroundColor: palette.volt },
   balanceRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: space[12] },
-  pasture: { marginTop: space[12] },
+  herdHead: { flexDirection: "row", alignItems: "baseline", justifyContent: "space-between", gap: space[8], paddingTop: space[12], paddingHorizontal: space[4] },
+  pastureTitled: { marginTop: space[6] },
   stripesRow: { flexDirection: "row", alignItems: "center", gap: space[10] },
   plan: { paddingVertical: space[4] },
   planRow: { flexDirection: "row", alignItems: "center", gap: space[8], minHeight: layout.minTapTarget },
