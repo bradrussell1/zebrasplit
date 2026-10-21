@@ -2,10 +2,10 @@ import {
   COSMETICS, EARN_RULES, SLOT_LABELS, OUTFIT_SLOTS, cosmeticById, hiddenByHood, hoodIsUp,
   outfitDescription, type CosmeticDef, type OutfitSlot, type ZebraMood,
 } from "@bunktab/core";
-import { color, palette, radius, shadow, space } from "@bunktab/theme";
+import { color, palette, radius, shadow, size, space } from "@bunktab/theme";
 import { useEffect, useState, type ReactNode } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
-import { Button, Card, HeroCard, InsetPanel, Press, Zebra, ZText, haptic, useToast } from "@/ui";
+import { Button, Card, HeroCard, InsetPanel, Press, SegmentedControl, Zebra, ZText, haptic, useToast } from "@/ui";
 import { earnProgress, useWardrobe } from "@/lib/wardrobe";
 
 /**
@@ -26,7 +26,8 @@ import { earnProgress, useWardrobe } from "@/lib/wardrobe";
  * Moods here are a preview and are never saved — a zebra's mood in a herd follows the
  * money and the Done gate, not a preference.
  */
-const MOODS: ZebraMood[] = ["hi", "happy", "wink", "love", "starry", "sleepy", "worried"];
+/** The Closet board's order. */
+const MOODS: ZebraMood[] = ["hi", "happy", "wink", "sleepy", "starry", "love", "worried"];
 
 export function ZebraTab({ loadingSlot }: { loadingSlot?: ReactNode }) {
   const { show } = useToast();
@@ -124,28 +125,21 @@ export function ZebraTab({ loadingSlot }: { loadingSlot?: ReactNode }) {
         </HeroCard>
 
         {/* mood preview, never saved */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.moods}>
-          {MOODS.map((m) => (
-            <Button key={m} label={m} kind={mood === m ? "ink" : "secondary"} onWhite height={32} onPress={() => setMood(m)} />
-          ))}
-        </ScrollView>
-
-        {/* slot tabs */}
-        <View style={styles.tabs}>
-          {OUTFIT_SLOTS.map((s) => (
-            <Press
-              key={s}
-              onPress={() => setSlot(s)}
-              scaleTo={0.97}
-              accessibilityRole="button"
-              accessibilityState={{ selected: slot === s }}
-              accessibilityLabel={SLOT_LABELS[s]}
-              style={[styles.tab, slot === s ? styles.tabOn : null]}
-            >
-              <ZText variant="label" color={slot === s ? color.textOnInk : color.textSecondary}>{SLOT_LABELS[s]}</ZText>
-            </Press>
-          ))}
+        <View style={styles.moodRow}>
+          <ZText variant="label" color={color.textMuted}>Try a mood</ZText>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.moods}>
+            {MOODS.map((m) => (
+              <Button key={m} label={`${m[0]!.toUpperCase()}${m.slice(1)}`} kind={mood === m ? "ink" : "secondary"} onWhite height={size.pillSmall} onPress={() => setMood(m)} accessibilityLabel={`Try the ${m} mood`} />
+            ))}
+          </ScrollView>
         </View>
+
+        {/* slot tabs: the shared control, so this row matches every other tab row */}
+        <SegmentedControl
+          options={OUTFIT_SLOTS.map((s) => ({ key: s, label: SLOT_LABELS[s] }))}
+          value={slot}
+          onChange={(k) => setSlot(k as OutfitSlot)}
+        />
         <ZText variant="caption" color={color.textMuted} style={styles.hint}>
           {slot === "head"
             ? hooded ? `A hoodie puts the hood up, so ${underHood ? underHood.name.toLowerCase() : "a hat"} is hidden while it's on.` : "One hat at a time."
@@ -219,10 +213,8 @@ const styles = StyleSheet.create({
   head: { paddingHorizontal: space[4], gap: space[4] },
   stage: { alignItems: "center", gap: space[8], backgroundColor: color.surfaceTranslucentStrong },
   tryPanel: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: space[12], alignSelf: "stretch" },
+  moodRow: { gap: space[6] },
   moods: { gap: space[8], paddingVertical: space[2], paddingHorizontal: space[2] },
-  tabs: { flexDirection: "row", gap: space[6], backgroundColor: color.segmentTrack, borderRadius: radius.pill, padding: 4 },
-  tab: { flex: 1, alignItems: "center", justifyContent: "center", paddingVertical: 8, borderRadius: radius.pill },
-  tabOn: { backgroundColor: palette.ink, ...shadow.hairline },
   hint: { paddingHorizontal: space[4] },
   grid: { flexDirection: "row", flexWrap: "wrap", gap: space[8] },
   tile: {

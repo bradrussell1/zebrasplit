@@ -1,5 +1,5 @@
 import { normalizeOutfit, type Outfit, type OutfitSlot } from "@bunktab/core";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "./supabase";
 
 /**
@@ -23,6 +23,17 @@ export type Wardrobe = {
 export function useWardrobe(): Wardrobe {
   const [owned, setOwned] = useState<Set<string>>(new Set());
   const [outfit, setOutfit] = useState<Outfit>({});
+  /**
+   * The equipped outfit, readable synchronously.
+   *
+   * `equip` has to send all three slots, because set_outfit replaces the row rather
+   * than patching it. It can't read `outfit` from its own closure — the callback has
+   * no deps, so that would be the first render's value — and it can't read it out of a
+   * setState updater either: React only runs those eagerly when the fiber has no
+   * pending work, and the screen sets a busy flag immediately before calling this, so
+   * it never does. Reading from a ref is the only version that is right every time.
+   */
+  const current = useRef<Outfit>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -38,21 +49,24 @@ export function useWardrobe(): Wardrobe {
     ]);
     if (mine.error) { setError(mine.error.message); setLoading(false); return; }
     setOwned(new Set((mine.data ?? []).map((r) => r.cosmetic_id as string)));
-    setOutfit(normalizeOutfit(worn.data as Outfit | null));
-    setError(null);
+    const worn2 = normalizeOutfit(worn.data as Outfit | null);
+    current.current = worn2;
+    setOutfit(worn2);
+    setError(worn.error ? worn.error.message : null);
     setLoading(false);
   }, []);
 
   useEffect(() => { void reload(); }, [reload]);
 
   const equip = useCallback(async (slot: OutfitSlot, id: string | null) => {
-    let rolledBack: Outfit | null = null;
-    setOutfit((cur) => { rolledBack = cur; return { ...cur, [slot]: id }; });
-    const next = { ...(rolledBack ?? {}), [slot]: id } as Outfit;
+    const prev = current.current;
+    const next = { ...prev, [slot]: id } as Outfit;
+    current.current = next;
+    setOutfit(next);
     const { error: e } = await supabase.rpc("set_outfit", {
       p_head: next.head ?? null, p_faceneck: next.faceneck ?? null, p_body: next.body ?? null,
     });
-    if (e) { if (rolledBack) setOutfit(rolledBack); return e.message; }
+    if (e) { current.current = prev; setOutfit(prev); return e.message; }
     return null;
   }, []);
 

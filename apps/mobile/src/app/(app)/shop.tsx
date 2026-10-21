@@ -19,6 +19,9 @@ import { useWardrobe } from "@/lib/wardrobe";
  * The Gift tab from the board is deliberately absent rather than disabled: gifting is
  * a purchase, so there is nothing behind it yet and a dead tab is worse than none.
  */
+/** One spelling, so the tile's emphasis test cannot drift from what the tag says. */
+const OWNED = "In your closet";
+
 export default function ShopScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -40,7 +43,7 @@ export default function ShopScreen() {
   if (item) staged[item.slot] = item.id;
 
   function tagFor(c: CosmeticDef): string {
-    if (owned.has(c.id)) return "In your closet";
+    if (owned.has(c.id)) return OWNED;
     if (c.status === "free") return "Free";
     if (c.status === "earned") return "Earn it";
     if (c.packs.length) return "Pack";
@@ -123,6 +126,7 @@ export default function ShopScreen() {
                         scaleTo={0.97}
                         accessibilityRole="button"
                         accessibilityLabel={p.name}
+                        hitSlop={13}
                         style={[styles.swatch, { backgroundColor: swatchColor(p) }, pack === p.id ? styles.swatchOn : null]}
                       />
                     ))}
@@ -153,7 +157,7 @@ export default function ShopScreen() {
                     >
                       <Zebra variant={c.slot === "body" ? "full" : "bust"} size={c.slot === "body" ? 70 : 66} striped mood="hi" outfit={{ [c.slot]: c.id }} decorative />
                       <ZText variant="micro" numberOfLines={1}>{c.name}</ZText>
-                      <ZText variant="micro" color={tag === "Owned" ? color.text : color.textMuted}>{tag}</ZText>
+                      <ZText variant="micro" color={tag === OWNED ? color.text : color.textMuted}>{tag}</ZText>
                     </Press>
                   );
                 })}
@@ -190,7 +194,11 @@ function lookFor(p: PackDef) {
   return look;
 }
 
-/** The swatch is the team colour the pack's jersey is actually drawn in. */
+/**
+ * The swatch is the team colour the pack's jersey is actually drawn in — it previews
+ * the art rather than decorating the UI, which is the one use the outfit-only rule in
+ * section 9 leaves open. Don't reach for these anywhere else.
+ */
 function swatchColor(p: PackDef): string {
   const name = p.id.replace(/^jersey_/, "") as TeamColor;
   return outfitArt.team[name] ?? palette.pink;

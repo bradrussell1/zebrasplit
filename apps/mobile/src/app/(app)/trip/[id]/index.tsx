@@ -8,7 +8,6 @@ import { ActionSheet, AmountPill, Avatar, Button, Card, CountUp, Icon, IconButto
 import { useAuth } from "@/lib/auth";
 import { useForegroundSeed } from "@/lib/foreground";
 import { uploadPrivateImage, useSignedUrl } from "@/lib/media";
-import { captureReceipt } from "@/lib/receipts";
 import { pickImage } from "@/lib/storage";
 import { isNetworkError, supabase } from "@/lib/supabase";
 import { biggestExpense, categoryIcon, frontedMost, topCategory } from "@/lib/tripExtras";
@@ -28,6 +27,8 @@ import { activeMembers, memberName, myDelta, nets, paidBy, previewPayments, shar
  * RPCs and navigation targets are otherwise the same as before.
  */
 type Tab = "expenses" | "people" | "summary";
+
+const YOU = "You";
 
 export default function TripScreen() {
   const { id, tab: tabParam, readonly: roParam, scrollTo } = useLocalSearchParams<{ id: string; tab?: string; readonly?: string; scrollTo?: string }>();
@@ -51,17 +52,6 @@ export default function TripScreen() {
   const [busy, setBusy] = useState(false);
   const [coverBusy, setCoverBusy] = useState(false);
   const [footerH, setFooterH] = useState(160);
-  const [snap, setSnap] = useState(false);
-  async function snapReceipt(source: "camera" | "library") {
-    if (!data) return;
-    try {
-      const r = await captureReceipt(data.trip.id, source);
-      if (!r) return;
-      if (r.queued) { show({ message: "No connection. The photo will upload when you're back online." }); return; }
-      if (r.aiDisabled) { router.push({ pathname: "/(app)/trip/[id]/expense", params: { id: data.trip.id, receipt_path: r.storagePath! } }); return; }
-      router.push({ pathname: "/(app)/trip/[id]/receipt/[receiptId]", params: { id: data.trip.id, receiptId: r.receiptId } });
-    } catch (e) { show({ message: e instanceof Error ? e.message : "Couldn't upload the photo." }); }
-  }
   // DEV-only `?scrollTo=tabs` scrolls the tab strip to the top (screenshots)
   const scrollRef = useRef<ScrollView>(null);
   const tabsY = useRef(0);
@@ -144,7 +134,8 @@ export default function TripScreen() {
     if (m.user_id === me) return figures.mine < 0 ? "worried" : figures.mine > 0 ? "happy" : "hi";
     return m.done_at ? "happy" : "hi";
   };
-  const stillAdding = figures.members.filter((m) => !m.done_at).map((m) => (m.user_id === me ? "You" : (m.display_name ?? "someone").split(/\s+/)[0]!));
+  // one spelling, because the force-close-out sheet filters the reader out by name
+  const stillAdding = figures.members.filter((m) => !m.done_at).map((m) => (m.user_id === me ? YOU : (m.display_name ?? "someone").split(/\s+/)[0]!));
 
   async function toggleDone(v: boolean) {
     setBusy(true); toggling.current = true;
@@ -157,7 +148,7 @@ export default function TripScreen() {
   // they're notified, the override is logged (feedback round 1, item 14)
   function closeOutAnyway() {
     setConfirm({
-      title: `Close out the remaining ${toGo === 1 ? "zebra" : "zebras"}? ${listNames(stillAdding.filter((n) => n !== "you"))} will be marked Done and told, the override is logged, and expenses already logged still count.`,
+      title: `Close out the remaining ${toGo === 1 ? "zebra" : "zebras"}? ${listNames(stillAdding.filter((n) => n !== YOU))} will be marked Done and told, the override is logged, and expenses already logged still count.`,
       label: "Close out for everyone",
       run: async () => {
         const { error: e } = await supabase.rpc("force_close_out", { p_trip: trip.id });
@@ -385,10 +376,6 @@ export default function TripScreen() {
         </View>
       ) : null}
 
-      <ActionSheet open={snap} onClose={() => setSnap(false)} title="Snap a receipt" actions={[
-        { label: "Take a photo", onPress: () => snapReceipt("camera") },
-        { label: "Choose from photos", onPress: () => snapReceipt("library") },
-      ]} />
       <ActionSheet open={menu} onClose={() => setMenu(false)} title={trip.title} actions={menuActions} />
       <ActionSheet open={!!confirm} onClose={() => setConfirm(null)} title={confirm?.title} actions={confirm ? [{ label: confirm.label, destructive: true, onPress: confirm.run }] : []} />
     </View>
@@ -483,13 +470,11 @@ const styles = StyleSheet.create({
   screen: { flex: 1 },
   errorPanel: { marginHorizontal: layout.screenGutter },
   flex: { flex: 1 },
-  center: { flex: 1, alignItems: "center", justifyContent: "center" },
   content: { paddingHorizontal: layout.screenGutter, gap: space[16] },
   head: { gap: space[6], paddingHorizontal: layout.textGutter - layout.screenGutter },
   titleRow: { flexDirection: "row", alignItems: "center", gap: space[12] },
   coverWrap: { borderRadius: radius.tile, overflow: "hidden" },
   cover: { width: 40, height: 40, borderRadius: radius.tile, backgroundColor: color.surfaceTile },
-  pills: { flexDirection: "row", gap: space[8], paddingHorizontal: layout.textGutter - layout.screenGutter, paddingVertical: space[2] },
   heroRow: { flexDirection: "row", alignItems: "center", gap: space[12] },
   heroText: { gap: space[8], alignItems: "flex-start" },
   labelPill: { borderRadius: radius.pill, paddingVertical: 5, paddingHorizontal: 11 },

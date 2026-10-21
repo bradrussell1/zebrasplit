@@ -24,7 +24,12 @@ import { Zebra } from "./Zebra";
 
 /** One revolution of the shared clock. Long enough that every idle period divides into it. */
 const CLOCK_SECONDS = 60;
-/** Roam amplitudes and periods, cycled per zebra — the board's own numbers. */
+/**
+ * Roam amplitudes and periods, cycled per zebra. The periods are the board's own `--d`
+ * values; the amplitudes are deliberately about double its `--r` (6/9/12), because the
+ * herd read as static at the board's figures on a real screen and more movement was
+ * asked for. Push them much further and the herd drifts rather than mills.
+ */
 const ROAM_PX = [14, 20, 26];
 const ROAM_SECS = [5.5, 6.8, 8.1, 9.4, 6.7, 8.0];
 const TROT_SECS = 0.95;
@@ -118,7 +123,6 @@ export function Pasture({ members, more = 0, height = 250, onPressMember, onPres
                 index={idleSeed(m.user_id)}
                 hop={cheer && (!cheer.only || cheer.only === m.user_id) ? cheer.key : 0}
                 hopDelay={cheer?.only ? 0 : slot.index * WAVE_STAGGER}
-                waveIndex={slot.index}
               >
                 <Pressable
                   onPress={onPressMember ? () => onPressMember(m) : undefined}
@@ -195,7 +199,7 @@ function idleSeed(userId: string): number {
  * derived from the shared clock inside a worklet, so nothing here touches the JS thread
  * once it's mounted.
  */
-function Grazer({ slot, clock, index, hop, hopDelay, children }: { slot: HerdSlot; clock: SharedValue<number>; index: number; hop: number; hopDelay: number; waveIndex?: number; children: ReactNode }) {
+function Grazer({ slot, clock, index, hop, hopDelay, children }: { slot: HerdSlot; clock: SharedValue<number>; index: number; hop: number; hopDelay: number; children: ReactNode }) {
   const r = ROAM_PX[index % ROAM_PX.length]!;
   const d = ROAM_SECS[index % ROAM_SECS.length]!;
   const off = ((index * 0.37) % 1);
@@ -204,10 +208,14 @@ function Grazer({ slot, clock, index, hop, hopDelay, children }: { slot: HerdSlo
 
   // the celebration hop rides on top of the idle rather than replacing it
   const cheer = useSharedValue(0);
-  const first = useRef(true);
+  // Remember which cheer has already played rather than "is this the first render".
+  // The old flag was cleared inside the effect body, but the effect returns early while
+  // `hop` is still 0 — which it is on mount — so the flag survived and ate the first
+  // real cheer. ZebraFarewell gets this right by keying on the play count; same here.
+  const played = useRef(0);
   useEffect(() => {
-    if (hop === 0) return;
-    if (first.current) { first.current = false; return; } // don't hop on first mount
+    if (hop === 0 || played.current === hop) return;
+    played.current = hop;
     if (reduced) return;
     cheer.value = withDelay(hopDelay, withSequence(
       withTiming(1, { duration: HOP_MS * 0.45, easing: Easing.out(Easing.quad) }),

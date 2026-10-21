@@ -66,9 +66,12 @@ export default function HomeScreen() {
   }, []);
   async function dismissDrop() {
     if (!drop) return;
-    const id = drop.id;
+    const d = drop;
     setDrop(null);
-    await supabase.from("drop_seen").insert({ drop_id: id });
+    // user_id is NOT NULL with no default, so omitting it fails with 23502 and the
+    // banner comes back on the next launch looking like the dismiss never took
+    const { error: e } = await supabase.from("drop_seen").insert({ drop_id: d.id, user_id: me });
+    if (e) { setDrop(d); show({ message: "Couldn't dismiss that. Try again." }); }
   }
   const [trips, setTrips] = useState<TripRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -145,7 +148,7 @@ export default function HomeScreen() {
           {position.main && position.main.currency !== "USD"
             ? <Money variant="display" cents={Math.abs(overall)} currency={`${position.main.currency} `} />
             : <CountUp cents={Math.abs(overall)} fit underline={overall !== 0} underlineColor={overall > 0 ? color.owedToYou : color.youOwe} />}
-          {overall !== 0 ? <LabelPill tone={overall > 0 ? "volt" : "blush"} label={overall > 0 ? "owed to you" : "you owe"} /> : null}
+          {overall !== 0 ? <LabelPill tone={overall > 0 ? "volt" : "blush"} label={overall > 0 ? "Owed To You" : "You Owe"} /> : null}
           {position.others.map((o) => (
             <ZText key={o.currency} variant="caption" color={color.textMuted}>
               {o.net === 0 ? `Even across ${o.n} ${o.n === 1 ? "Dazzle" : "Dazzles"} in ${o.currency}` : `${formatCents(Math.abs(o.net), o.currency)} ${o.net > 0 ? "owed to you" : "you owe"} across ${o.n} ${o.n === 1 ? "Dazzle" : "Dazzles"} in ${o.currency}`}
@@ -283,11 +286,14 @@ function DazzleCard({ trip, me, seed, onPress }: { trip: TripRow; me: string; se
       <InsetPanel style={styles.inset}>
         <View style={styles.meterRow}>
           {/* A11: a mini herd, not a meter. A bust can't show body stripes, so the fade
-              and the dashed ring carry "not done" instead. */}
+              and the dashed ring carry "still adding", and a small ink check carries done. */}
           <View style={styles.miniHerd} accessibilityLabel={`${done} of ${trip.members.length} have their stripes`}>
             {shown.map((m) => (
               <View key={m.user_id} style={[styles.miniBust, m.done_at ? null : styles.miniAdding]}>
                 <Zebra variant="bust" size={34} striped={!!m.done_at} outfit={m.outfit} mood={m.done_at ? "happy" : "hi"} decorative />
+                {m.done_at
+                  ? <View style={styles.miniCheck}><Icon name="check" size={9} color={palette.white} stroke={3} /></View>
+                  : null}
               </View>
             ))}
             {hidden > 0 ? <ZText variant="micro" color={color.textMuted}>+{hidden}</ZText> : null}
@@ -335,7 +341,8 @@ const styles = StyleSheet.create({
   dropText: { flex: 1, gap: 1 },
   dropChip: { backgroundColor: palette.volt, borderRadius: radius.pill, paddingVertical: 5, paddingHorizontal: 12 },
   miniBust: { marginRight: -8 },
-  miniAdding: { opacity: 0.4 },
+  miniAdding: { opacity: 0.4, borderWidth: 1.5, borderColor: color.outlineDashed, borderStyle: "dashed", borderRadius: 17 },
+  miniCheck: { position: "absolute", right: 0, bottom: 0, width: 13, height: 13, borderRadius: 6.5, backgroundColor: palette.ink, alignItems: "center", justifyContent: "center" },
   adding: { flexDirection: "row", alignItems: "center", gap: space[6] },
   empty: { alignItems: "center", gap: space[8], paddingVertical: space[32], paddingHorizontal: layout.textGutter },
   center: { textAlign: "center" },
