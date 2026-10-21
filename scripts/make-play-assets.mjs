@@ -5,7 +5,9 @@
 import fs from "node:fs";
 import { createRequire } from "node:module";
 const require = createRequire(import.meta.url);
+
 const sharp = require("sharp");
+const opentype = require("opentype.js");
 
 const SRC = new URL("../design/brand/app-icon.svg", import.meta.url).pathname;
 const OUT = new URL("../design/play", import.meta.url).pathname;
@@ -27,23 +29,52 @@ await sharp(Buffer.from(full), { density: 600 }).resize(512, 512).flatten({ back
 //    image on narrow screens.
 const zebra = await sharp(Buffer.from(bare), { density: 600 }).resize(430, 430, { fit: "contain", background: { r: 0, g: 0, b: 0, alpha: 0 } }).png().toBuffer();
 
-// Figtree ships with the app (@expo-google-fonts). librsvg ignores an @font-face
-// data URI, so the type is drawn with sharp's own text renderer, which takes a
-// font file directly — otherwise the wordmark silently falls back to Helvetica.
-const ttf = (p) => require.resolve(p);
-const render = (markup, font, file) =>
-  sharp({ text: { text: markup, font, fontfile: ttf(file), rgba: true, dpi: 300 } }).png().toBuffer();
+/**
+ * The type is drawn as outlines, not as text.
+ *
+ * Both of the obvious routes fail here. librsvg ignores an @font-face data URI, so
+ * SVG text silently falls back. sharp's own text renderer goes through pango, which
+ * resolves a font description through fontconfig — and on a machine with no
+ * /etc/fonts/fonts.conf (every macOS box without Homebrew's fontconfig) it resolves
+ * NOTHING: I rendered the same string with Figtree ExtraBold, Figtree Regular and IBM
+ * Plex Mono as `fontfile` and got byte-identical PNGs, and the same again for
+ * Helvetica, Courier and Times. `fontfile` is ignored outright. That is how a
+ * not-Figtree wordmark shipped into a store asset without anyone noticing: it still
+ * looks like a wordmark.
+ *
+ * So we read the TTF and emit real glyph outlines. No system font stack, no
+ * fontconfig, and the same bytes on any machine.
+ */
+const face = (p) => opentype.parse(fs.readFileSync(require.resolve(p)).buffer);
+const EXTRABOLD = face("@expo-google-fonts/figtree/800ExtraBold/Figtree_800ExtraBold.ttf");
+const SEMIBOLD = face("@expo-google-fonts/figtree/600SemiBold/Figtree_600SemiBold.ttf");
 
-const title = await render(
-  `<span foreground="${INK}" letter_spacing="-3000">zebrasplit</span>`,
-  "Figtree ExtraBold 22",
-  "@expo-google-fonts/figtree/800ExtraBold/Figtree_800ExtraBold.ttf",
-);
-const tagline = await render(
-  `<span foreground="${INK}" alpha="78%">Split the trip. Keep it black and white.</span>`,
-  "Figtree SemiBold 8.5",
-  "@expo-google-fonts/figtree/600SemiBold/Figtree_600SemiBold.ttf",
-);
+/** Glyph outlines at `size` px, with tracking in em, as a transparent PNG. */
+async function type(font, text, size, { tracking = 0, fill = INK, opacity = 1 } = {}) {
+  const scale = size / font.unitsPerEm;
+  const track = tracking * size;
+  let x = 0;
+  const parts = [];
+  for (const glyph of font.stringToGlyphs(text)) {
+    const d = glyph.getPath(x, size, size).toPathData(3);
+    // opentype.js emits NaN coordinates when the pen position carries float noise:
+    // x = 101.925 is fine, x = 101.92500000000001 is not. One NaN kills the rest of
+    // the path, which is why the tagline rendered as "Split the t". Round the pen each
+    // step — a thousandth of a pixel is far below anything that can be seen.
+    if (d.includes("NaN")) throw new Error(`NaN in the outline for "${glyph.name}" at x=${x}`);
+    parts.push(d);
+    x = Math.round((x + glyph.advanceWidth * scale + track) * 1000) / 1000;
+  }
+  const w = Math.ceil(x - track) + 2;
+  const h = Math.ceil(size * 1.35);
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">`
+    + `<path d="${parts.join(" ")}" fill="${fill}" fill-opacity="${opacity}"/></svg>`;
+  return sharp(Buffer.from(svg)).png().toBuffer();
+}
+
+// the wordmark is always lowercase, tracked -0.03em (siteText.wordmark)
+const title = await type(EXTRABOLD, "zebrasplit", 92, { tracking: -0.03 });
+const tagline = await type(SEMIBOLD, "Split the trip. Keep it black and white.", 25, { opacity: 0.78 });
 
 await sharp({ create: { width: 1024, height: 500, channels: 4, background: VOLT } })
   .composite([

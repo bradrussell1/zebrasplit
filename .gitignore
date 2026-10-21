@@ -46,3 +46,10 @@ npm-debug.log*
 .idea/
 .vscode/*
 !.vscode/extensions.json
+
+# credential files EAS needs at submit time (see secrets/README.md)
+secrets/*
+!secrets/README.md
+
+# Firebase config for Android push
+apps/mobile/google-services.json

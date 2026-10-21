@@ -24,6 +24,7 @@
     "node": ">=20"
   },
   "devDependencies": {
+    "opentype.js": "^2.0.0",
     "zod": "^3.25.76"
   }
 }
