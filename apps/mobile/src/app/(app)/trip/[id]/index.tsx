@@ -198,6 +198,8 @@ export default function TripScreen() {
 
   // Nudge (creator only): the same screen with a small Nudge CTA beside each person still adding
   const openNudge = () => router.push(`/(app)/trip/${trip.id}/closeout?nudge=1`);
+  /** Summary is the report: read it, don't log into it. */
+  const showFooter = !readonly && !closed && tab !== "summary";
   const balanceState = settledUp ? "settled" : data.expenses.length === 0 ? "none" : figures.mine === 0 ? "square" : "amount";
 
   return (
@@ -207,7 +209,7 @@ export default function TripScreen() {
         onBack={() => (readonly ? router.back() : router.replace("/(app)/home"))}
         right={!readonly ? <IconButton name="more" label="Dazzle menu" onPress={() => setMenu(true)} /> : null}
       />
-      <ScrollView ref={scrollRef} contentContainerStyle={[styles.content, { paddingBottom: footerH + space[16] }]} showsVerticalScrollIndicator={false}>
+      <ScrollView ref={scrollRef} contentContainerStyle={[styles.content, { paddingBottom: (showFooter ? footerH : insets.bottom) + space[16] }]} showsVerticalScrollIndicator={false}>
         <View style={styles.head}>
           <View style={styles.titleRow}>
             {coverUrl ? (
@@ -355,8 +357,9 @@ export default function TripScreen() {
         ) : null}
       </ScrollView>
 
-      {/* sheet footer (none in read-only) */}
-      {!readonly && !closed ? (
+      {/* Sheet footer. None in read-only, and none on Summary: that tab is the report,
+          and you don't log an expense from a report — you go back to Expenses to do it. */}
+      {showFooter ? (
         <View onLayout={(e) => setFooterH(e.nativeEvent.layout.height)} style={[styles.footer, { paddingBottom: insets.bottom + space[16] }]}>
           <View style={styles.footerButtons}>
             {/* no camera button: snapping a receipt lives inside Add expense */}
