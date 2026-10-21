@@ -1,11 +1,12 @@
 import { herdLayout, herdZebraLabel, type HerdSlot, type Outfit, type ZebraMood } from "@bunktab/core";
-import { color, pasture as p, radius, space } from "@bunktab/theme";
+import { color, palette, pasture as p, radius, space } from "@bunktab/theme";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from "react-native";
 import Animated, { cancelAnimation, Easing, useAnimatedStyle, useSharedValue, withDelay, withRepeat, withSequence, withTiming, type SharedValue } from "react-native-reanimated";
-import Svg, { Circle, Path, Rect } from "react-native-svg";
+import Svg, { Circle, Path } from "react-native-svg";
 import { Confetti } from "../motion";
 import { useReducedMotion } from "../motion/useReducedMotion";
+import { Press } from "../Press";
 import { ZText } from "../Text";
 import { Zebra } from "./Zebra";
 
@@ -24,7 +25,7 @@ import { Zebra } from "./Zebra";
 /** One revolution of the shared clock. Long enough that every idle period divides into it. */
 const CLOCK_SECONDS = 60;
 /** Roam amplitudes and periods, cycled per zebra — the board's own numbers. */
-const ROAM_PX = [6, 9, 12];
+const ROAM_PX = [14, 20, 26];
 const ROAM_SECS = [5.5, 6.8, 8.1, 9.4, 6.7, 8.0];
 const TROT_SECS = 0.95;
 const TROT_PX = -3;
@@ -63,6 +64,8 @@ export type PastureProps = {
   more?: number;
   height?: number;
   onPressMember?: (m: PastureMember) => void;
+  /** Tapping anywhere else in the field. The dazzle page sends this to the herd page. */
+  onPressField?: () => void;
   /** Tags cost a view each and read as clutter on a small card. */
   showTags?: boolean;
   /** Bump to make the herd hop: the whole field in a wave, or one zebra. */
@@ -70,7 +73,7 @@ export type PastureProps = {
   style?: StyleProp<ViewStyle>;
 };
 
-export function Pasture({ members, more = 0, height = 250, onPressMember, showTags = true, cheer, style }: PastureProps) {
+export function Pasture({ members, more = 0, height = 250, onPressMember, onPressField, showTags = true, cheer, style }: PastureProps) {
   const reduced = useReducedMotion();
   const [width, setWidth] = useState(0);
   const clock = useSharedValue(0);
@@ -85,11 +88,19 @@ export function Pasture({ members, more = 0, height = 250, onPressMember, showTa
   const scenery = useMemo(() => makeScenery(width, height), [width, height]);
 
   return (
-    <View style={[styles.field, { height }, style]} onLayout={(e) => { const next = e.nativeEvent.layout.width; setWidth((cur) => (Math.abs(cur - next) > 0.5 ? next : cur)); }}>
+    <Press
+      onPress={onPressField}
+      disabled={!onPressField}
+      scaleTo={0.98}
+      accessibilityRole={onPressField ? "button" : undefined}
+      accessibilityLabel={onPressField ? `The herd: ${members.length} zebras${more ? ` and ${more} more` : ""}. Opens the herd` : undefined}
+      style={[styles.field, { height }, style]}
+      onLayout={(e) => { const next = e.nativeEvent.layout.width; setWidth((cur) => (Math.abs(cur - next) > 0.5 ? next : cur)); }}>
       {width > 0 ? (
         <>
           <Svg width={width} height={height} style={StyleSheet.absoluteFill}>
-            <Rect x={0} y={0} width={width} height={height} fill={p.field} />
+            {/* the top of the field IS the wave: everything above it is left clear */}
+            <Path d={scenery.field} fill={p.field} />
             <Path d={scenery.horizon} fill={p.fieldFront} />
             {scenery.tufts.map((d, i) => <Path key={`t${i}`} d={d} stroke={p.grass} strokeWidth={3} fill="none" strokeLinecap="round" />)}
             {scenery.flowers.map((f, i) => <Circle key={`f${i}`} cx={f.x} cy={f.y} r={f.r} fill={p.flower} />)}
@@ -104,9 +115,10 @@ export function Pasture({ members, more = 0, height = 250, onPressMember, showTa
                 key={m.user_id}
                 slot={slot}
                 clock={clock}
-                index={slot.index}
+                index={idleSeed(m.user_id)}
                 hop={cheer && (!cheer.only || cheer.only === m.user_id) ? cheer.key : 0}
                 hopDelay={cheer?.only ? 0 : slot.index * WAVE_STAGGER}
+                waveIndex={slot.index}
               >
                 <Pressable
                   onPress={onPressMember ? () => onPressMember(m) : undefined}
@@ -138,11 +150,14 @@ export function Pasture({ members, more = 0, height = 250, onPressMember, showTa
                   key={`tag-${m.user_id}`}
                   pointerEvents="none"
                   style={[styles.tag, m.done ? styles.tagDone : styles.tagAdding, {
-                    left: slot.x + slot.width / 2 - TAG_W / 2,
+                    // a tag gets its own step and no more, so it can never cover a neighbour
+                    maxWidth: Math.max(48, slot.step - 6),
+                    left: slot.x + slot.width / 2 - Math.max(48, slot.step - 6) / 2,
                     top: slot.y + slot.height - TAG_H / 2,
                     zIndex: 20 + slot.z,
                   }]}
                 >
+                  <View style={[styles.tagStripe, { backgroundColor: m.done ? palette.volt : color.outlineDashed }]} />
                   <ZText variant="micro" numberOfLines={1} color={m.done ? color.textOnInk : color.textMuted}>
                     {m.isMe ? "You" : firstName(m.name)}
                   </ZText>
@@ -160,8 +175,19 @@ export function Pasture({ members, more = 0, height = 250, onPressMember, showTa
           ) : null}
         </>
       ) : null}
-    </View>
+    </Press>
   );
+}
+
+/**
+ * A stable number per person, so the same zebra roams and grazes the same way in every
+ * dazzle. Keying the idle on the slot index instead made someone trot in one trip and
+ * graze in another purely because the member list came back in a different order.
+ */
+function idleSeed(userId: string): number {
+  let h = 0;
+  for (let i = 0; i < userId.length; i++) h = (h * 31 + userId.charCodeAt(i)) >>> 0;
+  return h % 180;
 }
 
 /**
@@ -169,7 +195,7 @@ export function Pasture({ members, more = 0, height = 250, onPressMember, showTa
  * derived from the shared clock inside a worklet, so nothing here touches the JS thread
  * once it's mounted.
  */
-function Grazer({ slot, clock, index, hop, hopDelay, children }: { slot: HerdSlot; clock: SharedValue<number>; index: number; hop: number; hopDelay: number; children: ReactNode }) {
+function Grazer({ slot, clock, index, hop, hopDelay, children }: { slot: HerdSlot; clock: SharedValue<number>; index: number; hop: number; hopDelay: number; waveIndex?: number; children: ReactNode }) {
   const r = ROAM_PX[index % ROAM_PX.length]!;
   const d = ROAM_SECS[index % ROAM_SECS.length]!;
   const off = ((index * 0.37) % 1);
@@ -216,17 +242,29 @@ function Grazer({ slot, clock, index, hop, hopDelay, children }: { slot: HerdSlo
   );
 }
 
-/** Grass tufts and flowers, placed from the field's own size so they never jump. */
+/**
+ * The field itself, plus grass tufts and flowers, all placed from the field's own size
+ * so they never jump between renders.
+ *
+ * The top edge is a long shallow wave rather than a straight line, so the field reads as
+ * ground rather than as a green box. A second, closer wave divides it into a far band
+ * and a near one, which is what gives the herd somewhere to stand "in front".
+ */
 function makeScenery(w: number, h: number) {
-  if (w <= 0) return { horizon: "", tufts: [] as string[], flowers: [] as { x: number; y: number; r: number }[] };
-  const band = h * 0.46;
+  if (w <= 0) return { field: "", horizon: "", tufts: [] as string[], flowers: [] as { x: number; y: number; r: number }[] };
+  const crest = h * 0.2;            // where the wavy top edge sits
+  const swell = h * 0.075;          // how far it rises and falls
+  const field = `M0 ${crest} C${w * 0.2} ${crest - swell} ${w * 0.34} ${crest + swell} ${w * 0.55} ${crest}`
+    + ` C${w * 0.74} ${crest - swell} ${w * 0.88} ${crest + swell * 0.6} ${w} ${crest - swell * 0.3}`
+    + ` L${w} ${h} L0 ${h} Z`;
+  const band = h * 0.56;
   const horizon = `M0 ${band} Q${w * 0.25} ${band - h * 0.05} ${w * 0.5} ${band} T${w} ${band} L${w} ${h} L0 ${h} Z`;
   const tufts: string[] = [];
   const flowers: { x: number; y: number; r: number }[] = [];
   // a fixed lattice nudged by index, so it reads as scattered without a random source
   for (let i = 0; i < 14; i++) {
     const x = ((i * 97) % 100) / 100 * w;
-    const y = band + ((i * 53) % 100) / 100 * (h - band) * 0.92;
+    const y = band + ((i * 53) % 100) / 100 * (h - band) * 0.9;
     tufts.push(`M${x} ${y} l-4 -7 M${x} ${y} l0 -9 M${x} ${y} l4 -7`);
   }
   for (let i = 0; i < 7; i++) {
@@ -234,21 +272,23 @@ function makeScenery(w: number, h: number) {
     const y = band + ((i * 37 + 11) % 100) / 100 * (h - band) * 0.88;
     flowers.push({ x, y, r: 2.5 });
   }
-  return { horizon, tufts, flowers };
+  return { field, horizon, tufts, flowers };
 }
 
 const firstName = (n: string) => n.split(/\s+/)[0] ?? n;
 
-const TAG_W = 56;
-const TAG_H = 20;
+const TAG_H = 22;
 
 const styles = StyleSheet.create({
-  field: { width: "100%", borderRadius: radius.hero, overflow: "hidden", backgroundColor: p.field },
+  field: { width: "100%", borderRadius: radius.hero, overflow: "hidden" },
   zebra: { position: "absolute" },
   tag: {
-    position: "absolute", width: TAG_W, height: TAG_H, borderRadius: radius.pill,
-    alignItems: "center", justifyContent: "center", paddingHorizontal: space[4],
+    position: "absolute", height: TAG_H, borderRadius: radius.pill,
+    flexDirection: "row", alignItems: "center", justifyContent: "center",
+    gap: 4, paddingHorizontal: space[8],
   },
+  /** the volt stripe the member pills used to carry, now on the tag itself */
+  tagStripe: { width: 3, height: 10, borderRadius: 1.5, transform: [{ rotate: "10deg" }] },
   tagDone: { backgroundColor: color.surfaceInk },
   tagAdding: { backgroundColor: color.surface },
   more: {

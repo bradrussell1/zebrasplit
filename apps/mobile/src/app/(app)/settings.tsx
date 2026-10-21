@@ -6,7 +6,8 @@ import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from "re
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { PaymentMethodsEditor, savePaymentMethods, type PaymentMethodsValue } from "@/components/PaymentMethods";
 import { TripHistoryList } from "@/components/TripHistoryList";
-import { ActionSheet, Avatar, Button, Card, Icon, Input, InsetPanel, Press, RowCard, ScreenBackground, SegmentedControl, Skeleton, TextLink, TopBar, Zebra, ZText, useToast } from "@/ui";
+import { ActionSheet, Avatar, Button, Card, Icon, Input, InsetPanel, Press, RowCard, ScreenBackground, SegmentedControl, Skeleton, TextLink, TopBar, ZText, useToast } from "@/ui";
+import { ZebraTab } from "@/components/ZebraTab";
 import { useAuth } from "@/lib/auth";
 import { pickImage, uploadImage } from "@/lib/storage";
 import { supabase } from "@/lib/supabase";
@@ -40,6 +41,8 @@ export default function ProfileScreen() {
   const [photoBusy, setPhotoBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  /** Account | Zebra. Both halves of your profile: the admin of it, and the look of it. */
+  const [half, setHalf] = useState<"account" | "zebra">("account");
   /**
    * The design sheet is a developer page, but it is also the only place that shows the
    * whole wardrobe and every herd size at once, which is exactly what a TestFlight
@@ -136,6 +139,13 @@ export default function ProfileScreen() {
       <TopBar onBack={() => router.back()} />
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={styles.flex}>
         <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + space[32] }]} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive" showsVerticalScrollIndicator={false}>
+          <SegmentedControl
+            options={[{ key: "account", label: "Account" }, { key: "zebra", label: "Zebra" }]}
+            value={half}
+            onChange={(k) => setHalf(k as "account" | "zebra")}
+          />
+          {half === "zebra" ? <ZebraTab loadingSlot={<Skeleton height={200} />} /> : null}
+          {half === "account" ? (<>
           <ZText variant="title1" accessibilityRole="header" style={styles.title}>Profile</ZText>
 
           {/* 1–2: photo */}
@@ -179,14 +189,6 @@ export default function ProfileScreen() {
             )}
           </View>
 
-          <RowCard
-            title="Your zebra"
-            caption="Dress it up. Everyone in your Dazzles sees what you wear"
-            tile={<Zebra variant="bust" size={34} striped mood="happy" decorative />}
-            right={<Icon name="chevronRight" size={18} color={color.textMuted} />}
-            onPress={() => router.push("/(app)/zebra")}
-          />
-
           {/* 8: FAQ */}
           <RowCard title="FAQ" caption="How splitting, Done and close-out work" right={<Icon name="chevronRight" size={18} color={color.textMuted} />} onPress={() => router.push("/(app)/faq")} />
           <RowCard title="Send feedback" caption="Tell us what broke or what you'd change" right={<Icon name="chevronRight" size={18} color={color.textMuted} />} onPress={() => router.push("/(app)/feedback")} />
@@ -200,6 +202,7 @@ export default function ProfileScreen() {
             <ZText variant="label" color={color.destructive} style={styles.deleteText}>Delete account</ZText>
           </Press>
           <ZText variant="caption" color={color.textMuted} style={styles.note}>Deleting removes your personal data and anonymises you on shared Dazzles.</ZText>
+          </>) : null}
         </ScrollView>
       </KeyboardAvoidingView>
 

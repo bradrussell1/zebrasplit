@@ -20,16 +20,30 @@ export const HERD = {
   rowBreaks: [4, 8, 12] as const,
   /** Each row back is this much smaller than the one in front of it. */
   depthScale: 0.82,
-  /** ...and its feet sit this fraction of a front-row zebra's height higher. */
-  rowLift: 0.6,
+  /**
+   * ...and its feet sit this fraction of a front-row zebra's height higher.
+   *
+   * Just over 1 on purpose: a name tag sits at its own zebra's feet, so anything less
+   * than a full zebra-height of lift puts the back row's names across the front row's
+   * bodies. At 1.05 the back row stands on a line just above the front row's heads and
+   * every tag has clear ground under it.
+   */
+  rowLift: 1.05,
   /** Side margin and the gap between zebras, as a fraction of the field width. */
-  gapFactor: 0.032,
+  gapFactor: 0.03,
   /** The front row's feet stand this far above the field's bottom edge, leaving room
    *  for the name tags that sit at them. The board: 22 pt in a 250 pt field. */
   bottomFactor: 0.088,
   /** A front-row zebra is never taller than this much of the field. Without it a herd
    *  of three on a wide screen sizes itself from the width alone and fills the sky. */
-  maxFrontFactor: 0.44,
+  maxFrontFactor: 0.52,
+  /**
+   * How much wider than its share of the row a zebra may be drawn. A herd stands close
+   * together; sizing every zebra to fit shoulder-to-shoulder makes a row of four look
+   * like a row of stamps. At 1.3 neighbours overlap by about a quarter, which reads as
+   * a herd rather than a queue, and the half-step offset keeps the row behind visible.
+   */
+  crowdFactor: 1.3,
   /** The full zebra's master aspect ratio (viewBox 0 -8 320 330). */
   aspect: 330 / 320,
 } as const;
@@ -39,6 +53,8 @@ export type HerdSlot = {
   index: number;
   /** 0 is the front row. */
   row: number;
+  /** Centre-to-centre distance in this row, which is how wide a name tag may be. */
+  step: number;
   /** Top-left of the zebra box, in field points. */
   x: number;
   y: number;
@@ -74,7 +90,8 @@ export function herdLayout(n: number, width: number, height: number): HerdSlot[]
   // The front row sizes itself to fit across: width = c·size + (c+1)·gap.
   const gap = width * HERD.gapFactor;
   const frontCount = rows[0]!;
-  let frontH = ((width - (frontCount + 1) * gap) / frontCount) * HERD.aspect;
+  // its share of the row, widened by crowdFactor so neighbours overlap like a herd
+  let frontH = ((width - (frontCount + 1) * gap) / frontCount) * HERD.aspect * HERD.crowdFactor;
 
   // ...but height has the final say. A herd stands on a band of fixed height, so a row
   // of three on a wide screen would otherwise size itself from the width alone and come
@@ -88,7 +105,7 @@ export function herdLayout(n: number, width: number, height: number): HerdSlot[]
   const frontW = frontH / HERD.aspect;
 
   const slots: HerdSlot[] = [];
-  const frontStep = frontW + gap;
+  const frontStep = frontCount > 1 ? (width - 2 * gap - frontW) / (frontCount - 1) : 0;
   let index = 0;
   for (let row = 0; row < rows.length; row++) {
     const count = rows[row]!;
@@ -100,26 +117,26 @@ export function herdLayout(n: number, width: number, height: number): HerdSlot[]
     // holds as many zebras as the front, that offset would otherwise push it off the
     // edge. Rather than give up the offset, the row closes its own gaps to fit, which is
     // exactly the squeeze the board makes by hand on its six-zebra field.
-    const span = count * w + (count - 1) * gap;
+    // Rows spread across the field rather than packing: the step is whatever divides
+    // the space evenly, so zebras overlap when there are many and spread when there are
+    // few, and a name tag always has a whole step to itself.
+    const spread = (n: number, start: number) => (n > 1 ? (width - start - gap - w) / (n - 1) : 0);
     let left: number;
     let step: number;
     if (row === 0) {
-      left = (width - span) / 2;
-      step = w + gap;
+      step = spread(count, gap);
+      left = count > 1 ? gap : (width - w) / 2;
     } else {
+      // half a front-row step to the right, so nobody stands directly behind anybody
       left = gap + frontStep / 2;
-      const room = width - gap - left - w;
-      step = count > 1 ? Math.min(w + gap, room / (count - 1)) : 0;
-      if (step < w * 0.55) { // no room to offset at all: fall back to centred
-        left = (width - span) / 2;
-        step = w + gap;
-      }
+      step = spread(count, left);
+      if (step <= 0) { step = spread(count, gap); left = count > 1 ? gap : (width - w) / 2; }
     }
     // every row's feet, lifted a constant step back from the front row's
     const feet = height - bottom - frontH * HERD.rowLift * row;
     const y = feet - h;
     for (let i = 0; i < count; i++) {
-      slots.push({ index: index++, row, x: left + i * step, y, width: w, height: h, z: rows.length - row });
+      slots.push({ index: index++, row, step, x: left + i * step, y, width: w, height: h, z: rows.length - row });
     }
   }
   return slots;

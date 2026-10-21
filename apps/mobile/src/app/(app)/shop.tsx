@@ -1,10 +1,10 @@
-import { COSMETICS, PACKS, cosmeticById, outfitDescription, type CosmeticDef, type PackDef } from "@bunktab/core";
+import { COSMETICS, OUTFIT_SLOTS, PACKS, SLOT_LABELS, cosmeticById, outfitDescription, type CosmeticDef, type PackDef } from "@bunktab/core";
 import { color, layout, outfit as outfitArt, palette, radius, shadow, space, type TeamColor } from "@bunktab/theme";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Button, HeroCard, InsetPanel, Press, ScreenBackground, ScreenSkeleton, TopBar, Zebra, ZText, haptic, useToast } from "@/ui";
+import { Button, HeroCard, InsetPanel, Press, ScreenBackground, ScreenSkeleton, TopBar, Zebra, ZText, useToast } from "@/ui";
 import { useWardrobe } from "@/lib/wardrobe";
 
 /**
@@ -23,10 +23,9 @@ export default function ShopScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { show } = useToast();
-  const { owned, outfit, loading, equip } = useWardrobe();
+  const { owned, outfit, loading } = useWardrobe();
   const [preview, setPreview] = useState<string | null>(null);
   const [pack, setPack] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
 
   if (loading) {
     return <View style={styles.screen}><ScreenBackground /><TopBar onBack={() => router.back()} /><ScreenSkeleton rows={3} /></View>;
@@ -41,20 +40,11 @@ export default function ShopScreen() {
   if (item) staged[item.slot] = item.id;
 
   function tagFor(c: CosmeticDef): string {
-    if (owned.has(c.id)) return "Owned";
+    if (owned.has(c.id)) return "In your closet";
     if (c.status === "free") return "Free";
     if (c.status === "earned") return "Earn it";
     if (c.packs.length) return "Pack";
     return `$${c.price}`;
-  }
-
-  async function wear(c: CosmeticDef) {
-    setBusy(true);
-    const err = await equip(c.slot, c.id);
-    setBusy(false);
-    if (err) { show({ message: err }); return; }
-    haptic.light();
-    show({ message: `${c.name} on. Your herd will see it.` });
   }
 
   function tapItem(c: CosmeticDef) {
@@ -94,7 +84,8 @@ export default function ShopScreen() {
                 </ZText>
               ) : null}
               {!packDef && item && owned.has(item.id) ? (
-                <Button label={outfit[item.slot] === item.id ? "Wearing it" : "Wear it"} height={40} disabled={busy || outfit[item.slot] === item.id} onPress={() => wear(item)} />
+                // the Shop is a storefront, not a wardrobe: wearing happens in Your zebra
+                <Button kind="secondary" onWhite height={40} label="In your closet · wear it there" onPress={() => router.push("/(app)/zebra")} />
               ) : !packDef && item && item.status === "earned" ? (
                 <Button kind="locked" height={40} label={`Earn it: ${item.earnRule === "trips_5" ? "5 trips" : item.earnRule === "first_trip" ? "first trip" : "send a gift"}`} />
               ) : (
@@ -142,29 +133,34 @@ export default function ShopScreen() {
           </ScrollView>
         </View>
 
-        {/* the whole catalogue */}
-        <View style={styles.section}>
-          <ZText variant="overline" color={color.textMuted}>Everything · {COSMETICS.length} items</ZText>
-          <View style={styles.grid}>
-            {COSMETICS.map((c) => {
-              const tag = tagFor(c);
-              return (
-                <Press
-                  key={c.id}
-                  onPress={() => tapItem(c)}
-                  scaleTo={0.97}
-                  accessibilityRole="button"
-                  accessibilityLabel={`${c.name}, ${tag}`}
-                  style={[styles.tile, preview === c.id ? styles.tileOn : null]}
-                >
-                  <Zebra variant={c.slot === "body" ? "full" : "bust"} size={c.slot === "body" ? 70 : 66} striped mood="hi" outfit={{ [c.slot]: c.id }} decorative />
-                  <ZText variant="micro" numberOfLines={1}>{c.name}</ZText>
-                  <ZText variant="micro" color={tag === "Owned" ? color.text : color.textMuted}>{tag}</ZText>
-                </Press>
-              );
-            })}
-          </View>
-        </View>
+        {/* the catalogue, a section per slot */}
+        {OUTFIT_SLOTS.map((s) => {
+          const items = COSMETICS.filter((c) => c.slot === s);
+          return (
+            <View key={s} style={styles.section}>
+              <ZText variant="overline" color={color.textMuted}>{SLOT_LABELS[s]} · {items.length}</ZText>
+              <View style={styles.grid}>
+                {items.map((c) => {
+                  const tag = tagFor(c);
+                  return (
+                    <Press
+                      key={c.id}
+                      onPress={() => tapItem(c)}
+                      scaleTo={0.97}
+                      accessibilityRole="button"
+                      accessibilityLabel={`${c.name}, ${tag}`}
+                      style={[styles.tile, preview === c.id ? styles.tileOn : null]}
+                    >
+                      <Zebra variant={c.slot === "body" ? "full" : "bust"} size={c.slot === "body" ? 70 : 66} striped mood="hi" outfit={{ [c.slot]: c.id }} decorative />
+                      <ZText variant="micro" numberOfLines={1}>{c.name}</ZText>
+                      <ZText variant="micro" color={tag === "Owned" ? color.text : color.textMuted}>{tag}</ZText>
+                    </Press>
+                  );
+                })}
+              </View>
+            </View>
+          );
+        })}
 
         <InsetPanel style={styles.soon}>
           <ZText variant="caption" color={color.textSecondary}>

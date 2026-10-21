@@ -216,7 +216,7 @@ export default function CloseoutScreen() {
         {/* the zebra stage: one stripe per member who's Done */}
         <HeroCard style={styles.stage}>
           <Dance play={play.dance}>
-            <Zebra variant="full" members={members.length} done={doneCount} mood={mood} size={244} animate={{ blink: true, swish: true }} accessibilityLabel={zebraLabel(mood, members.length, doneCount)} />
+            <Zebra variant="full" striped={gateOpen} outfit={myOutfit} mood={mood} size={244} animate={{ blink: true, swish: true }} accessibilityLabel={zebraLabel(mood, members.length, doneCount)} />
           </Dance>
           <Confetti play={play.confetti} style={StyleSheet.absoluteFill} />
         </HeroCard>
@@ -273,7 +273,7 @@ export default function CloseoutScreen() {
                           </View>
                         ) : null}
                       </View>
-                      <Zebra variant="bust" size={84} mood={zebraMoodFor({ place: "payment", paid: allMinePaid }) ?? "hi"} animate={{ blink: true }} accessibilityLabel={allMinePaid ? "Zebra, love: all paid" : "Zebra, hi"} />
+                      <Zebra variant="bust" size={84} striped outfit={myOutfit} mood={zebraMoodFor({ place: "payment", paid: allMinePaid }) ?? "hi"} animate={{ blink: true }} accessibilityLabel={allMinePaid ? "Zebra, love: all paid" : "Zebra, hi"} />
                     </View>
                     {mine.map((s) => {
                       const to = who(s.to_user);
@@ -329,7 +329,7 @@ export default function CloseoutScreen() {
                     const platform = platformFor(s);
                     const paid = s.status !== "pending";
                     const title = toMe ? `${who(s.from_user)} pays you` : `${who(s.from_user)} pays ${who(s.to_user)}`;
-                    const status = s.status === "pending" ? "Not marked paid yet" : s.status === "confirmed" ? (toMe ? "You confirmed" : "Confirmed") : "Marked paid";
+                    const status = s.status === "pending" ? "Not closed out" : s.status === "confirmed" ? (toMe ? "You confirmed" : "Closed out") : "Closed out";
                     const tone = paid ? color.textMuted : toMe ? color.text : color.textSecondary;
                     return (
                       <View key={s.id} style={[styles.listRow, styles.listRule, paid ? styles.rowPaid : null]} accessibilityLabel={`${title} ${formatCents(s.amount_cents, cur)}, ${status}`}>

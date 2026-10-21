@@ -40,6 +40,17 @@ export default function HomeScreen() {
   const [query, setQuery] = useState("");
   const herdSeed = useForegroundSeed();
   /**
+   * Your own look on the hero zebra — head and face only. A bust is cropped at the
+   * shoulder, so a body item would either be invisible or clipped halfway through.
+   */
+  const [myLook, setMyLook] = useState<Outfit>({});
+  useEffect(() => {
+    let live = true;
+    supabase.from("user_outfit").select("head, faceneck").eq("user_id", me).maybeSingle()
+      .then(({ data: row }) => { if (live && row) setMyLook(normalizeOutfit(row as Outfit)); });
+    return () => { live = false; };
+  }, [me]);
+  /**
    * The drop banner (A17): built, and shipped switched off. `active_drop` returns the
    * newest live drop this person hasn't dismissed, and with no rows in `drops` — which
    * is launch — it always returns nothing, so neither the banner nor the dot appears.
@@ -142,7 +153,7 @@ export default function HomeScreen() {
           ))}
         </View>
         <View style={styles.heroZebra}>
-          <Zebra variant="bust" mood={heroMood} size={108} animate={{ bob: true }} accessibilityLabel={`Zebra, ${heroMood}`} />
+          <Zebra variant="bust" mood={heroMood} size={108} outfit={myLook} animate={{ bob: true }} accessibilityLabel={`Your zebra, ${heroMood}`} />
         </View>
       </HeroCard>
       {/* the drop banner sits between the balance and Your Dazzles, and only when a
@@ -252,11 +263,11 @@ function DazzleCard({ trip, me, seed, onPress }: { trip: TripRow; me: string; se
   const notDone = trip.members.length - done;
   // up to eight busts, picked the same way the field picks twelve: you always among them
   const MINI = 8;
-  const pick = herdPick(trip.members, me, seed);
+  const pick = herdPick([...trip.members].sort((a, b) => a.user_id.localeCompare(b.user_id)), me, seed);
   const shown = pick.shown.slice(0, MINI);
   const hidden = trip.members.length - shown.length;
   const cardMood = zebraMoodFor({ place: "home-card", youOwe });
-  const caption = `${shortRange(trip.start_date, trip.end_date)} · ${trip.members.length} in the Dazzle`;
+  const caption = `${shortRange(trip.start_date, trip.end_date)} · ${trip.members.length} ${trip.members.length === 1 ? "zebra" : "zebras"} in the Dazzle`;
   const status = settled ? "settled" : trip.net_cents > 0 ? `owed ${formatCents(trip.net_cents, trip.base_currency)}` : trip.net_cents < 0 ? `you owe ${formatCents(-trip.net_cents, trip.base_currency)}` : "even";
   const stillAdding = settled ? "Settled" : trip.status === "archived" ? "Archived" : notDone === 0 ? "Everyone's done" : cardMood ? "still adding" : `${notDone} still adding`;
   return (
