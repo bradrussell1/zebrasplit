@@ -248,6 +248,26 @@ export default function TripScreen() {
               {toGo > 0 && !readonly && !closed && isOwner ? <Button kind="nudge" label="Nudge" onPress={openNudge} accessibilityLabel={`Nudge, ${toGo} still adding`} /> : null}
             </View>
           </InsetPanel>
+          {/* the split sits directly under the status row, above the field */}
+          {data.expenses.length > 0 && !settledUp ? (
+            <InsetPanel style={styles.plan}>
+              <Press onPress={() => setShowPlan((v) => !v)} scaleTo={0.98} accessibilityRole="button" accessibilityState={{ expanded: showPlan }} accessibilityLabel="Preview the Final Split" style={styles.planRow}>
+                <ZText variant="bodyStrong" style={styles.flex}>Preview the Final Split</ZText>
+                <Icon name={showPlan ? "chevronUp" : "chevronDown"} size={18} color={color.textMuted} />
+              </Press>
+              {showPlan ? (
+                <Rise style={styles.planLines}>
+                  {figures.plan.length === 0 ? <ZText variant="caption" color={color.textMuted}>Nothing to settle yet.</ZText> : null}
+                  {figures.plan.map((p, i) => (
+                    <View key={i} style={styles.planLine}>
+                      <ZText variant="body" style={styles.flex}>{p.from === me ? `Pay ${memberName(data, p.to)}` : p.to === me ? `${memberName(data, p.from)} pays you` : `${memberName(data, p.from)} pays ${memberName(data, p.to)}`}</ZText>
+                      <Money cents={p.cents} currency={cur === "USD" ? undefined : `${cur} `} color={p.to === me ? color.text : p.from === me ? color.youOweText : color.textMuted} />
+                    </View>
+                  ))}
+                </Rise>
+              ) : null}
+            </InsetPanel>
+          ) : null}
           {/* the field. Tapping a zebra opens its member sheet; a zebra's stripes only
               ever change when its own owner taps Done, so the field is not a control. */}
           <Pasture
@@ -267,27 +287,6 @@ export default function TripScreen() {
           />
         </HeroCard>
 
-
-        {/* settlement preview */}
-        {data.expenses.length > 0 && !settledUp ? (
-          <InsetPanel style={styles.plan}>
-            <Press onPress={() => setShowPlan((v) => !v)} scaleTo={0.98} accessibilityRole="button" accessibilityState={{ expanded: showPlan }} accessibilityLabel="Preview the Final Split" style={styles.planRow}>
-              <ZText variant="bodyStrong" style={styles.flex}>Preview the Final Split</ZText>
-              <Icon name={showPlan ? "chevronUp" : "chevronDown"} size={18} color={color.textMuted} />
-            </Press>
-            {showPlan ? (
-              <Rise style={styles.planLines}>
-                {figures.plan.length === 0 ? <ZText variant="caption" color={color.textMuted}>Nothing to settle yet.</ZText> : null}
-                {figures.plan.map((p, i) => (
-                  <View key={i} style={styles.planLine}>
-                    <ZText variant="body" style={styles.flex}>{p.from === me ? `Pay ${memberName(data, p.to)}` : p.to === me ? `${memberName(data, p.from)} pays you` : `${memberName(data, p.from)} pays ${memberName(data, p.to)}`}</ZText>
-                    <Money cents={p.cents} currency={cur === "USD" ? undefined : `${cur} `} color={p.to === me ? color.text : p.from === me ? color.youOweText : color.textMuted} />
-                  </View>
-                ))}
-              </Rise>
-            ) : null}
-          </InsetPanel>
-        ) : null}
 
         <View onLayout={(e) => { tabsY.current = e.nativeEvent.layout.y; }}>
           <SegmentedControl options={[{ key: "expenses", label: "Expenses" }, { key: "people", label: "People" }, { key: "summary", label: "Summary" }]} value={tab} onChange={setTab} />
@@ -360,20 +359,20 @@ export default function TripScreen() {
       {/* Sheet footer. None in read-only, and none on Summary: that tab is the report,
           and you don't log an expense from a report — you go back to Expenses to do it. */}
       {showFooter ? (
-        <View onLayout={(e) => setFooterH(e.nativeEvent.layout.height)} style={[styles.footer, { paddingBottom: insets.bottom + space[16] }]}>
-          <View style={styles.footerButtons}>
-            {/* no camera button: snapping a receipt lives inside Add expense */}
-            <Button label="Add expense" height={size.buttonHeight} style={styles.footerButton} onPress={() => router.push(`/(app)/trip/${trip.id}/expense`)} />
-            {unlocked
-              ? <Button kind="ink" label="Close out" height={size.buttonHeight} style={styles.footerButton} onPress={() => router.push(`/(app)/trip/${trip.id}/closeout`)} />
-              /* the count stays in the accessibility label only: the button reads "Close out" in both
-                 states, so it keeps its width and doesn't jump when the last stripe lands */
-              : <Button kind="locked" label="Close out" height={size.buttonHeight} style={styles.footerButton} accessibilityLabel={`Close out, locked, ${toGo} still adding`} />}
-          </View>
-          {/* the Done toggle sits below the two CTAs (feedback round 1, item 10) */}
-          <View style={styles.doneRow}>
+        <View onLayout={(e) => setFooterH(e.nativeEvent.layout.height)} style={[styles.footer, { paddingBottom: insets.bottom + space[8] }]}>
+          {/* Done sits directly above the CTAs, in the same off-white as the split panel */}
+          <InsetPanel style={styles.doneRow}>
             <ZText variant="bodyStrong" style={styles.flex}>Done adding expenses</ZText>
             <Toggle value={myDone} onChange={toggleDone} disabled={busy} label="Done adding expenses" />
+          </InsetPanel>
+          <View style={styles.footerButtons}>
+            {/* no camera button: snapping a receipt lives inside Add expense */}
+            <Button label="Add expense" height={size.footerCta} style={styles.footerButton} onPress={() => router.push(`/(app)/trip/${trip.id}/expense`)} />
+            {unlocked
+              ? <Button kind="ink" label="Close out" height={size.footerCta} style={styles.footerButton} onPress={() => router.push(`/(app)/trip/${trip.id}/closeout`)} />
+              /* the count stays in the accessibility label only: the button reads "Close out" in both
+                 states, so it keeps its width and doesn't jump when the last stripe lands */
+              : <Button kind="locked" label="Close out" height={size.footerCta} style={styles.footerButton} accessibilityLabel={`Close out, locked, ${toGo} still adding`} />}
           </View>
         </View>
       ) : null}
@@ -516,8 +515,8 @@ const styles = StyleSheet.create({
   track: { height: 8, borderRadius: radius.stripe, backgroundColor: color.stripeOff, overflow: "hidden" },
   fill: { height: 8, borderRadius: radius.stripe, backgroundColor: color.stripeOn },
   facts: { gap: space[8] },
-  footer: { position: "absolute", left: 0, right: 0, bottom: 0, backgroundColor: palette.white, borderTopLeftRadius: radius.hero, borderTopRightRadius: radius.hero, paddingHorizontal: layout.screenGutter, paddingTop: space[16], gap: space[14], ...shadow.sheet },
-  doneRow: { flexDirection: "row", alignItems: "center", gap: space[12], minHeight: layout.minTapTarget },
+  footer: { position: "absolute", left: 0, right: 0, bottom: 0, backgroundColor: palette.white, borderTopLeftRadius: radius.hero, borderTopRightRadius: radius.hero, paddingHorizontal: layout.screenGutter, paddingTop: space[10], gap: space[8], ...shadow.sheet },
+  doneRow: { flexDirection: "row", alignItems: "center", gap: space[12], minHeight: layout.minTapTarget, paddingHorizontal: space[14] },
   footerButtons: { flexDirection: "row", gap: space[10] },
   footerButton: { flex: 1, paddingHorizontal: space[12] },
 });

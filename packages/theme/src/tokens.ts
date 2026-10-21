@@ -184,6 +184,7 @@ export const shadow = {
 export const size = {
   ctaHeight: 58,          // primary bottom CTA
   buttonHeight: 54,       // paired footer buttons
+  footerCta: 48,          // the dazzle page's two docked CTAs: tighter, still over the 44 tap target
   pillButton: 40,
   pillSmall: 32,          // Nudge, inline actions
   segmentHeight: 36,
