@@ -1,0 +1,68 @@
+{
+  "project_info": {
+    "project_number": "712652327864",
+    "project_id": "bunktab",
+    "storage_bucket": "bunktab.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:712652327864:android:a5bcce5a537b1e51681d4d",
+        "android_client_info": {
+          "package_name": "com.bunktab.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "712652327864-jmv8iik3cqmobo90ancdamcnrtvtvses.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCKiJgJC44IA1cul2d-si_zHV3AEOZV4Dk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "712652327864-jmv8iik3cqmobo90ancdamcnrtvtvses.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:712652327864:android:db5f9182df111f37681d4d",
+        "android_client_info": {
+          "package_name": "com.bunktab.com"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "712652327864-jmv8iik3cqmobo90ancdamcnrtvtvses.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCKiJgJC44IA1cul2d-si_zHV3AEOZV4Dk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "712652327864-jmv8iik3cqmobo90ancdamcnrtvtvses.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

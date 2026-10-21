@@ -33,6 +33,7 @@
     },
     "android": {
       "package": "com.bunktab.app",
+      "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "backgroundColor": "#E2FF2B",
         "foregroundImage": "./assets/images/android-icon-foreground.png",

@@ -51,5 +51,9 @@ npm-debug.log*
 secrets/*
 !secrets/README.md
 
-# Firebase config for Android push
-apps/mobile/google-services.json
+# google-services.json is deliberately NOT ignored. It holds no secret — no private
+# key, no token — and it is compiled into every APK by design, so it cannot be one.
+# Ignoring it would only mean EAS (which builds from the git archive) never receives
+# it, and push would fail silently on every Android build. The Firebase API key in it
+# is a client identifier; it is protected by restricting it to the package name and
+# signing certificate in the Google Cloud console, not by hiding the file.
