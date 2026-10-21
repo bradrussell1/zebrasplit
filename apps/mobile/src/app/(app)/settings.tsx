@@ -1,7 +1,7 @@
 import { CATEGORIES, formatCents, isValidNamePart, joinName, splitName } from "@bunktab/core";
 import { color, layout, palette, radius, size, space } from "@bunktab/theme";
 import { useFocusEffect, useRouter } from "expo-router";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { PaymentMethodsEditor, savePaymentMethods, type PaymentMethodsValue } from "@/components/PaymentMethods";
@@ -40,6 +40,22 @@ export default function ProfileScreen() {
   const [photoBusy, setPhotoBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  /**
+   * The design sheet is a developer page, but it is also the only place that shows the
+   * whole wardrobe and every herd size at once, which is exactly what a TestFlight
+   * reviewer needs. It has no link anywhere else, so in a release build it may as well
+   * not exist — a preview nobody can reach is a preview nobody sees.
+   *
+   * Gated on private.admins rather than on __DEV__, which is false in a TestFlight
+   * build, or on the release channel, which is "production" for both TestFlight and
+   * the App Store. An App Review account is not an admin, so it never appears for them.
+   */
+  const [isAdmin, setIsAdmin] = useState(false);
+  useEffect(() => {
+    let live = true;
+    supabase.rpc("is_admin").then(({ data: ok }) => { if (live && ok === true) setIsAdmin(true); });
+    return () => { live = false; };
+  }, []);
   const [tab, setTab] = useState<"stats" | "history">("stats");
   const [trips, setTrips] = useState<TripSummary[]>([]);
   const [rows, setRows] = useState<StatsRow[]>([]);
@@ -166,6 +182,9 @@ export default function ProfileScreen() {
           {/* 8: FAQ */}
           <RowCard title="FAQ" caption="How splitting, Done and close-out work" right={<Icon name="chevronRight" size={18} color={color.textMuted} />} onPress={() => router.push("/(app)/faq")} />
           <RowCard title="Send feedback" caption="Tell us what broke or what you'd change" right={<Icon name="chevronRight" size={18} color={color.textMuted} />} onPress={() => router.push("/(app)/feedback")} />
+          {isAdmin ? (
+            <RowCard title="Design sheet" caption="Every component, the herd at each size, all 32 outfits" right={<Icon name="chevronRight" size={18} color={color.textMuted} />} onPress={() => router.push("/design")} />
+          ) : null}
 
           {/* 9–10 */}
           <Button kind="secondary" label="Sign out" height={size.buttonHeight} onPress={signOut} />
