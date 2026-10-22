@@ -43,7 +43,7 @@ export function packById(id: string | null | undefined): PackDef | null {
   return PACKS.find((p) => p.id === id) ?? null;
 }
 
-/** The item a rule grants, e.g. `first_gift` → the tiara. */
+/** The item a rule grants, e.g. `first_trip` → the yellow cap. */
 export function cosmeticForEarnRule(rule: string): CosmeticDef | null {
   return cosmeticById(EARN_RULES[rule]);
 }

@@ -1,5 +1,5 @@
 import { COSMETICS, OUTFIT_SLOTS, PACKS, SLOT_LABELS, cosmeticById, outfitDescription, type CosmeticDef, type PackDef } from "@bunktab/core";
-import { color, layout, outfit as outfitArt, palette, radius, shadow, space, type TeamColor } from "@bunktab/theme";
+import { color, layout, palette, radius, shadow, space } from "@bunktab/theme";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
@@ -14,10 +14,11 @@ import { useWardrobe } from "@/lib/wardrobe";
  * Buying is not open. The store products don't exist until the paid-app agreement,
  * tax and banking are done, so every paid tile here previews and says so rather than
  * offering a button that cannot work. Everything free, and everything earned, works —
- * and the try-on works on all 32, which is most of what a storefront is for.
+ * and the try-on works on all 33, which is most of what a storefront is for.
  *
  * The Gift tab from the board is deliberately absent rather than disabled: gifting is
- * a purchase, so there is nothing behind it yet and a dead tab is worse than none.
+ * a purchase, so there is nothing behind it yet and a dead tab is worse than none. It
+ * grants nothing either: no item is earned by gifting, so none is out of reach at launch.
  */
 /** One spelling, so the tile's emphasis test cannot drift from what the tag says. */
 const OWNED = "In your closet";
@@ -101,37 +102,22 @@ export default function ShopScreen() {
           ) : null}
         </HeroCard>
 
-        {/* packs: the four jersey colours are one card with a colour picker */}
+        {/* packs: one card each, and every pack undercuts its contents */}
         <View style={styles.section}>
           <ZText variant="overline" color={color.textMuted}>Packs</ZText>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.packs}>
-            {groupedPacks().map((group) => (
+            {PACKS.map((p) => (
               <Press
-                key={group.key}
-                onPress={() => { setPreview(null); setPack(group.packs[0]!.id); }}
+                key={p.id}
+                onPress={() => { setPreview(null); setPack(p.id); }}
                 scaleTo={0.97}
                 accessibilityRole="button"
-                accessibilityLabel={`${group.label}, $${group.packs[0]!.price}`}
-                style={[styles.packCard, pack && group.packs.some((p) => p.id === pack) ? styles.packOn : null]}
+                accessibilityLabel={`${p.name}, $${p.price}`}
+                style={[styles.packCard, pack === p.id ? styles.packOn : null]}
               >
-                <Zebra variant="full" size={92} striped mood="happy" outfit={lookFor(group.packs[0]!)} decorative />
-                <ZText variant="bodyStrong" numberOfLines={1}>{group.label}</ZText>
-                <ZText variant="caption" color={color.textMuted}>${group.packs[0]!.price}</ZText>
-                {group.packs.length > 1 ? (
-                  <View style={styles.swatches}>
-                    {group.packs.map((p) => (
-                      <Press
-                        key={p.id}
-                        onPress={() => { setPreview(null); setPack(p.id); }}
-                        scaleTo={0.97}
-                        accessibilityRole="button"
-                        accessibilityLabel={p.name}
-                        hitSlop={13}
-                        style={[styles.swatch, { backgroundColor: swatchColor(p) }, pack === p.id ? styles.swatchOn : null]}
-                      />
-                    ))}
-                  </View>
-                ) : null}
+                <Zebra variant="full" size={92} striped mood="happy" outfit={lookFor(p)} decorative />
+                <ZText variant="bodyStrong" numberOfLines={1}>{p.name}</ZText>
+                <ZText variant="caption" color={color.textMuted}>${p.price}</ZText>
               </Press>
             ))}
           </ScrollView>
@@ -176,32 +162,11 @@ export default function ShopScreen() {
   );
 }
 
-/** The four Jersey packs are one card; everything else is its own. */
-function groupedPacks(): { key: string; label: string; packs: PackDef[] }[] {
-  const out: { key: string; label: string; packs: PackDef[] }[] = [];
-  for (const p of PACKS) {
-    const key = p.group ?? p.id;
-    const found = out.find((g) => g.key === key);
-    if (found) found.packs.push(p);
-    else out.push({ key, label: p.group ? `${p.group[0]!.toUpperCase()}${p.group.slice(1)} pack` : p.name, packs: [p] });
-  }
-  return out;
-}
-
 function lookFor(p: PackDef) {
   const look: Record<string, string> = {};
-  for (const id of p.items) { const c = cosmeticById(id); if (c) look[c.slot] = c.id; }
+  // a pack can hold four of one slot (every jersey); show the first, not whichever sorted last
+  for (const id of p.items) { const c = cosmeticById(id); if (c && !look[c.slot]) look[c.slot] = c.id; }
   return look;
-}
-
-/**
- * The swatch is the team colour the pack's jersey is actually drawn in — it previews
- * the art rather than decorating the UI, which is the one use the outfit-only rule in
- * section 9 leaves open. Don't reach for these anywhere else.
- */
-function swatchColor(p: PackDef): string {
-  const name = p.id.replace(/^jersey_/, "") as TeamColor;
-  return outfitArt.team[name] ?? palette.pink;
 }
 
 const styles = StyleSheet.create({
@@ -218,9 +183,6 @@ const styles = StyleSheet.create({
     borderWidth: 2, borderColor: "transparent",
   },
   packOn: { borderColor: palette.volt },
-  swatches: { flexDirection: "row", gap: 6, paddingTop: 4 },
-  swatch: { width: 18, height: 18, borderRadius: 9, borderWidth: 2, borderColor: "transparent" },
-  swatchOn: { borderColor: palette.ink },
   grid: { flexDirection: "row", flexWrap: "wrap", gap: space[8] },
   tile: {
     width: "31.5%", alignItems: "center", gap: 2, paddingVertical: space[8],

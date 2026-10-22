@@ -218,19 +218,32 @@ Art: `design/zebra/outfits/*.svg`, all in the full-zebra space, with `manifest.j
 
 **The hoodie rule.** Wearing the hoodie puts its hood up, which **hides whatever is in the head slot**. The hat is not removed: it is still equipped, its wardrobe tile reads "Under the hood", and it comes back the moment the hoodie comes off. This is a drawing rule and must never be written to the database. The ears are drawn **again, over the hood**, because the band passes straight across where they sit.
 
-**Rules for the art itself:** brand palette only, with the four Jersey team colours as the single exception and outfit-art-only. Lens tint at most 55 % so the eyes (the mood) still read. Torso items cover the chest only, so the striped barrel stays visible and Done is never hidden. Mood extras (z's, sweat drop, sparkles) draw **above** outfits. Outline weight scales up at herd size.
+**Rules for the art itself:** brand palette only, with the four jersey and cap team colours as the single exception and outfit-art-only. Lens tint at most 55 % so the eyes (the mood) still read. Torso items cover the chest only, so the striped barrel stays visible and Done is never hidden. Mood extras (z's, sweat drop, sparkles) draw **above** outfits. Outline weight scales up at herd size.
 
-### The launch wardrobe (32 items)
+### The launch wardrobe (33 items)
 
-6 free · 3 earned · 23 at $0.99 · packs at $2.99. Prices live in `public.cosmetics`, never in code.
+6 free · 2 earned · 24 at $0.99 · 1 pack-only · packs at $2.99. Prices live in `public.cosmetics`, never in code.
 
 | Slot | Free | Earned | Paid |
 |---|---|---|---|
-| **Head** (12) | Pink beanie, Joker hat | Yellow cap (first trip), Party hat (5 trips), Tiara (first gift) | Crown, Flat brim, Mohawk, Blue/Green/Purple/Red cap |
+| **Head** (13) | Pink beanie, Joker hat | Yellow cap (first trip), Party hat (5 trips) | Crown, Flat brim, Mohawk, Viking helmet, Blue/Green/Purple/Red cap |
 | **Face & neck** (9) | Glasses, Sunglasses | | Spectacles, Star shades, Heart shades, Ski goggles, Gold chain, Lei, Bride sash |
 | **Body** (11) | Zebra tee, Scarf | | Hoodie, Flannel, Suit and tie, Skirt, Jersey, Blue/Green/Purple/Red jersey |
 
-Packs: **Bachelorette** (sash, skirt, tiara) and **Jersey** in four colours, shown as one card with a colour picker. Earned items cannot be bought alone.
+Three packs, each $2.99: **Bachelorette** (sash, skirt, tiara), **Jersey** (all four colours) and **Hat** (all four caps).
+
+**A pack must undercut its contents.** Four packs once sold two $0.99 items for $2.99 while the Shop
+showed both prices on the same screen, which read as a penalty rather than a bundle. The Jersey and Hat
+packs now hold four items each, and a test in `packages/core/test/outfits.test.ts` fails if any pack
+costs more than buying it piece by piece.
+
+**Pack-only is its own status.** The tiara is `status: "pack"` — no price of its own, no earn rule, and
+no store product behind it. It exists only inside the Bachelorette pack, which is what justifies that
+pack's price when two of its three items are sold separately. Earned items still cannot be bought alone.
+
+**Gifting grants nothing.** It ships after launch, and an item nobody can reach is worse than an item
+that is simply for sale, so the Viking helmet is an ordinary $0.99 item rather than a reward for a
+feature that does not exist yet. The earn rules are `first_trip` and `trips_5`, both reachable on day one.
 
 ### The Pasture
 

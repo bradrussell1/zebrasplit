@@ -6,6 +6,7 @@ Non-Consumable,Cosmetic - Blue cap,com.zebrasplit.cosmetic.cap_blue,Blue cap,"Bl
 Non-Consumable,Cosmetic - Green cap,com.zebrasplit.cosmetic.cap_green,Green cap,"Green cap for your zebra, kept for good.",0.99,Head,cap_green
 Non-Consumable,Cosmetic - Purple cap,com.zebrasplit.cosmetic.cap_purple,Purple cap,"Purple cap for your zebra, kept for good.",0.99,Head,cap_purple
 Non-Consumable,Cosmetic - Red cap,com.zebrasplit.cosmetic.cap_red,Red cap,"Red cap for your zebra, kept for good.",0.99,Head,cap_red
+Non-Consumable,Cosmetic - Viking helmet,com.zebrasplit.cosmetic.viking,Viking helmet,"Viking helmet for your zebra, kept for good.",0.99,Head,viking
 Non-Consumable,Cosmetic - Spectacles,com.zebrasplit.cosmetic.specs,Spectacles,"Spectacles for your zebra, kept for good.",0.99,Face and neck,specs
 Non-Consumable,Cosmetic - Star shades,com.zebrasplit.cosmetic.stars,Star shades,"Star shades for your zebra, kept for good.",0.99,Face and neck,stars
 Non-Consumable,Cosmetic - Ski goggles,com.zebrasplit.cosmetic.goggles,Ski goggles,"Ski goggles for your zebra, kept for good.",0.99,Face and neck,goggles
@@ -23,7 +24,5 @@ Non-Consumable,Cosmetic - Green jersey,com.zebrasplit.cosmetic.jersey_green,Gree
 Non-Consumable,Cosmetic - Purple jersey,com.zebrasplit.cosmetic.jersey_purple,Purple jersey,"Purple jersey for your zebra, kept for good.",0.99,Body,jersey_purple
 Non-Consumable,Cosmetic - Red jersey,com.zebrasplit.cosmetic.jersey_red,Red jersey,"Red jersey for your zebra, kept for good.",0.99,Body,jersey_red
 Non-Consumable,Pack - Bachelorette pack,com.zebrasplit.pack.bachelorette,Bachelorette pack,"Sash, skirt and tiara for the bride's zebra.",2.99,Pack,sash + skirt + tiara
-Non-Consumable,Pack - Jersey pack: Blue,com.zebrasplit.pack.jersey_blue,Jersey pack: Blue,"Blue jersey and cap, two items in one.",2.99,Pack,jersey_blue + cap_blue
-Non-Consumable,Pack - Jersey pack: Green,com.zebrasplit.pack.jersey_green,Jersey pack: Green,"Green jersey and cap, two items in one.",2.99,Pack,jersey_green + cap_green
-Non-Consumable,Pack - Jersey pack: Purple,com.zebrasplit.pack.jersey_purple,Jersey pack: Purple,"Purple jersey and cap, two items in one.",2.99,Pack,jersey_purple + cap_purple
-Non-Consumable,Pack - Jersey pack: Red,com.zebrasplit.pack.jersey_red,Jersey pack: Red,"Red jersey and cap, two items in one.",2.99,Pack,jersey_red + cap_red
+Non-Consumable,Pack - Jersey pack,com.zebrasplit.pack.jersey,Jersey pack,"All four jerseys: blue, green, purple, red.",2.99,Pack,jersey_blue + jersey_green + jersey_purple + jersey_red
+Non-Consumable,Pack - Hat pack,com.zebrasplit.pack.hat,Hat pack,"All four caps: blue, green, purple and red.",2.99,Pack,cap_blue + cap_green + cap_purple + cap_red

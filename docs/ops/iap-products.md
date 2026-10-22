@@ -36,24 +36,23 @@ characters rather than 45, so the text below fits with room to spare.
 | 5 | Non-Consumable | Cosmetic - Green cap | `com.zebrasplit.cosmetic.cap_green` | Green cap | Green cap for your zebra, kept for good. | $0.99 |
 | 6 | Non-Consumable | Cosmetic - Purple cap | `com.zebrasplit.cosmetic.cap_purple` | Purple cap | Purple cap for your zebra, kept for good. | $0.99 |
 | 7 | Non-Consumable | Cosmetic - Red cap | `com.zebrasplit.cosmetic.cap_red` | Red cap | Red cap for your zebra, kept for good. | $0.99 |
-| 8 | Non-Consumable | Cosmetic - Spectacles | `com.zebrasplit.cosmetic.specs` | Spectacles | Spectacles for your zebra, kept for good. | $0.99 |
-| 9 | Non-Consumable | Cosmetic - Star shades | `com.zebrasplit.cosmetic.stars` | Star shades | Star shades for your zebra, kept for good. | $0.99 |
-| 10 | Non-Consumable | Cosmetic - Ski goggles | `com.zebrasplit.cosmetic.goggles` | Ski goggles | Ski goggles for your zebra, kept for good. | $0.99 |
-| 11 | Non-Consumable | Cosmetic - Gold chain | `com.zebrasplit.cosmetic.chain` | Gold chain | Gold chain for your zebra, kept for good. | $0.99 |
-| 12 | Non-Consumable | Cosmetic - Bride sash | `com.zebrasplit.cosmetic.sash` | Bride sash | Bride sash for your zebra, kept for good. | $0.99 |
-| 13 | Non-Consumable | Cosmetic - Lei | `com.zebrasplit.cosmetic.lei` | Lei | Lei for your zebra, kept for good. | $0.99 |
-| 14 | Non-Consumable | Cosmetic - Heart shades | `com.zebrasplit.cosmetic.hearts` | Heart shades | Heart shades for your zebra, kept for good. | $0.99 |
-| 15 | Non-Consumable | Cosmetic - Hoodie | `com.zebrasplit.cosmetic.hoodie` | Hoodie | Hoodie for your zebra, kept for good. | $0.99 |
-| 16 | Non-Consumable | Cosmetic - Jersey | `com.zebrasplit.cosmetic.jersey` | Jersey | Jersey for your zebra, kept for good. | $0.99 |
-| 17 | Non-Consumable | Cosmetic - Suit and tie | `com.zebrasplit.cosmetic.suit` | Suit and tie | Suit and tie for your zebra, kept for good. | $0.99 |
-| 18 | Non-Consumable | Cosmetic - Flannel | `com.zebrasplit.cosmetic.flannel` | Flannel | Flannel for your zebra, kept for good. | $0.99 |
-| 19 | Non-Consumable | Cosmetic - Skirt | `com.zebrasplit.cosmetic.skirt` | Skirt | Skirt for your zebra, kept for good. | $0.99 |
-| 20 | Non-Consumable | Cosmetic - Blue jersey | `com.zebrasplit.cosmetic.jersey_blue` | Blue jersey | Blue jersey for your zebra, kept for good. | $0.99 |
-| 21 | Non-Consumable | Cosmetic - Green jersey | `com.zebrasplit.cosmetic.jersey_green` | Green jersey | Green jersey for your zebra, kept for good. | $0.99 |
-| 22 | Non-Consumable | Cosmetic - Purple jersey | `com.zebrasplit.cosmetic.jersey_purple` | Purple jersey | Purple jersey for your zebra, kept for good. | $0.99 |
-| 23 | Non-Consumable | Cosmetic - Red jersey | `com.zebrasplit.cosmetic.jersey_red` | Red jersey | Red jersey for your zebra, kept for good. | $0.99 |
-| 24 | Non-Consumable | Pack - Bachelorette pack | `com.zebrasplit.pack.bachelorette` | Bachelorette pack | Sash, skirt and tiara for the bride's zebra. | $2.99 |
-| 25 | Non-Consumable | Pack - Jersey pack: Blue | `com.zebrasplit.pack.jersey_blue` | Jersey pack: Blue | Blue jersey and cap, two items in one. | $2.99 |
-| 26 | Non-Consumable | Pack - Jersey pack: Green | `com.zebrasplit.pack.jersey_green` | Jersey pack: Green | Green jersey and cap, two items in one. | $2.99 |
-| 27 | Non-Consumable | Pack - Jersey pack: Purple | `com.zebrasplit.pack.jersey_purple` | Jersey pack: Purple | Purple jersey and cap, two items in one. | $2.99 |
-| 28 | Non-Consumable | Pack - Jersey pack: Red | `com.zebrasplit.pack.jersey_red` | Jersey pack: Red | Red jersey and cap, two items in one. | $2.99 |
+| 8 | Non-Consumable | Cosmetic - Viking helmet | `com.zebrasplit.cosmetic.viking` | Viking helmet | Viking helmet for your zebra, kept for good. | $0.99 |
+| 9 | Non-Consumable | Cosmetic - Spectacles | `com.zebrasplit.cosmetic.specs` | Spectacles | Spectacles for your zebra, kept for good. | $0.99 |
+| 10 | Non-Consumable | Cosmetic - Star shades | `com.zebrasplit.cosmetic.stars` | Star shades | Star shades for your zebra, kept for good. | $0.99 |
+| 11 | Non-Consumable | Cosmetic - Ski goggles | `com.zebrasplit.cosmetic.goggles` | Ski goggles | Ski goggles for your zebra, kept for good. | $0.99 |
+| 12 | Non-Consumable | Cosmetic - Gold chain | `com.zebrasplit.cosmetic.chain` | Gold chain | Gold chain for your zebra, kept for good. | $0.99 |
+| 13 | Non-Consumable | Cosmetic - Bride sash | `com.zebrasplit.cosmetic.sash` | Bride sash | Bride sash for your zebra, kept for good. | $0.99 |
+| 14 | Non-Consumable | Cosmetic - Lei | `com.zebrasplit.cosmetic.lei` | Lei | Lei for your zebra, kept for good. | $0.99 |
+| 15 | Non-Consumable | Cosmetic - Heart shades | `com.zebrasplit.cosmetic.hearts` | Heart shades | Heart shades for your zebra, kept for good. | $0.99 |
+| 16 | Non-Consumable | Cosmetic - Hoodie | `com.zebrasplit.cosmetic.hoodie` | Hoodie | Hoodie for your zebra, kept for good. | $0.99 |
+| 17 | Non-Consumable | Cosmetic - Jersey | `com.zebrasplit.cosmetic.jersey` | Jersey | Jersey for your zebra, kept for good. | $0.99 |
+| 18 | Non-Consumable | Cosmetic - Suit and tie | `com.zebrasplit.cosmetic.suit` | Suit and tie | Suit and tie for your zebra, kept for good. | $0.99 |
+| 19 | Non-Consumable | Cosmetic - Flannel | `com.zebrasplit.cosmetic.flannel` | Flannel | Flannel for your zebra, kept for good. | $0.99 |
+| 20 | Non-Consumable | Cosmetic - Skirt | `com.zebrasplit.cosmetic.skirt` | Skirt | Skirt for your zebra, kept for good. | $0.99 |
+| 21 | Non-Consumable | Cosmetic - Blue jersey | `com.zebrasplit.cosmetic.jersey_blue` | Blue jersey | Blue jersey for your zebra, kept for good. | $0.99 |
+| 22 | Non-Consumable | Cosmetic - Green jersey | `com.zebrasplit.cosmetic.jersey_green` | Green jersey | Green jersey for your zebra, kept for good. | $0.99 |
+| 23 | Non-Consumable | Cosmetic - Purple jersey | `com.zebrasplit.cosmetic.jersey_purple` | Purple jersey | Purple jersey for your zebra, kept for good. | $0.99 |
+| 24 | Non-Consumable | Cosmetic - Red jersey | `com.zebrasplit.cosmetic.jersey_red` | Red jersey | Red jersey for your zebra, kept for good. | $0.99 |
+| 25 | Non-Consumable | Pack - Bachelorette pack | `com.zebrasplit.pack.bachelorette` | Bachelorette pack | Sash, skirt and tiara for the bride's zebra. | $2.99 |
+| 26 | Non-Consumable | Pack - Jersey pack | `com.zebrasplit.pack.jersey` | Jersey pack | All four jerseys: blue, green, purple, red. | $2.99 |
+| 27 | Non-Consumable | Pack - Hat pack | `com.zebrasplit.pack.hat` | Hat pack | All four caps: blue, green, purple and red. | $2.99 |

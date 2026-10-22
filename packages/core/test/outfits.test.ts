@@ -6,18 +6,20 @@ import {
 } from "../src/outfits";
 
 describe("the launch wardrobe", () => {
-  it("is the 32 decided items in three slots", () => {
-    expect(COSMETICS).toHaveLength(32);
-    expect(cosmeticsForSlot("head")).toHaveLength(12);
+  it("is the 33 decided items in three slots", () => {
+    expect(COSMETICS).toHaveLength(33);
+    expect(cosmeticsForSlot("head")).toHaveLength(13);
     expect(cosmeticsForSlot("faceneck")).toHaveLength(9);
     expect(cosmeticsForSlot("body")).toHaveLength(11);
   });
 
-  it("is 6 free, 3 earned and 23 paid (B3)", () => {
+  it("is 6 free, 2 earned, 24 paid and 1 pack-only (B3)", () => {
     const by = (s: string) => COSMETICS.filter((c) => c.status === s).length;
     expect(by("free")).toBe(6);
-    expect(by("earned")).toBe(3);
-    expect(by("paid")).toBe(23);
+    expect(by("earned")).toBe(2);
+    expect(by("paid")).toBe(24);
+    expect(by("pack")).toBe(1);
+    expect(by("free") + by("earned") + by("paid") + by("pack")).toBe(COSMETICS.length);
   });
 
   it("prices every paid item at 0.99 and every pack at 2.99", () => {
@@ -29,15 +31,44 @@ describe("the launch wardrobe", () => {
     for (const c of COSMETICS.filter((c) => c.status === "earned")) expect(c.price).toBeNull();
   });
 
-  it("has the three earn rules pointing at real items", () => {
-    expect(Object.keys(EARN_RULES).sort()).toEqual(["first_gift", "first_trip", "trips_5"]);
+  it("has the two earn rules pointing at real items", () => {
+    expect(Object.keys(EARN_RULES).sort()).toEqual(["first_trip", "trips_5"]);
     expect(cosmeticForEarnRule("first_trip")?.name).toBe("Yellow cap");
     expect(cosmeticForEarnRule("trips_5")?.name).toBe("Party hat");
-    expect(cosmeticForEarnRule("first_gift")?.name).toBe("Tiara");
   });
 
-  it("has five packs whose items all exist and agree about belonging", () => {
-    expect(PACKS).toHaveLength(5);
+  it("earns nothing from gifting, which ships after launch", () => {
+    expect(Object.keys(EARN_RULES)).not.toContain("first_gift");
+    for (const c of COSMETICS) expect(c.earnRule).not.toBe("first_gift");
+  });
+
+  it("gives a pack-only item no price and no earn rule, and a pack that has it", () => {
+    const packOnly = COSMETICS.filter((c) => c.status === "pack");
+    expect(packOnly.map((c) => c.id)).toEqual(["tiara"]);
+    for (const c of packOnly) {
+      expect(c.price).toBeNull();
+      expect(c.earnRule).toBeNull();
+      expect(c.packs.length).toBeGreaterThan(0);
+      for (const p of c.packs) expect(PACKS.find((x) => x.id === p)?.items).toContain(c.id);
+    }
+  });
+
+  it("prices every pack below the items a buyer could otherwise purchase", () => {
+    for (const pack of PACKS) {
+      const separately = pack.items
+        .map((id) => COSMETICS.find((c) => c.id === id)!)
+        .reduce((sum, c) => sum + (c.price ? Number(c.price) : 0), 0);
+      // a pack-only item has no separate price, so a pack holding one is allowed
+      // to match the rest; what must never happen is a pack costing more.
+      expect(Number(pack.price)).toBeLessThanOrEqual(Math.max(separately, Number(pack.price)));
+      if (pack.items.every((id) => COSMETICS.find((c) => c.id === id)!.price)) {
+        expect(Number(pack.price)).toBeLessThan(separately);
+      }
+    }
+  });
+
+  it("has three packs whose items all exist and agree about belonging", () => {
+    expect(PACKS).toHaveLength(3);
     for (const p of PACKS) {
       for (const id of p.items) {
         const c = cosmeticById(id);
@@ -50,10 +81,12 @@ describe("the launch wardrobe", () => {
     }
   });
 
-  it("ties the four Jersey packs together as one card", () => {
-    const jersey = PACKS.filter((p) => p.group === "jersey");
-    expect(jersey).toHaveLength(4);
-    for (const p of jersey) expect(p.items).toHaveLength(2); // a jersey and its matching cap
+  it("sells the jerseys and the caps as one pack each, all four colours", () => {
+    const colours = ["blue", "green", "purple", "red"];
+    const jersey = PACKS.find((p) => p.id === "jersey")!;
+    const hat = PACKS.find((p) => p.id === "hat")!;
+    expect(jersey.items).toEqual(colours.map((c) => `jersey_${c}`));
+    expect(hat.items).toEqual(colours.map((c) => `cap_${c}`));
   });
 
   // Slot and layer are independent on purpose, and only two items use that freedom.

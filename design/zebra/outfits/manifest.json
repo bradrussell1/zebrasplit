@@ -1,485 +1,480 @@
 {
- "coordinate_space": "master full zebra, viewBox 0 -8 320 330; bust is the same space cropped to 30 -8 200 208",
- "slots": {
-  "head": "one item",
-  "faceneck": "one item (glasses OR chain OR lei OR sash, never two)",
-  "body": "one item"
- },
- "draw_order": "body fill/stripes -> torso items (clipped to body or bust neck) -> body outline -> skirt -> head+mood -> hood (hoodie only) -> throat items -> face items -> head items (skipped while hoodie is worn)",
- "rules": [
-  "hoodie hides the head slot item while worn",
-  "lens tint max 55% so the eyes (mood) read",
-  "torso items cover the chest only; striped barrel stays visible",
-  "mood extras draw above outfits",
-  "outline stroke scales with size",
-  "jersey pack team colors are outfit-only and never reuse chart palette tokens"
- ],
- "items": [
-  {
-   "id": "beanie",
-   "name": "Pink beanie",
-   "slot": "head",
-   "layer": "head",
-   "draw_order": 6,
-   "clip": null,
-   "hides_head_slot": false,
-   "status": "free",
-   "price_or_rule": null,
-   "in_packs": []
+  "coordinate_space": "master full zebra, viewBox 0 -8 320 330; bust is the same space cropped to 30 -8 200 208",
+  "slots": {
+    "head": "one item",
+    "faceneck": "one item (glasses OR chain OR lei OR sash, never two)",
+    "body": "one item"
   },
-  {
-   "id": "cap",
-   "name": "Yellow cap",
-   "slot": "head",
-   "layer": "head",
-   "draw_order": 6,
-   "clip": null,
-   "hides_head_slot": false,
-   "status": "earned",
-   "price_or_rule": "first_trip: complete your first trip or group expense",
-   "in_packs": []
+  "draw_order": "body fill/stripes -> torso items (clipped to body or bust neck) -> body outline -> skirt -> head+mood -> hood (hoodie only) -> throat items -> face items -> head items (skipped while hoodie is worn)",
+  "rules": [
+    "hoodie hides the head slot item while worn",
+    "lens tint max 55% so the eyes (mood) read",
+    "torso items cover the chest only; striped barrel stays visible",
+    "mood extras draw above outfits",
+    "outline stroke scales with size",
+    "jersey pack team colors are outfit-only and never reuse chart palette tokens"
+  ],
+  "items": [
+    {
+      "id": "beanie",
+      "name": "Pink beanie",
+      "slot": "head",
+      "layer": "head",
+      "draw_order": 6,
+      "clip": null,
+      "hides_head_slot": false,
+      "status": "free",
+      "price_or_rule": null,
+      "in_packs": []
+    },
+    {
+      "id": "cap",
+      "name": "Yellow cap",
+      "slot": "head",
+      "layer": "head",
+      "draw_order": 6,
+      "clip": null,
+      "hides_head_slot": false,
+      "status": "earned",
+      "price_or_rule": "first_trip: complete your first trip or group expense",
+      "in_packs": []
+    },
+    {
+      "id": "flatbrim",
+      "name": "Flat brim hat",
+      "slot": "head",
+      "layer": "head",
+      "draw_order": 6,
+      "clip": null,
+      "hides_head_slot": false,
+      "status": "paid",
+      "price_or_rule": "0.99",
+      "in_packs": []
+    },
+    {
+      "id": "joker",
+      "name": "Joker hat",
+      "slot": "head",
+      "layer": "head",
+      "draw_order": 6,
+      "clip": null,
+      "hides_head_slot": false,
+      "status": "free",
+      "price_or_rule": null,
+      "in_packs": []
+    },
+    {
+      "id": "mohawk",
+      "name": "Mohawk",
+      "slot": "head",
+      "layer": "head",
+      "draw_order": 6,
+      "clip": null,
+      "hides_head_slot": false,
+      "status": "paid",
+      "price_or_rule": "0.99",
+      "in_packs": []
+    },
+    {
+      "id": "tiara",
+      "name": "Tiara",
+      "slot": "head",
+      "layer": "head",
+      "draw_order": 6,
+      "clip": null,
+      "hides_head_slot": false,
+      "status": "pack",
+      "price_or_rule": "In the Bachelorette pack only",
+      "in_packs": [
+        "bachelorette"
+      ]
+    },
+    {
+      "id": "crown",
+      "name": "Crown",
+      "slot": "head",
+      "layer": "head",
+      "draw_order": 6,
+      "clip": null,
+      "hides_head_slot": false,
+      "status": "paid",
+      "price_or_rule": "0.99",
+      "in_packs": []
+    },
+    {
+      "id": "party",
+      "name": "Party hat",
+      "slot": "head",
+      "layer": "head",
+      "draw_order": 6,
+      "clip": null,
+      "hides_head_slot": false,
+      "status": "earned",
+      "price_or_rule": "trips_5: complete five trips or group expenses",
+      "in_packs": []
+    },
+    {
+      "id": "cap_blue",
+      "name": "Blue cap",
+      "slot": "head",
+      "layer": "head",
+      "draw_order": 6,
+      "clip": null,
+      "hides_head_slot": false,
+      "status": "paid",
+      "price_or_rule": "0.99",
+      "in_packs": [
+        "hat"
+      ]
+    },
+    {
+      "id": "cap_green",
+      "name": "Green cap",
+      "slot": "head",
+      "layer": "head",
+      "draw_order": 6,
+      "clip": null,
+      "hides_head_slot": false,
+      "status": "paid",
+      "price_or_rule": "0.99",
+      "in_packs": [
+        "hat"
+      ]
+    },
+    {
+      "id": "cap_purple",
+      "name": "Purple cap",
+      "slot": "head",
+      "layer": "head",
+      "draw_order": 6,
+      "clip": null,
+      "hides_head_slot": false,
+      "status": "paid",
+      "price_or_rule": "0.99",
+      "in_packs": [
+        "hat"
+      ]
+    },
+    {
+      "id": "cap_red",
+      "name": "Red cap",
+      "slot": "head",
+      "layer": "head",
+      "draw_order": 6,
+      "clip": null,
+      "hides_head_slot": false,
+      "status": "paid",
+      "price_or_rule": "0.99",
+      "in_packs": [
+        "hat"
+      ]
+    },
+    {
+      "id": "viking",
+      "name": "Viking helmet",
+      "slot": "head",
+      "layer": "head",
+      "draw_order": 6,
+      "clip": null,
+      "hides_head_slot": false,
+      "status": "paid",
+      "price_or_rule": "0.99",
+      "in_packs": []
+    },
+    {
+      "id": "specs",
+      "name": "Spectacles",
+      "slot": "faceneck",
+      "layer": "face",
+      "draw_order": 5,
+      "clip": null,
+      "hides_head_slot": false,
+      "status": "paid",
+      "price_or_rule": "0.99",
+      "in_packs": []
+    },
+    {
+      "id": "glasses",
+      "name": "Glasses",
+      "slot": "faceneck",
+      "layer": "face",
+      "draw_order": 5,
+      "clip": null,
+      "hides_head_slot": false,
+      "status": "free",
+      "price_or_rule": null,
+      "in_packs": []
+    },
+    {
+      "id": "shades",
+      "name": "Sunglasses",
+      "slot": "faceneck",
+      "layer": "face",
+      "draw_order": 5,
+      "clip": null,
+      "hides_head_slot": false,
+      "status": "free",
+      "price_or_rule": null,
+      "in_packs": []
+    },
+    {
+      "id": "stars",
+      "name": "Star shades",
+      "slot": "faceneck",
+      "layer": "face",
+      "draw_order": 5,
+      "clip": null,
+      "hides_head_slot": false,
+      "status": "paid",
+      "price_or_rule": "0.99",
+      "in_packs": []
+    },
+    {
+      "id": "goggles",
+      "name": "Ski goggles",
+      "slot": "faceneck",
+      "layer": "face",
+      "draw_order": 5,
+      "clip": null,
+      "hides_head_slot": false,
+      "status": "paid",
+      "price_or_rule": "0.99",
+      "in_packs": []
+    },
+    {
+      "id": "chain",
+      "name": "Gold chain",
+      "slot": "faceneck",
+      "layer": "throat",
+      "draw_order": 4,
+      "clip": null,
+      "hides_head_slot": false,
+      "status": "paid",
+      "price_or_rule": "0.99",
+      "in_packs": []
+    },
+    {
+      "id": "sash",
+      "name": "Bride sash",
+      "slot": "faceneck",
+      "layer": "torso",
+      "draw_order": 1,
+      "clip": "body (bust: neck)",
+      "hides_head_slot": false,
+      "status": "paid",
+      "price_or_rule": "0.99",
+      "in_packs": [
+        "bachelorette"
+      ]
+    },
+    {
+      "id": "lei",
+      "name": "Lei",
+      "slot": "faceneck",
+      "layer": "throat",
+      "draw_order": 4,
+      "clip": null,
+      "hides_head_slot": false,
+      "status": "paid",
+      "price_or_rule": "0.99",
+      "in_packs": []
+    },
+    {
+      "id": "hearts",
+      "name": "Heart shades",
+      "slot": "faceneck",
+      "layer": "face",
+      "draw_order": 5,
+      "clip": null,
+      "hides_head_slot": false,
+      "status": "paid",
+      "price_or_rule": "0.99",
+      "in_packs": []
+    },
+    {
+      "id": "tee",
+      "name": "Zebra tee",
+      "slot": "body",
+      "layer": "torso",
+      "draw_order": 1,
+      "clip": "body (bust: neck)",
+      "hides_head_slot": false,
+      "status": "free",
+      "price_or_rule": null,
+      "in_packs": []
+    },
+    {
+      "id": "hoodie",
+      "name": "Hoodie",
+      "slot": "body",
+      "layer": "torso",
+      "draw_order": 1,
+      "clip": "body (bust: neck)",
+      "hides_head_slot": true,
+      "status": "paid",
+      "price_or_rule": "0.99",
+      "in_packs": []
+    },
+    {
+      "id": "scarf",
+      "name": "Scarf",
+      "slot": "body",
+      "layer": "throat",
+      "draw_order": 4,
+      "clip": null,
+      "hides_head_slot": false,
+      "status": "free",
+      "price_or_rule": null,
+      "in_packs": []
+    },
+    {
+      "id": "jersey",
+      "name": "Jersey",
+      "slot": "body",
+      "layer": "torso",
+      "draw_order": 1,
+      "clip": "body (bust: neck)",
+      "hides_head_slot": false,
+      "status": "paid",
+      "price_or_rule": "0.99",
+      "in_packs": []
+    },
+    {
+      "id": "suit",
+      "name": "Suit and tie",
+      "slot": "body",
+      "layer": "torso",
+      "draw_order": 1,
+      "clip": "body (bust: neck)",
+      "hides_head_slot": false,
+      "status": "paid",
+      "price_or_rule": "0.99",
+      "in_packs": []
+    },
+    {
+      "id": "flannel",
+      "name": "Flannel",
+      "slot": "body",
+      "layer": "torso",
+      "draw_order": 1,
+      "clip": "body (bust: neck)",
+      "hides_head_slot": false,
+      "status": "paid",
+      "price_or_rule": "0.99",
+      "in_packs": []
+    },
+    {
+      "id": "skirt",
+      "name": "Skirt",
+      "slot": "body",
+      "layer": "skirt",
+      "draw_order": 2,
+      "clip": null,
+      "hides_head_slot": false,
+      "status": "paid",
+      "price_or_rule": "0.99",
+      "in_packs": [
+        "bachelorette"
+      ]
+    },
+    {
+      "id": "jersey_blue",
+      "name": "Blue jersey",
+      "slot": "body",
+      "layer": "torso",
+      "draw_order": 1,
+      "clip": "body (bust: neck)",
+      "hides_head_slot": false,
+      "status": "paid",
+      "price_or_rule": "0.99",
+      "in_packs": [
+        "jersey"
+      ]
+    },
+    {
+      "id": "jersey_green",
+      "name": "Green jersey",
+      "slot": "body",
+      "layer": "torso",
+      "draw_order": 1,
+      "clip": "body (bust: neck)",
+      "hides_head_slot": false,
+      "status": "paid",
+      "price_or_rule": "0.99",
+      "in_packs": [
+        "jersey"
+      ]
+    },
+    {
+      "id": "jersey_purple",
+      "name": "Purple jersey",
+      "slot": "body",
+      "layer": "torso",
+      "draw_order": 1,
+      "clip": "body (bust: neck)",
+      "hides_head_slot": false,
+      "status": "paid",
+      "price_or_rule": "0.99",
+      "in_packs": [
+        "jersey"
+      ]
+    },
+    {
+      "id": "jersey_red",
+      "name": "Red jersey",
+      "slot": "body",
+      "layer": "torso",
+      "draw_order": 1,
+      "clip": "body (bust: neck)",
+      "hides_head_slot": false,
+      "status": "paid",
+      "price_or_rule": "0.99",
+      "in_packs": [
+        "jersey"
+      ]
+    }
+  ],
+  "packs": {
+    "bachelorette": {
+      "name": "Bachelorette pack",
+      "price": "2.99",
+      "items": [
+        "sash",
+        "skirt",
+        "tiara"
+      ]
+    },
+    "jersey": {
+      "name": "Jersey pack",
+      "price": "2.99",
+      "items": [
+        "jersey_blue",
+        "jersey_green",
+        "jersey_purple",
+        "jersey_red"
+      ]
+    },
+    "hat": {
+      "name": "Hat pack",
+      "price": "2.99",
+      "items": [
+        "cap_blue",
+        "cap_green",
+        "cap_purple",
+        "cap_red"
+      ]
+    }
   },
-  {
-   "id": "flatbrim",
-   "name": "Flat brim hat",
-   "slot": "head",
-   "layer": "head",
-   "draw_order": 6,
-   "clip": null,
-   "hides_head_slot": false,
-   "status": "paid",
-   "price_or_rule": "0.99",
-   "in_packs": []
+  "team_colors": {
+    "scope": "Jersey pack outfit art ONLY. Never UI, never charts.",
+    "blue": "#2F6BFF",
+    "green": "#1FA463",
+    "purple": "#7A4DFF",
+    "red": "#F0443A"
   },
-  {
-   "id": "joker",
-   "name": "Joker hat",
-   "slot": "head",
-   "layer": "head",
-   "draw_order": 6,
-   "clip": null,
-   "hides_head_slot": false,
-   "status": "free",
-   "price_or_rule": null,
-   "in_packs": []
-  },
-  {
-   "id": "mohawk",
-   "name": "Mohawk",
-   "slot": "head",
-   "layer": "head",
-   "draw_order": 6,
-   "clip": null,
-   "hides_head_slot": false,
-   "status": "paid",
-   "price_or_rule": "0.99",
-   "in_packs": []
-  },
-  {
-   "id": "tiara",
-   "name": "Tiara",
-   "slot": "head",
-   "layer": "head",
-   "draw_order": 6,
-   "clip": null,
-   "hides_head_slot": false,
-   "status": "earned",
-   "price_or_rule": "first_gift: send a gift to someone (also in the Bachelorette pack)",
-   "in_packs": [
-    "bachelorette"
-   ]
-  },
-  {
-   "id": "crown",
-   "name": "Crown",
-   "slot": "head",
-   "layer": "head",
-   "draw_order": 6,
-   "clip": null,
-   "hides_head_slot": false,
-   "status": "paid",
-   "price_or_rule": "0.99",
-   "in_packs": []
-  },
-  {
-   "id": "party",
-   "name": "Party hat",
-   "slot": "head",
-   "layer": "head",
-   "draw_order": 6,
-   "clip": null,
-   "hides_head_slot": false,
-   "status": "earned",
-   "price_or_rule": "trips_5: complete five trips or group expenses",
-   "in_packs": []
-  },
-  {
-   "id": "cap_blue",
-   "name": "Blue cap",
-   "slot": "head",
-   "layer": "head",
-   "draw_order": 6,
-   "clip": null,
-   "hides_head_slot": false,
-   "status": "paid",
-   "price_or_rule": "0.99",
-   "in_packs": [
-    "jersey_blue"
-   ]
-  },
-  {
-   "id": "cap_green",
-   "name": "Green cap",
-   "slot": "head",
-   "layer": "head",
-   "draw_order": 6,
-   "clip": null,
-   "hides_head_slot": false,
-   "status": "paid",
-   "price_or_rule": "0.99",
-   "in_packs": [
-    "jersey_green"
-   ]
-  },
-  {
-   "id": "cap_purple",
-   "name": "Purple cap",
-   "slot": "head",
-   "layer": "head",
-   "draw_order": 6,
-   "clip": null,
-   "hides_head_slot": false,
-   "status": "paid",
-   "price_or_rule": "0.99",
-   "in_packs": [
-    "jersey_purple"
-   ]
-  },
-  {
-   "id": "cap_red",
-   "name": "Red cap",
-   "slot": "head",
-   "layer": "head",
-   "draw_order": 6,
-   "clip": null,
-   "hides_head_slot": false,
-   "status": "paid",
-   "price_or_rule": "0.99",
-   "in_packs": [
-    "jersey_red"
-   ]
-  },
-  {
-   "id": "specs",
-   "name": "Spectacles",
-   "slot": "faceneck",
-   "layer": "face",
-   "draw_order": 5,
-   "clip": null,
-   "hides_head_slot": false,
-   "status": "paid",
-   "price_or_rule": "0.99",
-   "in_packs": []
-  },
-  {
-   "id": "glasses",
-   "name": "Glasses",
-   "slot": "faceneck",
-   "layer": "face",
-   "draw_order": 5,
-   "clip": null,
-   "hides_head_slot": false,
-   "status": "free",
-   "price_or_rule": null,
-   "in_packs": []
-  },
-  {
-   "id": "shades",
-   "name": "Sunglasses",
-   "slot": "faceneck",
-   "layer": "face",
-   "draw_order": 5,
-   "clip": null,
-   "hides_head_slot": false,
-   "status": "free",
-   "price_or_rule": null,
-   "in_packs": []
-  },
-  {
-   "id": "stars",
-   "name": "Star shades",
-   "slot": "faceneck",
-   "layer": "face",
-   "draw_order": 5,
-   "clip": null,
-   "hides_head_slot": false,
-   "status": "paid",
-   "price_or_rule": "0.99",
-   "in_packs": []
-  },
-  {
-   "id": "goggles",
-   "name": "Ski goggles",
-   "slot": "faceneck",
-   "layer": "face",
-   "draw_order": 5,
-   "clip": null,
-   "hides_head_slot": false,
-   "status": "paid",
-   "price_or_rule": "0.99",
-   "in_packs": []
-  },
-  {
-   "id": "chain",
-   "name": "Gold chain",
-   "slot": "faceneck",
-   "layer": "throat",
-   "draw_order": 4,
-   "clip": null,
-   "hides_head_slot": false,
-   "status": "paid",
-   "price_or_rule": "0.99",
-   "in_packs": []
-  },
-  {
-   "id": "sash",
-   "name": "Bride sash",
-   "slot": "faceneck",
-   "layer": "torso",
-   "draw_order": 1,
-   "clip": "body (bust: neck)",
-   "hides_head_slot": false,
-   "status": "paid",
-   "price_or_rule": "0.99",
-   "in_packs": [
-    "bachelorette"
-   ]
-  },
-  {
-   "id": "lei",
-   "name": "Lei",
-   "slot": "faceneck",
-   "layer": "throat",
-   "draw_order": 4,
-   "clip": null,
-   "hides_head_slot": false,
-   "status": "paid",
-   "price_or_rule": "0.99",
-   "in_packs": []
-  },
-  {
-   "id": "hearts",
-   "name": "Heart shades",
-   "slot": "faceneck",
-   "layer": "face",
-   "draw_order": 5,
-   "clip": null,
-   "hides_head_slot": false,
-   "status": "paid",
-   "price_or_rule": "0.99",
-   "in_packs": []
-  },
-  {
-   "id": "tee",
-   "name": "Zebra tee",
-   "slot": "body",
-   "layer": "torso",
-   "draw_order": 1,
-   "clip": "body (bust: neck)",
-   "hides_head_slot": false,
-   "status": "free",
-   "price_or_rule": null,
-   "in_packs": []
-  },
-  {
-   "id": "hoodie",
-   "name": "Hoodie",
-   "slot": "body",
-   "layer": "torso",
-   "draw_order": 1,
-   "clip": "body (bust: neck)",
-   "hides_head_slot": true,
-   "status": "paid",
-   "price_or_rule": "0.99",
-   "in_packs": []
-  },
-  {
-   "id": "scarf",
-   "name": "Scarf",
-   "slot": "body",
-   "layer": "throat",
-   "draw_order": 4,
-   "clip": null,
-   "hides_head_slot": false,
-   "status": "free",
-   "price_or_rule": null,
-   "in_packs": []
-  },
-  {
-   "id": "jersey",
-   "name": "Jersey",
-   "slot": "body",
-   "layer": "torso",
-   "draw_order": 1,
-   "clip": "body (bust: neck)",
-   "hides_head_slot": false,
-   "status": "paid",
-   "price_or_rule": "0.99",
-   "in_packs": []
-  },
-  {
-   "id": "suit",
-   "name": "Suit and tie",
-   "slot": "body",
-   "layer": "torso",
-   "draw_order": 1,
-   "clip": "body (bust: neck)",
-   "hides_head_slot": false,
-   "status": "paid",
-   "price_or_rule": "0.99",
-   "in_packs": []
-  },
-  {
-   "id": "flannel",
-   "name": "Flannel",
-   "slot": "body",
-   "layer": "torso",
-   "draw_order": 1,
-   "clip": "body (bust: neck)",
-   "hides_head_slot": false,
-   "status": "paid",
-   "price_or_rule": "0.99",
-   "in_packs": []
-  },
-  {
-   "id": "skirt",
-   "name": "Skirt",
-   "slot": "body",
-   "layer": "skirt",
-   "draw_order": 2,
-   "clip": null,
-   "hides_head_slot": false,
-   "status": "paid",
-   "price_or_rule": "0.99",
-   "in_packs": [
-    "bachelorette"
-   ]
-  },
-  {
-   "id": "jersey_blue",
-   "name": "Blue jersey",
-   "slot": "body",
-   "layer": "torso",
-   "draw_order": 1,
-   "clip": "body (bust: neck)",
-   "hides_head_slot": false,
-   "status": "paid",
-   "price_or_rule": "0.99",
-   "in_packs": [
-    "jersey_blue"
-   ]
-  },
-  {
-   "id": "jersey_green",
-   "name": "Green jersey",
-   "slot": "body",
-   "layer": "torso",
-   "draw_order": 1,
-   "clip": "body (bust: neck)",
-   "hides_head_slot": false,
-   "status": "paid",
-   "price_or_rule": "0.99",
-   "in_packs": [
-    "jersey_green"
-   ]
-  },
-  {
-   "id": "jersey_purple",
-   "name": "Purple jersey",
-   "slot": "body",
-   "layer": "torso",
-   "draw_order": 1,
-   "clip": "body (bust: neck)",
-   "hides_head_slot": false,
-   "status": "paid",
-   "price_or_rule": "0.99",
-   "in_packs": [
-    "jersey_purple"
-   ]
-  },
-  {
-   "id": "jersey_red",
-   "name": "Red jersey",
-   "slot": "body",
-   "layer": "torso",
-   "draw_order": 1,
-   "clip": "body (bust: neck)",
-   "hides_head_slot": false,
-   "status": "paid",
-   "price_or_rule": "0.99",
-   "in_packs": [
-    "jersey_red"
-   ]
+  "pricing": "Every individual paid item $0.99; every pack $2.99. Pack-only items carry no individual price. Serve from config (cosmetics table), never hard-code.",
+  "earn_rules": {
+    "first_trip": "cap",
+    "trips_5": "party"
   }
- ],
- "packs": {
-  "bachelorette": {
-   "name": "Bachelorette pack",
-   "price": "2.99",
-   "items": [
-    "sash",
-    "skirt",
-    "tiara"
-   ]
-  },
-  "jersey_blue": {
-   "name": "Jersey pack: Blue",
-   "price": "2.99",
-   "items": [
-    "jersey_blue",
-    "cap_blue"
-   ],
-   "group": "jersey"
-  },
-  "jersey_green": {
-   "name": "Jersey pack: Green",
-   "price": "2.99",
-   "items": [
-    "jersey_green",
-    "cap_green"
-   ],
-   "group": "jersey"
-  },
-  "jersey_purple": {
-   "name": "Jersey pack: Purple",
-   "price": "2.99",
-   "items": [
-    "jersey_purple",
-    "cap_purple"
-   ],
-   "group": "jersey"
-  },
-  "jersey_red": {
-   "name": "Jersey pack: Red",
-   "price": "2.99",
-   "items": [
-    "jersey_red",
-    "cap_red"
-   ],
-   "group": "jersey"
-  }
- },
- "team_colors": {
-  "scope": "Jersey pack outfit art ONLY. Never UI, never charts.",
-  "blue": "#2F6BFF",
-  "green": "#1FA463",
-  "purple": "#7A4DFF",
-  "red": "#F0443A"
- },
- "pricing": "Every individual paid item $0.99; every pack $2.99. Serve from config (cosmetics table), never hard-code.",
- "earn_rules": {
-  "first_trip": "cap",
-  "trips_5": "party",
-  "first_gift": "tiara"
- }
 }

@@ -15,6 +15,8 @@ const NAME_MAX = 30, DESC_MAX = 45;
 
 const src = readFileSync(SRC, "utf8");
 
+// Only `paid` items get a product of their own. A `pack` item - the tiara - is
+// sold inside a pack and has no store product, which is the point of it.
 const items = [...src.matchAll(/\{ id: "([^"]+)", name: "([^"]+)", slot: "([^"]+)".*?status: "paid", price: "([^"]+)".*?\}/g)]
   .map(([, id, name, slot, price]) => ({ id, name, slot, price, kind: "cosmetic" }));
 
@@ -28,10 +30,8 @@ const packs = [...src.matchAll(/\{ id: "([^"]+)", name: "([^"]+)", price: "([^"]
 // the 45-character limit for every name in the catalogue.
 const PACK_DESC = {
   bachelorette: "Sash, skirt and tiara for the bride's zebra.",
-  jersey_blue: "Blue jersey and cap, two items in one.",
-  jersey_green: "Green jersey and cap, two items in one.",
-  jersey_purple: "Purple jersey and cap, two items in one.",
-  jersey_red: "Red jersey and cap, two items in one.",
+  jersey: "All four jerseys: blue, green, purple, red.",
+  hat: "All four caps: blue, green, purple and red.",
 };
 
 const SLOT_LABEL = { head: "Head", faceneck: "Face and neck", body: "Body" };
@@ -52,7 +52,7 @@ const rows = [
     reference: `Pack - ${p.name}`,
     productId: `${PREFIX}.pack.${p.id}`,
     display: p.name,
-    description: PACK_DESC[p.id] ?? `${p.name} for your zebra.`,
+    description: PACK_DESC[p.id],
     price: p.price,
     slot: "Pack",
     grants: p.items.join(" + "),
@@ -61,6 +61,7 @@ const rows = [
 
 const problems = [];
 for (const r of rows) {
+  if (!r.description) { problems.push(`no description written for ${r.productId}`); continue; }
   if (r.display.length > NAME_MAX) problems.push(`display ${r.display.length}>${NAME_MAX}: ${r.display}`);
   if (r.description.length > DESC_MAX) problems.push(`description ${r.description.length}>${DESC_MAX}: ${r.description}`);
 }

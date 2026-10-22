@@ -1,5 +1,5 @@
 import {
-  COSMETICS, EARN_RULES, SLOT_LABELS, OUTFIT_SLOTS, cosmeticById, hiddenByHood, hoodIsUp,
+  COSMETICS, EARN_RULES, PACKS, SLOT_LABELS, OUTFIT_SLOTS, cosmeticById, hiddenByHood, hoodIsUp,
   outfitDescription, type CosmeticDef, type OutfitSlot, type ZebraMood,
 } from "@bunktab/core";
 import { color, palette, radius, shadow, size, space } from "@bunktab/theme";
@@ -81,9 +81,15 @@ export function ZebraTab({ loadingSlot }: { loadingSlot?: ReactNode }) {
       show({
         message: c.earnRule === "trips_5"
           ? `Finish 5 trips to earn the ${c.name.toLowerCase()}. You're at ${settledTrips}.`
-          : c.earnRule === "first_gift"
-            ? `Send any gift to earn the ${c.name.toLowerCase()}. It's also in the Bachelorette pack.`
-            : `Settle your first trip to earn the ${c.name.toLowerCase()}.`,
+          : `Settle your first trip to earn the ${c.name.toLowerCase()}.`,
+        duration: 4000,
+      });
+      return;
+    }
+    if (c.status === "pack") {
+      const pack = PACKS.find((p) => p.id === c.packs[0]);
+      show({
+        message: `The ${c.name.toLowerCase()} only comes in the ${pack?.name ?? "pack"}.`,
         duration: 4000,
       });
       return;
