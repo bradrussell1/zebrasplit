@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   availablePlatforms, choosePlatform, formatHandle, isValidHandle, normalizeHandle,
-  PAY_PLATFORMS, payLink, payNote, PLATFORM_SPECS, type PayPlatform,
+  PAY_PLATFORMS, payLink, payNote, planVenmoRequests, PLATFORM_SPECS, type PayPlatform,
 } from "../src/payments";
 
 describe("normalizeHandle", () => {
@@ -130,5 +130,46 @@ describe("availablePlatforms", () => {
   it("lists only what the person registered, in display order", () => {
     expect(availablePlatforms({ paypal: "p", venmo: "v-enmo" })).toEqual<PayPlatform[]>(["venmo", "paypal"]);
     expect(availablePlatforms({})).toEqual([]);
+  });
+});
+
+describe("planVenmoRequests", () => {
+  const d = (recipient: string | null, amountCents: number) => ({ recipient, amountCents });
+
+  it("batches when every debt is the same amount", () => {
+    const plan = planVenmoRequests([d("mike-c", 5000), d("priya-p", 5000), d("jen-a", 5000)]);
+    expect(plan.mode).toBe("batch");
+    expect(plan.requests).toHaveLength(3);
+    expect(plan.coversAll).toBe(true);
+  });
+
+  // the bug this replaces: one charge for several people used the FIRST debt's amount,
+  // so Priya's $33.28 was requested as Mike's $457.25
+  it("never batches debts of different amounts", () => {
+    const plan = planVenmoRequests([d("mike-c", 45725), d("priya-p", 3328)]);
+    expect(plan.mode).toBe("each");
+    expect(plan.requests.map((r) => r.amountCents)).toEqual([45725, 3328]);
+  });
+
+  it("treats a single debt as a batch of one", () => {
+    expect(planVenmoRequests([d("mike-c", 1200)]).mode).toBe("batch");
+  });
+
+  it("drops debtors with no Venmo username and says it isn't everyone", () => {
+    const plan = planVenmoRequests([d("mike-c", 5000), d(null, 5000)]);
+    expect(plan.mode).toBe("batch");
+    expect(plan.requests).toHaveLength(1);
+    expect(plan.coversAll).toBe(false);
+  });
+
+  it("is none when nobody can be requested", () => {
+    expect(planVenmoRequests([d(null, 5000), d("", 100)]).mode).toBe("none");
+    expect(planVenmoRequests([]).mode).toBe("none");
+  });
+
+  it("ignores debts that are not worth requesting", () => {
+    const plan = planVenmoRequests([d("mike-c", 0), d("priya-p", 900)]);
+    expect(plan.requests).toEqual([d("priya-p", 900)]);
+    expect(plan.coversAll).toBe(false);
   });
 });

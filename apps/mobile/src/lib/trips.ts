@@ -1,4 +1,4 @@
-import { computeNets, settle, type Handles, type LedgerExpense, type Payment, type PayPlatform } from "@bunktab/core";
+import { computeNets, normalizeOutfit, settle, type Handles, type LedgerExpense, type Outfit, type Payment, type PayPlatform } from "@bunktab/core";
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "./supabase";
 
@@ -8,12 +8,25 @@ import { supabase } from "./supabase";
  * badges), expenses and settlements re-fetch so every member sees changes
  * live (spec: Stack → Supabase realtime for the Done badges).
  */
+/**
+ * PostgREST returns an embedded one-to-one either as an object or as a one-element
+ * array depending on how it infers the relationship, so take both. Anything that
+ * isn't a real item in that slot is dropped by normalizeOutfit, which also covers a
+ * row naming an item that has since been retired.
+ */
+function readOutfit(raw: unknown): Outfit {
+  const row = Array.isArray(raw) ? raw[0] : raw;
+  return normalizeOutfit(row as Outfit | null | undefined);
+}
+
 export type Member = {
   user_id: string; role: "owner" | "member"; done_at: string | null; settled_up_at: string | null; removed_at: string | null;
   display_name: string | null; first_name: string | null; last_name: string | null; venmo_username: string | null;
   photo_url: string | null; phone: string | null;
   /** Where this person can be paid, and which platform they prefer. */
   handles: Handles; default_pay_platform: PayPlatform | null;
+  /** What their zebra is wearing. Visible to anyone sharing the dazzle. */
+  outfit: Outfit;
 };
 export type Expense = {
   id: string; trip_id: string; description: string; category: string; subcategory: string | null;
@@ -36,13 +49,13 @@ export type TripData = { trip: Trip; members: Member[]; expenses: Expense[]; set
 export async function fetchTrip(tripId: string): Promise<TripData | null> {
   const [t, m, e, s] = await Promise.all([
     supabase.from("trips").select("*").eq("id", tripId).maybeSingle(),
-    supabase.from("trip_members").select("user_id, role, done_at, settled_up_at, removed_at, users(display_name, first_name, last_name, venmo_username, photo_url, phone, default_pay_platform, payment_handles(platform, handle))").eq("trip_id", tripId),
+    supabase.from("trip_members").select("user_id, role, done_at, settled_up_at, removed_at, users(display_name, first_name, last_name, venmo_username, photo_url, phone, default_pay_platform, payment_handles(platform, handle), user_outfit(head, faceneck, body))").eq("trip_id", tripId),
     supabase.from("expenses").select("*, expense_payers(user_id, amount_cents, base_amount_cents), expense_shares(user_id, share_cents, base_share_cents, nights, night_presence)").eq("trip_id", tripId).is("deleted_at", null).order("created_at", { ascending: false }),
     supabase.from("settlements").select("*").eq("trip_id", tripId).order("created_at"),
   ]);
   if (!t.data) return null;
-  type Row = { user_id: string; role: "owner" | "member"; done_at: string | null; settled_up_at: string | null; removed_at: string | null; users: { display_name: string | null; first_name: string | null; last_name: string | null; venmo_username: string | null; photo_url: string | null; phone: string | null; default_pay_platform: PayPlatform | null; payment_handles: { platform: PayPlatform; handle: string }[] | null } | null };
-  const members: Member[] = ((m.data ?? []) as unknown as Row[]).map((r) => ({ user_id: r.user_id, role: r.role, done_at: r.done_at, settled_up_at: r.settled_up_at, removed_at: r.removed_at, display_name: r.users?.display_name ?? null, first_name: r.users?.first_name ?? null, last_name: r.users?.last_name ?? null, venmo_username: r.users?.venmo_username ?? null, photo_url: r.users?.photo_url ?? null, phone: r.users?.phone ?? null, default_pay_platform: r.users?.default_pay_platform ?? null, handles: Object.fromEntries((r.users?.payment_handles ?? []).map((h) => [h.platform, h.handle])) as Handles }));
+  type Row = { user_id: string; role: "owner" | "member"; done_at: string | null; settled_up_at: string | null; removed_at: string | null; users: { display_name: string | null; first_name: string | null; last_name: string | null; venmo_username: string | null; photo_url: string | null; phone: string | null; default_pay_platform: PayPlatform | null; payment_handles: { platform: PayPlatform; handle: string }[] | null; user_outfit: { head: string | null; faceneck: string | null; body: string | null } | { head: string | null; faceneck: string | null; body: string | null }[] | null } | null };
+  const members: Member[] = ((m.data ?? []) as unknown as Row[]).map((r) => ({ user_id: r.user_id, role: r.role, done_at: r.done_at, settled_up_at: r.settled_up_at, removed_at: r.removed_at, display_name: r.users?.display_name ?? null, first_name: r.users?.first_name ?? null, last_name: r.users?.last_name ?? null, venmo_username: r.users?.venmo_username ?? null, photo_url: r.users?.photo_url ?? null, phone: r.users?.phone ?? null, default_pay_platform: r.users?.default_pay_platform ?? null, handles: Object.fromEntries((r.users?.payment_handles ?? []).map((h) => [h.platform, h.handle])) as Handles, outfit: readOutfit(r.users?.user_outfit) }));
   return { trip: t.data as Trip, members, expenses: (e.data ?? []) as Expense[], settlements: (s.data ?? []) as Settlement[] };
 }
 

@@ -1,17 +1,17 @@
-import { CATEGORIES, categoryLabel, closeoutUnlocked, countDone, formatCents, formatDateRange, memberState, nightsBetween, shortName, shortNameFromDisplay, zebraMoodFor } from "@bunktab/core";
+import { CATEGORIES, categoryLabel, closeoutUnlocked, countDone, formatCents, formatDateRange, herdPick, nightsBetween, type ZebraMood } from "@bunktab/core";
 import { color, layout, palette, radius, shadow, size, space } from "@bunktab/theme";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Image, ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { ActionSheet, AmountPill, Avatar, Button, Card, CountUp, Icon, IconButton, InsetPanel, HeroCard, MemberPill, Money, Press, Rise, RowCard, ScreenBackground, SegmentedControl, Toggle, TopBar, Zebra, ZText, useToast, type SheetAction, ErrorPanel, ScreenSkeleton } from "@/ui";
+import { ActionSheet, AmountPill, Avatar, Button, Card, CountUp, Icon, IconButton, InsetPanel, HeroCard, Money, Pasture, Press, Rise, RowCard, ScreenBackground, SegmentedControl, Toggle, TopBar, ZText, haptic, useToast, type PastureCheer, type SheetAction, ErrorPanel, ScreenSkeleton } from "@/ui";
 import { useAuth } from "@/lib/auth";
+import { useForegroundSeed } from "@/lib/foreground";
 import { uploadPrivateImage, useSignedUrl } from "@/lib/media";
-import { captureReceipt } from "@/lib/receipts";
 import { pickImage } from "@/lib/storage";
 import { isNetworkError, supabase } from "@/lib/supabase";
 import { biggestExpense, categoryIcon, frontedMost, topCategory } from "@/lib/tripExtras";
-import { activeMembers, hasAddedExpenses, memberName, myDelta, nets, paidBy, previewPayments, shareOf, tripTotal, useTrip, type Expense, type Member, type TripData } from "@/lib/trips";
+import { activeMembers, memberName, myDelta, nets, paidBy, previewPayments, shareOf, tripTotal, useTrip, type Expense, type TripData } from "@/lib/trips";
 
 /**
  * The dazzle page (RESKIN_PROMPT B4, board `Trip`): TopBar with back and the ⋯ menu;
@@ -28,6 +28,8 @@ import { activeMembers, hasAddedExpenses, memberName, myDelta, nets, paidBy, pre
  */
 type Tab = "expenses" | "people" | "summary";
 
+const YOU = "You";
+
 export default function TripScreen() {
   const { id, tab: tabParam, readonly: roParam, scrollTo } = useLocalSearchParams<{ id: string; tab?: string; readonly?: string; scrollTo?: string }>();
   const readonly = roParam === "1";
@@ -35,6 +37,9 @@ export default function TripScreen() {
   const insets = useSafeAreaInsets();
   const { show } = useToast();
   const { session } = useAuth();
+  const herdSeed = useForegroundSeed();
+  const [cheer, setCheer] = useState<PastureCheer>({ key: 0 });
+  const wasComplete = useRef<boolean | null>(null);
   const me = session!.user.id;
   const { data, loading, error, reload } = useTrip(id);
   // DEV-only `?tab=people|summary` opens a tab directly (screenshots)
@@ -47,17 +52,6 @@ export default function TripScreen() {
   const [busy, setBusy] = useState(false);
   const [coverBusy, setCoverBusy] = useState(false);
   const [footerH, setFooterH] = useState(160);
-  const [snap, setSnap] = useState(false);
-  async function snapReceipt(source: "camera" | "library") {
-    if (!data) return;
-    try {
-      const r = await captureReceipt(data.trip.id, source);
-      if (!r) return;
-      if (r.queued) { show({ message: "No connection. The photo will upload when you're back online." }); return; }
-      if (r.aiDisabled) { router.push({ pathname: "/(app)/trip/[id]/expense", params: { id: data.trip.id, receipt_path: r.storagePath! } }); return; }
-      router.push({ pathname: "/(app)/trip/[id]/receipt/[receiptId]", params: { id: data.trip.id, receiptId: r.receiptId } });
-    } catch (e) { show({ message: e instanceof Error ? e.message : "Couldn't upload the photo." }); }
-  }
   // DEV-only `?scrollTo=tabs` scrolls the tab strip to the top (screenshots)
   const scrollRef = useRef<ScrollView>(null);
   const tabsY = useRef(0);
@@ -81,6 +75,27 @@ export default function TripScreen() {
     prevDone.current = myDone;
   }, [myDone, data, show]);
 
+  /**
+   * Herd moments. Both of these sit above the loading guard, because a hook below it
+   * is a conditional hook — the trap that already bit once on this screen.
+   *
+   * The solo hop is fired from the tap itself rather than from watching `done_at`,
+   * because a Done that arrives any other way — someone else's late expense clearing
+   * it, a force close-out — is not yours to celebrate. If your Done also completes the
+   * herd, the wave lands right behind the hop, which reads as the others joining in.
+   */
+  const active = (data?.members ?? []).filter((m) => !m.removed_at);
+  const complete = active.length > 0 && active.every((m) => m.done_at);
+  useEffect(() => {
+    if (!data) return;
+    if (wasComplete.current === null) { wasComplete.current = complete; return; }
+    if (!wasComplete.current && complete) {
+      setCheer((c) => ({ key: c.key + 1, confetti: true }));
+      haptic.success();
+    }
+    wasComplete.current = complete;
+  }, [complete, data]);
+
   if (loading || !data || !figures) {
     return (
       <View style={styles.screen}>
@@ -100,20 +115,40 @@ export default function TripScreen() {
   const closed = trip.status !== "open";
   const cur = trip.base_currency;
   const nights = nightsBetween(trip.start_date, trip.end_date);
-  const mood = zebraMoodFor({ place: "dazzle-hero", members: figures.members.length, done: doneCount }) ?? "hi";
-  const stillAdding = figures.members.filter((m) => !m.done_at).map((m) => (m.user_id === me ? "you" : (m.display_name ?? "someone").split(/\s+/)[0]!));
+  /**
+   * The herd: at most twelve drawn, you always among them, reshuffled whenever the app
+   * comes back to the foreground (A10b). `herdSeed` is bumped by that, never by a
+   * re-render, so the field doesn't reshuffle under your thumb while you read it.
+   */
+  // not memoised on purpose: this sits after the loading guard, where a hook would be
+  // conditional, and herdPick is a filter plus a seeded shuffle of at most a few dozen
+  // a stable order, so a person stands in the same place on every screen and every trip
+  const herd = herdPick([...figures.members].sort((a, b) => a.user_id.localeCompare(b.user_id)), me, herdSeed);
+  /**
+   * One mood per zebra (B2). Yours tracks the money — worried when you owe on this
+   * dazzle, happy when you're owed — and everyone else's tracks their Done. When the
+   * whole herd is striped they all go starry.
+   */
+  const herdMood = (m: { user_id: string; done_at: string | null }): ZebraMood => {
+    if (toGo === 0) return "starry";
+    if (m.user_id === me) return figures.mine < 0 ? "worried" : figures.mine > 0 ? "happy" : "hi";
+    return m.done_at ? "happy" : "hi";
+  };
+  // one spelling, because the force-close-out sheet filters the reader out by name
+  const stillAdding = figures.members.filter((m) => !m.done_at).map((m) => (m.user_id === me ? YOU : (m.display_name ?? "someone").split(/\s+/)[0]!));
 
   async function toggleDone(v: boolean) {
     setBusy(true); toggling.current = true;
     await supabase.rpc("set_done", { p_trip: trip.id, p_done: v });
     await reload();
     toggling.current = false; setBusy(false);
+    if (v) setCheer((c) => ({ key: c.key + 1, only: me }));
   }
   // the creator's force close-out: every remaining member is marked Done (force_close_out),
   // they're notified, the override is logged (feedback round 1, item 14)
   function closeOutAnyway() {
     setConfirm({
-      title: `Close out the remaining ${toGo === 1 ? "zebra" : "zebras"}? ${listNames(stillAdding.filter((n) => n !== "you"))} will be marked Done and told, the override is logged, and expenses already logged still count.`,
+      title: `Close out the remaining ${toGo === 1 ? "zebra" : "zebras"}? ${listNames(stillAdding.filter((n) => n !== YOU))} will be marked Done and told, the override is logged, and expenses already logged still count.`,
       label: "Close out for everyone",
       run: async () => {
         const { error: e } = await supabase.rpc("force_close_out", { p_trip: trip.id });
@@ -143,7 +178,8 @@ export default function TripScreen() {
   }
   const menuActions: SheetAction[] = [
     { label: coverUrl ? "Change the cover photo" : "Add a cover photo", onPress: changeCover },
-    { label: "Members", onPress: () => router.push(`/(app)/trip/${trip.id}/members`) },
+    // the member screen needs a member; the herd page is the list you pick one from
+    { label: "The herd", onPress: () => router.push(`/(app)/trip/${trip.id}/herd`) },
     { label: "Dazzle history", onPress: () => router.push(`/(app)/trip/${trip.id}/history`) },
     { label: "Profile", onPress: () => router.push("/(app)/settings") },
   ];
@@ -151,10 +187,10 @@ export default function TripScreen() {
   if (isOwner && !unlocked && !closed) menuActions.push({ label: "Close out anyway", destructive: true, onPress: closeOutAnyway });
   if (isOwner && !closed && data.expenses.length === 0) menuActions.push({ label: "Delete Dazzle", destructive: true, onPress: deleteTrip });
 
-  const openStripes = readonly ? undefined : () => router.push(`/(app)/trip/${trip.id}/closeout`);
   // Nudge (creator only): the same screen with a small Nudge CTA beside each person still adding
   const openNudge = () => router.push(`/(app)/trip/${trip.id}/closeout?nudge=1`);
-  const pillLabel = (m: Member) => (m.first_name || m.last_name ? shortName(m.first_name, m.last_name) : shortNameFromDisplay(m.display_name, m.phone ? "Invited" : "Member"));
+  /** Summary is the report: read it, don't log into it. */
+  const showFooter = !readonly && !closed && tab !== "summary";
   const balanceState = settledUp ? "settled" : data.expenses.length === 0 ? "none" : figures.mine === 0 ? "square" : "amount";
 
   return (
@@ -164,7 +200,7 @@ export default function TripScreen() {
         onBack={() => (readonly ? router.back() : router.replace("/(app)/home"))}
         right={!readonly ? <IconButton name="more" label="Dazzle menu" onPress={() => setMenu(true)} /> : null}
       />
-      <ScrollView ref={scrollRef} contentContainerStyle={[styles.content, { paddingBottom: footerH + space[16] }]} showsVerticalScrollIndicator={false}>
+      <ScrollView ref={scrollRef} contentContainerStyle={[styles.content, { paddingBottom: (showFooter ? footerH : insets.bottom) + space[16] }]} showsVerticalScrollIndicator={false}>
         <View style={styles.head}>
           <View style={styles.titleRow}>
             {coverUrl ? (
@@ -175,7 +211,7 @@ export default function TripScreen() {
             <ZText variant="title1" accessibilityRole="header" style={styles.flex}>{trip.title}</ZText>
           </View>
           <ZText variant="caption" color={color.textMuted}>
-            {formatDateRange(trip.start_date, trip.end_date)} · {nights} {nights === 1 ? "night" : "nights"} · {figures.members.length} in the Dazzle{closed ? ` · ${trip.status}` : ""}
+            {formatDateRange(trip.start_date, trip.end_date)} · {nights} {nights === 1 ? "night" : "nights"} · {figures.members.length} {figures.members.length === 1 ? "zebra" : "zebras"} in the Dazzle{closed ? ` · ${trip.status}` : ""}
           </ZText>
         </View>
 
@@ -184,60 +220,71 @@ export default function TripScreen() {
           <View style={styles.heroRow}>
             <View style={[styles.flex, styles.heroText]}>
               <ZText variant="caption" color={color.textMuted}>Your balance</ZText>
-              {balanceState === "amount" ? <CountUp cents={Math.abs(figures.mine)} variant="amountL" underline={figures.mine !== 0} underlineColor={figures.mine > 0 ? color.owedToYou : color.youOwe} /> : <ZText variant="amountL">{balanceState === "settled" ? "Settled up" : balanceState === "none" ? "Nothing yet" : "All square"}</ZText>}
-              {balanceState === "amount" ? <LabelPill tone={figures.mine > 0 ? "volt" : "blush"} label={figures.mine > 0 ? "owed to you" : "you owe"} /> : null}
+              <View style={styles.balanceRow}>
+                {balanceState === "amount" ? <CountUp cents={Math.abs(figures.mine)} variant="amountL" underline={figures.mine !== 0} underlineColor={figures.mine > 0 ? color.owedToYou : color.youOwe} /> : <ZText variant="amountL">{balanceState === "settled" ? "Settled up" : balanceState === "none" ? "Nothing yet" : "All square"}</ZText>}
+                {/* the label sits out to the right on the amount's own line, not under it */}
+                {balanceState === "amount" ? <LabelPill tone={figures.mine > 0 ? "volt" : "blush"} label={figures.mine > 0 ? "Owed To You" : "You Owe"} /> : null}
+              </View>
             </View>
-            <Press onPress={openStripes} disabled={!openStripes} scaleTo={0.97} accessibilityRole="button" accessibilityLabel={`Zebra with ${doneCount} of ${figures.members.length} stripes, ${mood}. Opens Earn your stripes`}>
-              <Zebra variant="full" mood={mood} members={figures.members.length} done={doneCount} size={128} animate={{ blink: true, swish: true }} decorative />
-            </Press>
           </View>
-          <InsetPanel style={styles.stripesPanel}>
+          {/* status row: who hasn't closed out, by name */}
+          <InsetPanel style={[styles.stripesPanel, toGo === 0 ? styles.statusDone : null]}>
             <View style={styles.stripesRow}>
               <ZText variant="caption" style={styles.flex}>
-                <ZText variant="captionStrong">{doneCount === figures.members.length ? `All ${figures.members.length} stripes.` : `${doneCount} of ${figures.members.length} stripes.`}</ZText>
-                {" "}{toGo === 0 ? "Everyone's done." : `${listNames(stillAdding)} still adding.`}
+                <ZText variant="captionStrong">
+                  {toGo === 0 ? "Every zebra has closed out." : "Zebras not closed out:"}
+                </ZText>
+                {" "}{toGo === 0 ? "Time to settle." : `${listNames(stillAdding)}.`}
               </ZText>
               {toGo > 0 && !readonly && !closed && isOwner ? <Button kind="nudge" label="Nudge" onPress={openNudge} accessibilityLabel={`Nudge, ${toGo} still adding`} /> : null}
             </View>
           </InsetPanel>
+          {/* the split sits directly under the status row, above the field */}
+          {data.expenses.length > 0 && !settledUp ? (
+            <InsetPanel style={styles.plan}>
+              <Press onPress={() => setShowPlan((v) => !v)} scaleTo={0.98} accessibilityRole="button" accessibilityState={{ expanded: showPlan }} accessibilityLabel="Preview the Final Split" style={styles.planRow}>
+                <ZText variant="bodyStrong" style={styles.flex}>Preview the Final Split</ZText>
+                <Icon name={showPlan ? "chevronUp" : "chevronDown"} size={18} color={color.textMuted} />
+              </Press>
+              {showPlan ? (
+                <Rise style={styles.planLines}>
+                  {figures.plan.length === 0 ? <ZText variant="caption" color={color.textMuted}>Nothing to settle yet.</ZText> : null}
+                  {figures.plan.map((p, i) => (
+                    <View key={i} style={styles.planLine}>
+                      <ZText variant="body" style={styles.flex}>{p.from === me ? `Pay ${memberName(data, p.to)}` : p.to === me ? `${memberName(data, p.from)} pays you` : `${memberName(data, p.from)} pays ${memberName(data, p.to)}`}</ZText>
+                      <Money cents={p.cents} currency={cur === "USD" ? undefined : `${cur} `} color={p.to === me ? color.text : p.from === me ? color.youOweText : color.textMuted} />
+                    </View>
+                  ))}
+                </Rise>
+              ) : null}
+            </InsetPanel>
+          ) : null}
+          {/* The herd names the field rather than linking to it: the field itself is
+              what you tap. A zebra's stripes only ever change when its own owner taps
+              Done, so nothing in here is a control over anyone else. */}
+          <View style={styles.herdHead}>
+            <ZText variant="overline" color={color.textMuted}>The herd</ZText>
+            <ZText variant="caption" color={color.textMuted}>
+              {figures.members.length} {figures.members.length === 1 ? "zebra" : "zebras"}{herd.more > 0 ? ` · ${herd.more} not shown` : ""}
+            </ZText>
+          </View>
+          <Pasture
+            members={herd.shown.map((m) => ({
+              user_id: m.user_id,
+              name: memberName(data, m.user_id, me),
+              isMe: m.user_id === me,
+              done: !!m.done_at,
+              mood: herdMood(m),
+              outfit: m.outfit,
+            }))}
+            more={herd.more}
+            cheer={cheer}
+            height={300}
+            onPressField={() => router.push(`/(app)/trip/${trip.id}/herd`)}
+            style={styles.pastureTitled}
+          />
         </HeroCard>
 
-        {/* member pills: grey = nothing added, volt wash = adding, ink + volt stripe = done; tap → member sheet */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.pills} accessibilityLabel={`${doneCount} of ${figures.members.length} members done`}>
-          {figures.members.map((m) => {
-            const state = memberState(m, hasAddedExpenses(data, m.user_id));
-            return (
-              <MemberPill
-                key={m.user_id}
-                label={m.user_id === me ? `${pillLabel(m)} (you)` : pillLabel(m)}
-                state={state}
-                onPress={readonly ? undefined : () => router.push(`/(app)/trip/${trip.id}/members?user=${m.user_id}`)}
-                accessibilityLabel={`${memberName(data, m.user_id, me)}, ${state === "done" ? "done" : state === "adding" ? "adding expenses" : "nothing added yet"}. Opens member details`}
-              />
-            );
-          })}
-        </ScrollView>
-
-        {/* settlement preview */}
-        {data.expenses.length > 0 && !settledUp ? (
-          <InsetPanel style={styles.plan}>
-            <Press onPress={() => setShowPlan((v) => !v)} scaleTo={0.98} accessibilityRole="button" accessibilityState={{ expanded: showPlan }} accessibilityLabel="Preview the Final Split" style={styles.planRow}>
-              <ZText variant="bodyStrong" style={styles.flex}>Preview the Final Split</ZText>
-              <Icon name={showPlan ? "chevronUp" : "chevronDown"} size={18} color={color.textMuted} />
-            </Press>
-            {showPlan ? (
-              <Rise style={styles.planLines}>
-                {figures.plan.length === 0 ? <ZText variant="caption" color={color.textMuted}>Nothing to settle yet.</ZText> : null}
-                {figures.plan.map((p, i) => (
-                  <View key={i} style={styles.planLine}>
-                    <ZText variant="body" style={styles.flex}>{p.from === me ? `Pay ${memberName(data, p.to)}` : p.to === me ? `${memberName(data, p.from)} pays you` : `${memberName(data, p.from)} pays ${memberName(data, p.to)}`}</ZText>
-                    <Money cents={p.cents} currency={cur === "USD" ? undefined : `${cur} `} color={p.to === me ? color.text : p.from === me ? color.youOweText : color.textMuted} />
-                  </View>
-                ))}
-              </Rise>
-            ) : null}
-          </InsetPanel>
-        ) : null}
 
         <View onLayout={(e) => { tabsY.current = e.nativeEvent.layout.y; }}>
           <SegmentedControl options={[{ key: "expenses", label: "Expenses" }, { key: "people", label: "People" }, { key: "summary", label: "Summary" }]} value={tab} onChange={setTab} />
@@ -307,22 +354,23 @@ export default function TripScreen() {
         ) : null}
       </ScrollView>
 
-      {/* sheet footer (none in read-only) */}
-      {!readonly && !closed ? (
-        <View onLayout={(e) => setFooterH(e.nativeEvent.layout.height)} style={[styles.footer, { paddingBottom: insets.bottom + space[16] }]}>
+      {/* Sheet footer. None in read-only, and none on Summary: that tab is the report,
+          and you don't log an expense from a report — you go back to Expenses to do it. */}
+      {showFooter ? (
+        <View onLayout={(e) => setFooterH(e.nativeEvent.layout.height)} style={[styles.footer, { paddingBottom: insets.bottom + space[8] }]}>
+          {/* Done sits directly above the CTAs, in the same off-white as the split panel */}
+          <InsetPanel style={styles.doneRow}>
+            <ZText variant="bodyStrong" style={styles.flex}>Done adding expenses</ZText>
+            <Toggle value={myDone} onChange={toggleDone} disabled={busy} label="Done adding expenses" />
+          </InsetPanel>
           <View style={styles.footerButtons}>
-            <Button label="Add expense" height={size.buttonHeight} style={styles.footerButton} onPress={() => router.push(`/(app)/trip/${trip.id}/expense`)} />
-            <IconButton name="camera" label="Snap a receipt" onPress={() => setSnap(true)} size={size.buttonHeight} />
+            {/* no camera button: snapping a receipt lives inside Add expense */}
+            <Button label="Add expense" height={size.footerCta} style={styles.footerButton} onPress={() => router.push(`/(app)/trip/${trip.id}/expense`)} />
             {unlocked
-              ? <Button kind="ink" label="Close out" height={size.buttonHeight} style={styles.footerButton} onPress={() => router.push(`/(app)/trip/${trip.id}/closeout`)} />
+              ? <Button kind="ink" label="Close out" height={size.footerCta} style={styles.footerButton} onPress={() => router.push(`/(app)/trip/${trip.id}/closeout`)} />
               /* the count stays in the accessibility label only: the button reads "Close out" in both
                  states, so it keeps its width and doesn't jump when the last stripe lands */
-              : <Button kind="locked" label="Close out" height={size.buttonHeight} style={styles.footerButton} accessibilityLabel={`Close out, locked, ${toGo} still adding`} />}
-          </View>
-          {/* the Done toggle sits below the two CTAs (feedback round 1, item 10) */}
-          <View style={styles.doneRow}>
-            <ZText variant="bodyStrong" style={styles.flex}>I&apos;m done adding expenses</ZText>
-            <Toggle value={myDone} onChange={toggleDone} disabled={busy} label="I'm done adding expenses" />
+              : <Button kind="locked" label="Close out" height={size.footerCta} style={styles.footerButton} accessibilityLabel={`Close out, locked, ${toGo} still adding`} />}
           </View>
         </View>
       ) : null}
@@ -335,10 +383,6 @@ export default function TripScreen() {
         </View>
       ) : null}
 
-      <ActionSheet open={snap} onClose={() => setSnap(false)} title="Snap a receipt" actions={[
-        { label: "Take a photo", onPress: () => snapReceipt("camera") },
-        { label: "Choose from photos", onPress: () => snapReceipt("library") },
-      ]} />
       <ActionSheet open={menu} onClose={() => setMenu(false)} title={trip.title} actions={menuActions} />
       <ActionSheet open={!!confirm} onClose={() => setConfirm(null)} title={confirm?.title} actions={confirm ? [{ label: confirm.label, destructive: true, onPress: confirm.run }] : []} />
     </View>
@@ -433,17 +477,19 @@ const styles = StyleSheet.create({
   screen: { flex: 1 },
   errorPanel: { marginHorizontal: layout.screenGutter },
   flex: { flex: 1 },
-  center: { flex: 1, alignItems: "center", justifyContent: "center" },
   content: { paddingHorizontal: layout.screenGutter, gap: space[16] },
   head: { gap: space[6], paddingHorizontal: layout.textGutter - layout.screenGutter },
   titleRow: { flexDirection: "row", alignItems: "center", gap: space[12] },
   coverWrap: { borderRadius: radius.tile, overflow: "hidden" },
   cover: { width: 40, height: 40, borderRadius: radius.tile, backgroundColor: color.surfaceTile },
-  pills: { flexDirection: "row", gap: space[8], paddingHorizontal: layout.textGutter - layout.screenGutter, paddingVertical: space[2] },
   heroRow: { flexDirection: "row", alignItems: "center", gap: space[12] },
   heroText: { gap: space[8], alignItems: "flex-start" },
   labelPill: { borderRadius: radius.pill, paddingVertical: 5, paddingHorizontal: 11 },
   stripesPanel: { marginTop: space[12] },
+  statusDone: { backgroundColor: palette.volt },
+  balanceRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: space[12] },
+  herdHead: { flexDirection: "row", alignItems: "baseline", justifyContent: "space-between", gap: space[8], paddingTop: space[12], paddingHorizontal: space[4] },
+  pastureTitled: { marginTop: space[6] },
   stripesRow: { flexDirection: "row", alignItems: "center", gap: space[10] },
   plan: { paddingVertical: space[4] },
   planRow: { flexDirection: "row", alignItems: "center", gap: space[8], minHeight: layout.minTapTarget },
@@ -462,8 +508,8 @@ const styles = StyleSheet.create({
   track: { height: 8, borderRadius: radius.stripe, backgroundColor: color.stripeOff, overflow: "hidden" },
   fill: { height: 8, borderRadius: radius.stripe, backgroundColor: color.stripeOn },
   facts: { gap: space[8] },
-  footer: { position: "absolute", left: 0, right: 0, bottom: 0, backgroundColor: palette.white, borderTopLeftRadius: radius.hero, borderTopRightRadius: radius.hero, paddingHorizontal: layout.screenGutter, paddingTop: space[16], gap: space[14], ...shadow.sheet },
-  doneRow: { flexDirection: "row", alignItems: "center", gap: space[12], minHeight: layout.minTapTarget },
+  footer: { position: "absolute", left: 0, right: 0, bottom: 0, backgroundColor: palette.white, borderTopLeftRadius: radius.hero, borderTopRightRadius: radius.hero, paddingHorizontal: layout.screenGutter, paddingTop: space[10], gap: space[8], ...shadow.sheet },
+  doneRow: { flexDirection: "row", alignItems: "center", gap: space[12], minHeight: layout.minTapTarget, paddingHorizontal: space[14] },
   footerButtons: { flexDirection: "row", gap: space[10] },
   footerButton: { flex: 1, paddingHorizontal: space[12] },
 });

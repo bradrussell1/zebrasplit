@@ -1,10 +1,10 @@
-import { availablePlatforms, choosePlatform, closeoutUnlocked, countDone, formatCents, formatHandle, payLink, PLATFORM_SPECS, venmoChargeLink, zebraLabel, zebraMoodFor, type Handles, type PayPlatform } from "@bunktab/core";
+import { availablePlatforms, choosePlatform, closeoutUnlocked, countDone, formatCents, formatHandle, payLink, planVenmoRequests, PLATFORM_SPECS, venmoChargeLink, zebraLabel, zebraMoodFor, type Handles, type PayPlatform } from "@bunktab/core";
 import { color, layout, palette, radius, shadow, size, space } from "@bunktab/theme";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import { Linking, ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { ActionSheet, Banner, Button, Card, Confetti, Dance, HeroCard, Icon, InsetPanel, PersonPill, PlatformChip, Press, Rise, ScreenBackground, StatusPill, TextLink, Toggle, TopBar, VenmoZipButton, Zebra, ZText, haptic, ScreenSkeleton, useToast } from "@/ui";
+import { ActionSheet, Banner, Button, Card, Confetti, CountUp, Dance, HeroCard, Icon, InsetPanel, PayZipButton, PersonPill, PlatformChip, PlatformMark, Press, Rise, ScreenBackground, StatusPill, TextLink, Toggle, TopBar, Zebra, ZebraFarewell, ZText, haptic, ScreenSkeleton, useToast } from "@/ui";
 import { useAuth } from "@/lib/auth";
 import { isNetworkError, supabase } from "@/lib/supabase";
 import { activeMembers, memberName, useTrip } from "@/lib/trips";
@@ -24,10 +24,19 @@ import { activeMembers, memberName, useTrip } from "@/lib/trips";
  *
  * Everyone done: "Stripes are even. Time to settle." The zebra dances and confetti
  * fires the moment the last stripe lands; the payment plan (written by the database
- * through generate_settlements) rises in: your payments as "Pay Mike $84.50" zip
- * buttons with Mark as paid / Undo, what's owed to you with Got it, payments
- * between others, then "We earned our stripes. Share the recap?" and one volt
- * "Request … in Venmo" for creditors. Settled up stays a toggle (set_settled_up).
+ * through generate_settlements) rises in, in two deliberately unalike halves
+ * (feedback round 2, items 2, 4 and 5):
+ *
+ *  - "Your payments" — a volt-capped card, the amount you still owe in amountL, and a
+ *    "Pay Mike $84.50" button each. Marking one paid sends a zebra galloping across the
+ *    button, dragging the volt fill and "Paid, nice!" behind it and off the screen.
+ *  - "Remaining zebras" — everyone else's payments, quieter type, each with the
+ *    recipient's platform mark. A payment someone has marked paid is struck through and
+ *    dimmed, so what is left to happen is what still reads as live.
+ *
+ * Then "We earned our stripes. Share the recap?" and, for a creditor, one volt
+ * "Request … in Venmo". Settled up stays a toggle (set_settled_up) and now plays the
+ * send-off: the zebra rears, neighs, spins, gallops off, and you land back on Home.
  *
  * Each payment opens Venmo, Cash App or PayPal, whichever the RECIPIENT has added:
  * the handle belongs to the person being paid, so the chip under a payment offers
@@ -39,6 +48,9 @@ import { activeMembers, memberName, useTrip } from "@/lib/trips";
  * There is one link per payment: Venmo's deep link carries several recipients but
  * only ONE amount, so three different debts cannot be batched into one trip out to
  * Venmo. The settlement algorithm keeps that cheap by minimising payments per payer.
+ * The creditor's "Request from everyone" is the same constraint seen from the other
+ * side: it batches only when every debt is the identical amount, and otherwise offers
+ * one request per person rather than charging everybody the first person's figure.
  */
 function friendly(m: string): string {
   const s = m.toLowerCase();
@@ -66,6 +78,8 @@ export default function CloseoutScreen() {
   const [nudging, setNudging] = useState<string | null>(null);
   const [nudged, setNudged] = useState<Record<string, boolean>>({}); // user_id → sent this session
   const [picking, setPicking] = useState<string | null>(null); // settlement id whose platform is being changed
+  const [requesting, setRequesting] = useState(false); // the one-by-one Venmo request sheet
+  const [farewell, setFarewell] = useState(0); // bumped to play the send-off
   const [play, setPlay] = useState({ dance: 0, confetti: 0 });
   const wasUnlocked = useRef<boolean | null>(null);
 
@@ -108,11 +122,24 @@ export default function CloseoutScreen() {
   const platformFor = (s: { to_user: string; platform: PayPlatform | null }) =>
     choosePlatform(handlesOf(s.to_user), defaultOf(s.to_user), s.platform);
   const settledUp = !!data.members.find((m) => m.user_id === me)?.settled_up_at;
-  const pendingOwed = owed.filter((s) => s.status === "pending");
-  // "Request from everyone" is a Venmo-only link (one charge, several recipients, one amount)
-  const canRequest = pendingOwed.length > 0 && owed.every((s) => venmoOf(s.from_user));
   const allMinePaid = mine.length > 0 && mine.every((s) => s.status !== "pending");
   const who = (uid: string) => memberName(data, uid, me);
+  // the boop is YOUR zebra leaning in, so it wears what you're wearing
+  const myOutfit = data.members.find((m) => m.user_id === me)?.outfit ?? {};
+  const minePaidCount = mine.filter((s) => s.status !== "pending").length;
+  const mineLeftCents = mine.filter((s) => s.status === "pending").reduce((t, s) => t + s.amount_cents, 0);
+  /** When every one of your payments opens the same app, the card says so once instead of per row. */
+  const minePlatforms = Array.from(new Set(mine.map((s) => platformFor(s)).filter((p): p is PayPlatform => !!p)));
+  const onePlatform = minePlatforms.length === 1 ? minePlatforms[0]! : null;
+  // "Remaining zebras": every payment that isn't yours to make, what's owed to you first
+  const remaining = [...owed.map((s) => ({ s, toMe: true })), ...others.map((s) => ({ s, toMe: false }))];
+  const remainingOpen = remaining.filter(({ s }) => s.status === "pending").length;
+
+  // A Venmo charge carries several recipients but one amount, so batching is only
+  // honest when every debt matches; anything else goes one request at a time.
+  const requestPlan = planVenmoRequests(owed.filter((s) => s.status === "pending")
+    .map((s) => ({ recipient: venmoOf(s.from_user), amountCents: s.amount_cents, from: s.from_user })));
+  const requestable = requestPlan.requests;
 
   async function open(link: { app: string; web: string }) {
     const can = await Linking.canOpenURL(link.app).catch(() => false);
@@ -139,13 +166,15 @@ export default function CloseoutScreen() {
     setNudging(null);
     if (e) { show({ message: friendly(e.message) }); return; }
     setNudged((n) => ({ ...n, [uid]: true }));
-    show({ message: sent ? `Nudged ${name}. They'll get a push and see it next time they open the app.` : `${name} was already nudged today. One a day keeps it friendly.`, duration: 3500, bust: <Zebra variant="bust" mood="wink" size={28} decorative /> });
+    show({ message: sent ? `Nudged ${name}. They'll get a push and see it next time they open the app.` : `${name} was already nudged today. One a day keeps it friendly.`, duration: 3500, bust: <Zebra variant="bust" mood="wink" size={28} outfit={myOutfit} decorative /> });
   }
   async function toggleSettledUp(v: boolean) {
     setSettling(true);
     const { error: e } = await supabase.rpc("set_settled_up", { p_trip: trip.id, p_on: v });
     if (e) setError(friendly(e.message));
     await reload(); setSettling(false);
+    // turning it on is the end of this Dazzle: the zebra takes its bow, then Home
+    if (v && !e) setFarewell((n) => n + 1);
   }
   async function mark(sid: string, action: "mark_paid" | "unmark" | "confirm") {
     const { error: e } = await supabase.rpc("mark_settlement", { p_settlement: sid, p_action: action });
@@ -157,8 +186,14 @@ export default function CloseoutScreen() {
     if (e) { show({ message: friendly(e.message) }); return; }
     reload();
   }
-  const requestLabel = pendingOwed.length === 1 ? `Request ${formatCents(pendingOwed[0]!.amount_cents, cur)} in Venmo` : "Request from everyone in Venmo";
-  const request = () => open(venmoChargeLink(pendingOwed.map((s) => venmoOf(s.from_user)!), owed[0]!.amount_cents, trip.title));
+  const requestLabel = requestPlan.mode !== "batch" ? "Request in Venmo"
+    : requestable.length === 1 ? `Request ${formatCents(requestable[0]!.amountCents, cur)} in Venmo`
+      : `Request ${formatCents(requestable[0]!.amountCents, cur)} from ${requestPlan.coversAll ? "everyone" : `${requestable.length} people`} in Venmo`;
+  const requestOne = (d: { recipient: string | null; amountCents: number }) => open(venmoChargeLink([d.recipient!], d.amountCents, trip.title));
+  const request = () => {
+    if (requestPlan.mode === "batch") return open(venmoChargeLink(requestable.map((d) => d.recipient!), requestable[0]!.amountCents, trip.title));
+    setRequesting(true); // different amounts: one at a time, so nobody is charged the wrong figure
+  };
 
   return (
     <View style={styles.screen}>
@@ -181,7 +216,7 @@ export default function CloseoutScreen() {
         {/* the zebra stage: one stripe per member who's Done */}
         <HeroCard style={styles.stage}>
           <Dance play={play.dance}>
-            <Zebra variant="full" members={members.length} done={doneCount} mood={mood} size={244} animate={{ blink: true, swish: true }} accessibilityLabel={zebraLabel(mood, members.length, doneCount)} />
+            <Zebra variant="full" striped={gateOpen} outfit={myOutfit} mood={mood} size={244} animate={{ blink: true, swish: true }} accessibilityLabel={zebraLabel(mood, members.length, doneCount)} />
           </Dance>
           <Confetti play={play.confetti} style={StyleSheet.absoluteFill} />
         </HeroCard>
@@ -214,78 +249,100 @@ export default function CloseoutScreen() {
               </Rise>
             ) : null}
 
+            {/* yours: volt-capped, the figure in amountL, one zip button each */}
             {mine.length > 0 ? (
               <Rise delay={250} style={styles.gutter}>
-                <Card style={styles.payCard}>
-                  <View style={styles.payHeader}>
-                    <View style={styles.flex}>
-                      <ZText variant="small" color={color.textSecondary}>Your payments</ZText>
-                      <ZText variant="headline">{mine.filter((s) => s.status !== "pending").length} of {mine.length} marked paid</ZText>
-                    </View>
-                    <Zebra variant="bust" size={84} mood={zebraMoodFor({ place: "payment", paid: allMinePaid }) ?? "hi"} animate={{ blink: true }} accessibilityLabel={allMinePaid ? "Zebra, love: all paid" : "Zebra, hi"} />
-                  </View>
-                  {mine.map((s) => {
-                    const to = who(s.to_user);
-                    const handles = handlesOf(s.to_user);
-                    const platform = platformFor(s);
-                    const paid = s.status !== "pending";
-                    const amt = formatCents(s.amount_cents, cur);
-                    const canSwitch = availablePlatforms(handles).length > 1;
-                    return (
-                      <View key={s.id} style={styles.payRow}>
-                        {platform ? (
-                          <VenmoZipButton
-                            label={`Pay ${to} ${amt}`}
-                            openingLabel={`Opening ${PLATFORM_SPECS[platform].label}…`}
-                            paid={paid}
-                            onPress={() => open(payLink(platform, handles[platform]!, s.amount_cents, trip.title, cur))}
-                          />
-                        ) : (
-                          <Button kind="locked" label={`Pay ${to} ${amt}`} accessibilityLabel={`Pay ${to} ${amt}, unavailable: ${to} hasn't added a way to be paid yet`} />
-                        )}
-                        <View style={styles.payMeta}>
-                          {platform ? (
-                            <PlatformChip platform={platform} disabled={paid || !canSwitch} onPress={canSwitch && !paid ? () => setPicking(s.id) : undefined} />
-                          ) : (
-                            <ZText variant="caption" color={color.textMuted} style={styles.flex} numberOfLines={1}>{to} hasn&apos;t added a way to be paid yet</ZText>
-                          )}
-                          {platform ? (
-                            <ZText variant="caption" color={color.textMuted} style={styles.flex} numberOfLines={1}>{formatHandle(platform, handles[platform]!)}</ZText>
-                          ) : null}
-                          {s.status === "confirmed"
-                            ? <ZText variant="captionStrong">{to} confirmed</ZText>
-                            : <TextLink label={paid ? "Undo" : platform ? "Mark as paid" : "Paid another way"} muted={paid} onPress={() => mark(s.id, paid ? "unmark" : "mark_paid")} />}
-                        </View>
+                <View style={styles.payCard}>
+                  <View style={styles.payCap} />
+                  <View style={styles.payBody}>
+                    <View style={styles.payHeader}>
+                      <View style={styles.flex}>
+                        <ZText variant="overline" color={color.textMuted}>Your payments</ZText>
+                        {allMinePaid
+                          ? <ZText variant="amountL">All paid</ZText>
+                          : <CountUp cents={mineLeftCents} variant="amountL" underlineColor={color.youOwe} fit />}
+                        <ZText variant="caption" color={color.textSecondary}>
+                          {allMinePaid ? `${mine.length === 1 ? "Your payment is" : `All ${mine.length} are`} marked paid.` : `${minePaidCount} of ${mine.length} marked paid.`}
+                        </ZText>
+                        {onePlatform ? (
+                          <View style={styles.platformNote}>
+                            <PlatformMark platform={onePlatform} size={16} />
+                            <ZText variant="caption" color={color.textMuted}>
+                              {mine.length === 1 ? `Opens in ${PLATFORM_SPECS[onePlatform].label}` : `Every one opens in ${PLATFORM_SPECS[onePlatform].label}`}
+                            </ZText>
+                          </View>
+                        ) : null}
                       </View>
-                    );
-                  })}
-                </Card>
+                      <Zebra variant="bust" size={84} striped outfit={myOutfit} mood={zebraMoodFor({ place: "payment", paid: allMinePaid }) ?? "hi"} animate={{ blink: true }} accessibilityLabel={allMinePaid ? "Zebra, love: all paid" : "Zebra, hi"} />
+                    </View>
+                    {mine.map((s) => {
+                      const to = who(s.to_user);
+                      const handles = handlesOf(s.to_user);
+                      const platform = platformFor(s);
+                      const paid = s.status !== "pending";
+                      const amt = formatCents(s.amount_cents, cur);
+                      const canSwitch = availablePlatforms(handles).length > 1;
+                      return (
+                        <View key={s.id} style={styles.payRow}>
+                          {platform ? (
+                            <PayZipButton
+                              label={`Pay ${to} ${amt}`}
+                              openingLabel={`Opening ${PLATFORM_SPECS[platform].label}…`}
+                              paid={paid}
+                              onPress={() => open(payLink(platform, handles[platform]!, s.amount_cents, trip.title, cur))}
+                            />
+                          ) : (
+                            <Button kind="locked" label={`Pay ${to} ${amt}`} accessibilityLabel={`Pay ${to} ${amt}, unavailable: ${to} hasn't added a way to be paid yet`} />
+                          )}
+                          <View style={styles.payMeta}>
+                            {platform ? (
+                              <PlatformChip platform={platform} disabled={paid || !canSwitch} onPress={canSwitch && !paid ? () => setPicking(s.id) : undefined} />
+                            ) : (
+                              <ZText variant="caption" color={color.textMuted} style={styles.flex} numberOfLines={1}>{to} hasn&apos;t added a way to be paid yet</ZText>
+                            )}
+                            {platform ? (
+                              <ZText variant="caption" color={color.textMuted} style={styles.flex} numberOfLines={1}>{formatHandle(platform, handles[platform]!)}</ZText>
+                            ) : null}
+                            {s.status === "confirmed"
+                              ? <ZText variant="captionStrong">{to} confirmed</ZText>
+                              : <TextLink label={paid ? "Undo" : platform ? "Mark as paid" : "Paid another way"} muted={paid} onPress={() => mark(s.id, paid ? "unmark" : "mark_paid")} />}
+                          </View>
+                        </View>
+                      );
+                    })}
+                  </View>
+                </View>
               </Rise>
             ) : null}
 
-            {owed.length > 0 || others.length > 0 ? (
+            {/* everyone else's: quieter, with the recipient's mark, struck off as they land */}
+            {remaining.length > 0 ? (
               <Rise delay={mine.length ? 350 : 250} style={styles.gutter}>
                 <Card style={styles.listCard}>
-                  {owed.map((s, i) => {
-                    const from = who(s.from_user);
-                    const status = s.status === "pending" ? "Not marked paid yet" : s.status === "confirmed" ? "You confirmed" : "Marked paid";
+                  <View style={styles.listHead}>
+                    <ZText variant="overline" color={color.textMuted}>Remaining zebras</ZText>
+                    <ZText variant="caption" color={color.textSecondary}>
+                      {remainingOpen === 0 ? "Everyone else has marked theirs paid." : `${remainingOpen} of ${remaining.length} still to pay. They cross off as people mark them paid.`}
+                    </ZText>
+                  </View>
+                  {remaining.map(({ s, toMe }, i) => {
+                    const platform = platformFor(s);
+                    const paid = s.status !== "pending";
+                    const title = toMe ? `${who(s.from_user)} pays you` : `${who(s.from_user)} pays ${who(s.to_user)}`;
+                    const status = s.status === "pending" ? "Not closed out" : s.status === "confirmed" ? (toMe ? "You confirmed" : "Closed out") : "Closed out";
+                    const tone = paid ? color.textMuted : toMe ? color.text : color.textSecondary;
                     return (
-                      <View key={s.id} style={[styles.listRow, i > 0 ? styles.listRule : null]} accessibilityLabel={`${from} pays you ${formatCents(s.amount_cents, cur)}, ${status}`}>
+                      <View key={s.id} style={[styles.listRow, styles.listRule, paid ? styles.rowPaid : null]} accessibilityLabel={`${title} ${formatCents(s.amount_cents, cur)}, ${status}`}>
+                        {platform ? <PlatformMark platform={platform} size={20} /> : <View style={styles.markGap} />}
                         <View style={styles.flex}>
-                          <ZText variant="body">{from} pays you</ZText>
-                          <ZText variant="small" color={s.status === "pending" ? color.textMuted : color.text}>{status}</ZText>
+                          <ZText variant={toMe ? "bodyStrong" : "body"} color={tone} style={paid ? styles.struck : null} numberOfLines={1}>{title}</ZText>
+                          <ZText variant="small" color={color.textMuted}>{status}</ZText>
                         </View>
-                        <ZText variant="amountRow" tabular>{formatCents(s.amount_cents, cur)}</ZText>
-                        {s.status === "marked_paid" ? <Button kind="secondary" onWhite height={size.pillSmall} label="Got it" onPress={() => mark(s.id, "confirm")} /> : null}
+                        <ZText variant="amountRow" tabular color={tone} style={paid ? styles.struck : null}>{formatCents(s.amount_cents, cur)}</ZText>
+                        {toMe && s.status === "marked_paid" ? <Button kind="secondary" onWhite height={size.pillSmall} label="Got it" onPress={() => mark(s.id, "confirm")} /> : null}
                       </View>
                     );
                   })}
-                  {others.map((s, i) => (
-                    <View key={s.id} style={[styles.listRow, owed.length + i > 0 ? styles.listRule : null]}>
-                      <ZText variant="body" color={color.textSecondary} style={styles.flex}>{who(s.from_user)} pays {who(s.to_user)}</ZText>
-                      <ZText variant="amountRow" tabular color={color.textSecondary}>{formatCents(s.amount_cents, cur)}</ZText>
-                    </View>
-                  ))}
                 </Card>
               </Rise>
             ) : null}
@@ -306,7 +363,7 @@ export default function CloseoutScreen() {
                   <Toggle value={settledUp} onChange={toggleSettledUp} disabled={settling} label="Settled up" />
                 </View>
                 <ZText variant="caption" color={color.textSecondary}>Turn this on once you&apos;ve paid and been paid for this Dazzle. It marks your payments paid and quiets the expenses.</ZText>
-                <ZText variant="caption" color={color.textMuted}>Venmo does the paying. Zebrasplit only prepares each payment and can&apos;t see whether it went through, so mark each one paid yourself. Recipients can tap Got it to confirm, but they don&apos;t have to.</ZText>
+                <ZText variant="caption" color={color.textMuted}>Venmo, Cash App and PayPal do the paying. Zebrasplit only prepares each payment and can&apos;t see whether it went through, so mark each one paid yourself. Recipients can tap Got it to confirm, but they don&apos;t have to.</ZText>
               </Card>
             </Rise>
           </>
@@ -328,11 +385,19 @@ export default function CloseoutScreen() {
           ) : null}
           <Button kind="locked" label={`Close out at ${members.length} stripes · ${toGo} to go`} accessibilityLabel={`Close out, locked, ${toGo} still adding expenses`} />
         </View>
-      ) : canRequest ? (
+      ) : requestPlan.mode !== "none" ? (
         <Rise delay={450} style={[styles.footer, { paddingBottom: insets.bottom + layout.bottomCtaPadding }]}>
           <Button label={requestLabel} right={<Icon name="arrowUpRight" size={18} />} onPress={request} />
         </Rise>
       ) : null}
+
+      {/* different amounts can't share one Venmo charge, so they go one at a time */}
+      <ActionSheet
+        open={requesting}
+        onClose={() => setRequesting(false)}
+        title="Venmo can only request one amount at a time, so these go one by one."
+        actions={requestable.map((d) => ({ label: `Request ${formatCents(d.amountCents, cur)} from ${who(d.from)}`, onPress: () => requestOne(d) }))}
+      />
 
       <ActionSheet
         open={confirmSkip}
@@ -360,6 +425,9 @@ export default function CloseoutScreen() {
           />
         );
       })()}
+
+      {/* Settled up: the zebra rears, neighs, spins, gallops off, and we land on Home */}
+      <ZebraFarewell play={farewell} onDone={() => router.replace("/(app)/home")} />
     </View>
   );
 }
@@ -372,13 +440,21 @@ const styles = StyleSheet.create({
   titleBlock: { paddingHorizontal: layout.textGutter, paddingTop: space[2], gap: space[4] },
   stage: { marginHorizontal: layout.screenGutter, backgroundColor: color.surfaceTranslucentStrong, alignItems: "center", paddingVertical: space[6], paddingHorizontal: space[10], overflow: "hidden" },
   pills: { paddingHorizontal: layout.screenGutter, gap: space[8] },
-  payCard: { gap: space[14] },
+  // yours: a volt cap across the top of the card, so the two halves never read alike
+  payCard: { backgroundColor: palette.white, borderRadius: radius.card, overflow: "hidden", ...shadow.card },
+  payCap: { height: 6, backgroundColor: palette.volt },
+  payBody: { gap: space[14], paddingVertical: 16, paddingHorizontal: layout.cardPadding },
   payHeader: { flexDirection: "row", alignItems: "flex-end", gap: space[12] },
+  platformNote: { flexDirection: "row", alignItems: "center", gap: space[6], paddingTop: space[2] },
   payRow: { gap: space[8], paddingTop: space[12], borderTopWidth: 1, borderTopColor: color.divider },
   payMeta: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: space[12], paddingHorizontal: space[4] },
   listCard: { paddingVertical: space[2] },
+  listHead: { paddingVertical: 10, gap: space[2] },
   listRow: { flexDirection: "row", alignItems: "center", gap: space[12], paddingVertical: 12 },
   listRule: { borderTopWidth: 1, borderTopColor: color.divider },
+  rowPaid: { opacity: 0.6 },
+  struck: { textDecorationLine: "line-through" },
+  markGap: { width: 20 },
   recapNudge: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: space[8], borderRadius: radius.inset + 4, paddingVertical: 12, paddingHorizontal: 16 },
   settledCard: { gap: space[8] },
   settledRow: { flexDirection: "row", alignItems: "center", gap: space[12] },

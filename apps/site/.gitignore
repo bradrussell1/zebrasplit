@@ -3,3 +3,4 @@ styles/tokens.css
 .vercel
 .invite-samples.json
 lib/og-fonts.ts
+.env*

@@ -109,6 +109,8 @@ export const fonts = {
   semibold: 'Figtree_600SemiBold',
   bold: 'Figtree_700Bold',
   extrabold: 'Figtree_800ExtraBold',
+  // outfit art only: the jersey number and the gold chain's pendant are drawn at 900
+  black: 'Figtree_900Black',
   // Receipt read-out only (the "receipt prints in" moment). Nowhere else.
   mono: 'IBMPlexMono_400Regular',
   monoBold: 'IBMPlexMono_700Bold',
@@ -182,6 +184,7 @@ export const shadow = {
 export const size = {
   ctaHeight: 58,          // primary bottom CTA
   buttonHeight: 54,       // paired footer buttons
+  footerCta: 48,          // the dazzle page's two docked CTAs: tighter, still over the 44 tap target
   pillButton: 40,
   pillSmall: 32,          // Nudge, inline actions
   segmentHeight: 36,
@@ -209,11 +212,77 @@ export const motion = {
   boop: { duration: 900, bezier: [0.3, 1.4, 0.5, 1], bubbleDelay: 350, bubbleDuration: 450 },
   pop: { duration: 450, scale: 1.4 },
   venmoZip: { stripePx: 14, angleDeg: 115, loopMs: 500, travelPx: 56, landDelay: 1300 },
+  // the zebra gallops across a paid button, dragging the volt fill and "Paid, nice!" behind it
+  paidRun: { duration: 1150, bezier: [0.25, 0.65, 0.3, 1], zebraSize: 64, gallopHops: 5, gallopPx: 5, leanDeg: 7, pullAt: 0.5 },
+  // the send-off when you tap Settled up: rear, neigh, spin, run off screen, then Home
+  farewell: {
+    scrimIn: 220,
+    rear: { at: 140, duration: 520, deg: -32, liftPx: 14 },
+    neigh: { at: 430, duration: 620 },
+    spin: { at: 1080, duration: 660, deg: 360, dipScale: 0.9 },
+    exit: { at: 1700, duration: 640 },
+    total: 2420,
+    reducedTotal: 760,
+  },
   skeleton: { period: 1400 },                                     // loading bars shimmer ghost ↔ cream
   twinkle: { period: 2600, minOpacity: 0.45 },
   zz: { period: 2400, travelY: -6 },
   liveDot: { period: 1400, minOpacity: 0.35 },
 } as const;
+
+/**
+ * Category data-viz palette (prompt section 9, decision A14).
+ *
+ * These seven map 1:1 onto the top-level CATEGORIES in packages/core. They are the ONLY
+ * colors in the product besides volt and pink, and they are allowed on charts and
+ * nowhere else, ever: bars, segments and their legend swatches in Trip Story, Wrapped
+ * and the dazzle Summary tab. Never on buttons, pills, text, backgrounds or outfits.
+ * `scripts/check-chart-tokens.mjs` fails the build if theme.chart is read outside
+ * src/ui/charts/. Ink text is legible on every one of them.
+ */
+export const chart = {
+  travel: palette.ink,
+  dining: '#FF4FA3',
+  alcohol: '#FF9F43',
+  recreation: '#9B7BFF',
+  transportation: '#4DA3FF',
+  groceries: '#4CCB8F',
+  other: '#9B9590',
+} as const;
+
+/** The Pasture the herd stands in. Name tags use the existing ink and white. */
+export const pasture = {
+  field: '#EEF5D4',
+  fieldFront: '#E6F0C6',
+  grass: '#B9CF8C',
+  flower: '#F7A8BC',
+} as const;
+
+/** Background tints for the animated tale's scenes, in order. */
+export const storyTint = ['#F6FFD3', '#FFE9F3', '#FFF1E2', '#EAF4FF', '#FAF7F2'] as const;
+
+/**
+ * Outfit art. The wardrobe draws in the brand palette only; the four Jersey pack team
+ * colors are the single exception and are outfit art only — they are deliberately not
+ * the chart palette, and neither set may be used anywhere the other is.
+ */
+export const outfit = {
+  ink: palette.ink,
+  hide: palette.hide,
+  volt: palette.volt,
+  pink: palette.pink,
+  blush: palette.blush,
+  shade: '#3A3631',
+  shadeSoft: '#5C5852',
+  team: {
+    blue: '#2F6BFF',
+    green: '#1FA463',
+    purple: '#7A4DFF',
+    red: '#F0443A',
+  },
+} as const;
+
+export type TeamColor = keyof typeof outfit.team;
 
 /**
  * Web display scale for the marketing site (apps/site). The mobile scale above tops out
@@ -247,6 +316,6 @@ export const siteText = {
   phoneTitle:{ size: 24, lineHeight: 1,    tracking: -0.03 },   // phone-mock screen title
 } as const;
 
-export const theme = { palette, color, zebra, fonts, type, space, layout, radius, shadow, size, motion, siteType, siteText };
+export const theme = { palette, color, zebra, fonts, type, space, layout, radius, shadow, size, motion, chart, pasture, storyTint, outfit, siteType, siteText };
 export type Theme = typeof theme;
 export default theme;

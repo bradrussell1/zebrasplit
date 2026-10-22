@@ -1,6 +1,6 @@
 import { palette } from "@bunktab/theme";
 import { Stack } from "expo-router";
-import { Figtree_400Regular, Figtree_600SemiBold, Figtree_700Bold, Figtree_800ExtraBold, useFonts } from "@expo-google-fonts/figtree";
+import { Figtree_400Regular, Figtree_600SemiBold, Figtree_700Bold, Figtree_800ExtraBold, Figtree_900Black, useFonts } from "@expo-google-fonts/figtree";
 import { IBMPlexMono_400Regular, IBMPlexMono_700Bold } from "@expo-google-fonts/ibm-plex-mono";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
@@ -77,6 +77,7 @@ function RootLayout() {
   // receipt read-out.
   const [fontsReady, fontError] = useFonts({
     Figtree_400Regular, Figtree_600SemiBold, Figtree_700Bold, Figtree_800ExtraBold,
+    Figtree_900Black, // outfit art: the jersey number and the chain pendant
     IBMPlexMono_400Regular, IBMPlexMono_700Bold,
   });
   const [waited, setWaited] = useState(false);

@@ -1,12 +1,13 @@
-import { countDone, formatCents, formatDateRange, zebraMoodFor, type ZebraMood } from "@bunktab/core";
-import { color, layout, radius, size, space } from "@bunktab/theme";
+import { cosmeticById, countDone, formatCents, formatDateRange, herdPick, normalizeOutfit, zebraMoodFor, type Outfit, type ZebraMood } from "@bunktab/core";
+import { color, layout, palette, radius, size, space } from "@bunktab/theme";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { FlatList, Image, RefreshControl, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { AmountPill, Button, Card, CountUp, Icon, IconButton, Input, InsetPanel, HeroCard, Money, ScreenBackground, SegmentedControl, StripeMeter, TopBar, Zebra, ZText, useToast } from "@/ui";
+import { AmountPill, Button, Card, CountUp, Icon, IconButton, Input, InsetPanel, HeroCard, Money, Press, ScreenBackground, SegmentedControl, TopBar, Zebra, ZText, useToast } from "@/ui";
 import { trackOnboardingFinishedOnce } from "@/lib/analytics";
 import { useAuth } from "@/lib/auth";
+import { useForegroundSeed } from "@/lib/foreground";
 import { useSignedUrl } from "@/lib/media";
 import { supabase } from "@/lib/supabase";
 import { fetchUnseenNotifications, markNotificationsSeen } from "@/lib/notifications";
@@ -21,7 +22,7 @@ import { sortMembers } from "@/lib/trips";
  * paid minus share), so the two screens can never disagree. Reloads whenever the
  * screen regains focus, so a dazzle created or edited elsewhere shows at once.
  */
-type MemberRow = { user_id: string; role: "owner" | "member"; joined_at: string | null; done_at: string | null; display_name: string | null; photo_url: string | null };
+type MemberRow = { user_id: string; role: "owner" | "member"; joined_at: string | null; done_at: string | null; display_name: string | null; photo_url: string | null; outfit: Outfit };
 type TripRow = { id: string; title: string; status: "open" | "settled" | "archived"; start_date: string; end_date: string; base_currency: string; cover_photo_url: string | null; last_activity_at: string; members: MemberRow[]; net_cents: number };
 
 export default function HomeScreen() {
@@ -37,6 +38,41 @@ export default function HomeScreen() {
   useEffect(() => { if (params.tab === "open" || params.tab === "past") setTab(params.tab); }, [params.tab]); // a link can open either tab
   const [searching, setSearching] = useState(false);
   const [query, setQuery] = useState("");
+  const herdSeed = useForegroundSeed();
+  /**
+   * Your own look on the hero zebra — head and face only. A bust is cropped at the
+   * shoulder, so a body item would either be invisible or clipped halfway through.
+   */
+  const [myLook, setMyLook] = useState<Outfit>({});
+  useEffect(() => {
+    let live = true;
+    supabase.from("user_outfit").select("head, faceneck").eq("user_id", me).maybeSingle()
+      .then(({ data: row }) => { if (live && row) setMyLook(normalizeOutfit(row as Outfit)); });
+    return () => { live = false; };
+  }, [me]);
+  /**
+   * The drop banner (A17): built, and shipped switched off. `active_drop` returns the
+   * newest live drop this person hasn't dismissed, and with no rows in `drops` — which
+   * is launch — it always returns nothing, so neither the banner nor the dot appears.
+   */
+  const [drop, setDrop] = useState<{ id: string; title: string; subtitle: string | null; item_ids: string[] } | null>(null);
+  useEffect(() => {
+    let live = true;
+    supabase.rpc("active_drop").then(({ data: rows }) => {
+      const d = Array.isArray(rows) ? rows[0] : null;
+      if (live && d) setDrop(d);
+    });
+    return () => { live = false; };
+  }, []);
+  async function dismissDrop() {
+    if (!drop) return;
+    const d = drop;
+    setDrop(null);
+    // user_id is NOT NULL with no default, so omitting it fails with 23502 and the
+    // banner comes back on the next launch looking like the dismiss never took
+    const { error: e } = await supabase.from("drop_seen").insert({ drop_id: d.id, user_id: me });
+    if (e) { setDrop(d); show({ message: "Couldn't dismiss that. Try again." }); }
+  }
   const [trips, setTrips] = useState<TripRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [footerH, setFooterH] = useState(size.ctaHeight + layout.bottomCtaPadding);
@@ -45,13 +81,14 @@ export default function HomeScreen() {
     const [t, m, e] = await Promise.all([
       supabase.from("trips").select("id, title, status, start_date, end_date, base_currency, cover_photo_url, last_activity_at").order("last_activity_at", { ascending: false }),
       // done_at is read here only for the stripe meter ("3 of 6 stripes"); nothing on Home writes it
-      supabase.from("trip_members").select("trip_id, user_id, role, joined_at, done_at, users(display_name, photo_url)").is("removed_at", null),
+      supabase.from("trip_members").select("trip_id, user_id, role, joined_at, done_at, users(display_name, photo_url, user_outfit(head, faceneck, body))").is("removed_at", null),
       supabase.from("expenses").select("trip_id, expense_payers(user_id, base_amount_cents), expense_shares(user_id, base_share_cents)").is("deleted_at", null),
     ]);
-    type M = { trip_id: string; user_id: string; role: "owner" | "member"; joined_at: string | null; done_at: string | null; users: { display_name: string | null; photo_url: string | null } | null };
+    type OutfitRow = { head: string | null; faceneck: string | null; body: string | null };
+    type M = { trip_id: string; user_id: string; role: "owner" | "member"; joined_at: string | null; done_at: string | null; users: { display_name: string | null; photo_url: string | null; user_outfit: OutfitRow | OutfitRow[] | null } | null };
     type E = { trip_id: string; expense_payers: { user_id: string; base_amount_cents: number }[]; expense_shares: { user_id: string; base_share_cents: number }[] };
     const membersBy = new Map<string, MemberRow[]>();
-    for (const r of (m.data ?? []) as unknown as M[]) membersBy.set(r.trip_id, [...(membersBy.get(r.trip_id) ?? []), { user_id: r.user_id, role: r.role, joined_at: r.joined_at, done_at: r.done_at, display_name: r.users?.display_name ?? null, photo_url: r.users?.photo_url ?? null }]);
+    for (const r of (m.data ?? []) as unknown as M[]) membersBy.set(r.trip_id, [...(membersBy.get(r.trip_id) ?? []), { user_id: r.user_id, role: r.role, joined_at: r.joined_at, done_at: r.done_at, display_name: r.users?.display_name ?? null, photo_url: r.users?.photo_url ?? null, outfit: normalizeOutfit((Array.isArray(r.users?.user_outfit) ? r.users?.user_outfit[0] : r.users?.user_outfit) as Outfit | null) }]);
     const netBy = new Map<string, number>();
     for (const x of (e.data ?? []) as unknown as E[]) {
       const paid = x.expense_payers.filter((p) => p.user_id === me).reduce((s, p) => s + p.base_amount_cents, 0);
@@ -111,7 +148,7 @@ export default function HomeScreen() {
           {position.main && position.main.currency !== "USD"
             ? <Money variant="display" cents={Math.abs(overall)} currency={`${position.main.currency} `} />
             : <CountUp cents={Math.abs(overall)} fit underline={overall !== 0} underlineColor={overall > 0 ? color.owedToYou : color.youOwe} />}
-          {overall !== 0 ? <LabelPill tone={overall > 0 ? "volt" : "blush"} label={overall > 0 ? "owed to you" : "you owe"} /> : null}
+          {overall !== 0 ? <LabelPill tone={overall > 0 ? "volt" : "blush"} label={overall > 0 ? "Owed To You" : "You Owe"} /> : null}
           {position.others.map((o) => (
             <ZText key={o.currency} variant="caption" color={color.textMuted}>
               {o.net === 0 ? `Even across ${o.n} ${o.n === 1 ? "Dazzle" : "Dazzles"} in ${o.currency}` : `${formatCents(Math.abs(o.net), o.currency)} ${o.net > 0 ? "owed to you" : "you owe"} across ${o.n} ${o.n === 1 ? "Dazzle" : "Dazzles"} in ${o.currency}`}
@@ -119,9 +156,26 @@ export default function HomeScreen() {
           ))}
         </View>
         <View style={styles.heroZebra}>
-          <Zebra variant="bust" mood={heroMood} size={108} animate={{ bob: true }} accessibilityLabel={`Zebra, ${heroMood}`} />
+          <Zebra variant="bust" mood={heroMood} size={108} outfit={myLook} animate={{ bob: true }} accessibilityLabel={`Your zebra, ${heroMood}`} />
         </View>
       </HeroCard>
+      {/* the drop banner sits between the balance and Your Dazzles, and only when a
+          drop is live and undismissed — which is never, until there is drop content */}
+      {drop ? (
+        <Press onPress={() => router.push("/(app)/shop")} scaleTo={0.98} accessibilityRole="button" accessibilityLabel={`${drop.title}. ${drop.subtitle ?? ""} Opens the Shop`} style={styles.drop}>
+          {cosmeticById(drop.item_ids[0]) ? (
+            <Zebra variant="bust" size={44} striped mood="happy" outfit={{ [cosmeticById(drop.item_ids[0])!.slot]: drop.item_ids[0]! }} decorative />
+          ) : null}
+          <View style={styles.dropText}>
+            <ZText variant="bodyStrong" color={color.textOnInk} numberOfLines={1}>{drop.title}</ZText>
+            {drop.subtitle ? <ZText variant="caption" color={palette.hide} numberOfLines={1}>{drop.subtitle}</ZText> : null}
+          </View>
+          <View style={styles.dropChip}><ZText variant="captionStrong">Shop</ZText></View>
+          <Press onPress={dismissDrop} scaleTo={0.97} accessibilityRole="button" accessibilityLabel="Dismiss" hitSlop={10}>
+            <Icon name="close" size={16} color={palette.hide} />
+          </Press>
+        </Press>
+      ) : null}
       <View style={styles.titleRow}>
         <ZText variant="title2" accessibilityRole="header">Your Dazzles</ZText>
         <SegmentedControl options={[{ key: "open", label: "Open" }, { key: "past", label: "Past" }]} value={tab} onChange={setTab} style={styles.segment} />
@@ -145,6 +199,11 @@ export default function HomeScreen() {
         right={
           <>
             <IconButton name={searching ? "close" : "search"} label={searching ? "Close search" : "Search Dazzles"} onPress={toggleSearch} accessibilityState={{ expanded: searching }} />
+            <View>
+              <IconButton name="bag" label="Shop" onPress={() => router.push("/(app)/shop")} />
+              {/* the dot is a live drop nobody has dismissed; with no drops it never shows */}
+              {drop ? <View style={styles.shopDot} pointerEvents="none" /> : null}
+            </View>
             <IconButton name="person" label="Profile" onPress={() => router.push("/(app)/settings")} />
           </>
         }
@@ -172,7 +231,7 @@ export default function HomeScreen() {
         ListHeaderComponent={header}
         ItemSeparatorComponent={() => <View style={{ height: layout.listGap }} />}
         ListEmptyComponent={empty}
-        renderItem={({ item }) => <DazzleCard trip={item} me={me} onPress={() => router.push(`/(app)/trip/${item.id}`)} />}
+        renderItem={({ item }) => <DazzleCard trip={item} me={me} seed={herdSeed} onPress={() => router.push(`/(app)/trip/${item.id}`)} />}
         contentContainerStyle={[styles.list, { paddingBottom: footerH + space[16] }]}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
@@ -199,14 +258,19 @@ function shortRange(start: string, end: string) {
   return formatDateRange(start, end).replace(new RegExp(`, ${new Date().getFullYear()}$`), "");
 }
 
-function DazzleCard({ trip, me, onPress }: { trip: TripRow; me: string; onPress: () => void }) {
+function DazzleCard({ trip, me, seed, onPress }: { trip: TripRow; me: string; seed: number; onPress: () => void }) {
   const cover = useSignedUrl("covers", trip.cover_photo_url); // object path in the private bucket
   const settled = trip.status === "settled";
   const youOwe = !settled && trip.net_cents < 0;
   const { done } = countDone(trip.members);
   const notDone = trip.members.length - done;
+  // up to eight busts, picked the same way the field picks twelve: you always among them
+  const MINI = 8;
+  const pick = herdPick([...trip.members].sort((a, b) => a.user_id.localeCompare(b.user_id)), me, seed);
+  const shown = pick.shown.slice(0, MINI);
+  const hidden = trip.members.length - shown.length;
   const cardMood = zebraMoodFor({ place: "home-card", youOwe });
-  const caption = `${shortRange(trip.start_date, trip.end_date)} · ${trip.members.length} in the Dazzle`;
+  const caption = `${shortRange(trip.start_date, trip.end_date)} · ${trip.members.length} ${trip.members.length === 1 ? "zebra" : "zebras"} in the Dazzle`;
   const status = settled ? "settled" : trip.net_cents > 0 ? `owed ${formatCents(trip.net_cents, trip.base_currency)}` : trip.net_cents < 0 ? `you owe ${formatCents(-trip.net_cents, trip.base_currency)}` : "even";
   const stillAdding = settled ? "Settled" : trip.status === "archived" ? "Archived" : notDone === 0 ? "Everyone's done" : cardMood ? "still adding" : `${notDone} still adding`;
   return (
@@ -221,10 +285,21 @@ function DazzleCard({ trip, me, onPress }: { trip: TripRow; me: string; onPress:
       </View>
       <InsetPanel style={styles.inset}>
         <View style={styles.meterRow}>
-          <StripeMeter members={trip.members.length} done={done} allInk={settled} />
+          {/* A11: a mini herd, not a meter. A bust can't show body stripes, so the fade
+              and the dashed ring carry "still adding", and a small ink check carries done. */}
+          <View style={styles.miniHerd} accessibilityLabel={`${done} of ${trip.members.length} have their stripes`}>
+            {shown.map((m) => (
+              <View key={m.user_id} style={[styles.miniBust, m.done_at ? null : styles.miniAdding]}>
+                <Zebra variant="bust" size={34} striped={!!m.done_at} outfit={m.outfit} mood={m.done_at ? "happy" : "hi"} decorative />
+                {m.done_at
+                  ? <View style={styles.miniCheck}><Icon name="check" size={9} color={palette.white} stroke={3} /></View>
+                  : null}
+              </View>
+            ))}
+            {hidden > 0 ? <ZText variant="micro" color={color.textMuted}>+{hidden}</ZText> : null}
+          </View>
           <View style={styles.adding}>
             <ZText variant="small" color={settled ? color.text : color.textMuted}>{stillAdding}</ZText>
-            {cardMood ? <Zebra variant="bust" mood={cardMood} size={30} animate={{ blink: true }} decorative /> : null}
           </View>
         </View>
       </InsetPanel>
@@ -260,6 +335,14 @@ const styles = StyleSheet.create({
   cardText: { flex: 1, gap: 2 },
   inset: { marginTop: space[10] },
   meterRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: space[8] },
+  miniHerd: { flexDirection: "row", alignItems: "center", gap: 2, flex: 1, flexWrap: "nowrap" },
+  shopDot: { position: "absolute", top: 2, right: 2, width: 10, height: 10, borderRadius: 5, backgroundColor: color.attention, borderWidth: 2, borderColor: palette.white },
+  drop: { flexDirection: "row", alignItems: "center", gap: space[10], backgroundColor: palette.ink, borderRadius: radius.pill, paddingVertical: 10, paddingHorizontal: 14 },
+  dropText: { flex: 1, gap: 1 },
+  dropChip: { backgroundColor: palette.volt, borderRadius: radius.pill, paddingVertical: 5, paddingHorizontal: 12 },
+  miniBust: { marginRight: -8 },
+  miniAdding: { opacity: 0.4, borderWidth: 1.5, borderColor: color.outlineDashed, borderStyle: "dashed", borderRadius: 17 },
+  miniCheck: { position: "absolute", right: 0, bottom: 0, width: 13, height: 13, borderRadius: 6.5, backgroundColor: palette.ink, alignItems: "center", justifyContent: "center" },
   adding: { flexDirection: "row", alignItems: "center", gap: space[6] },
   empty: { alignItems: "center", gap: space[8], paddingVertical: space[32], paddingHorizontal: layout.textGutter },
   center: { textAlign: "center" },

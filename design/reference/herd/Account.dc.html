@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Zebrasplit, Your account</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400..900&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#1D1A17}a:hover{color:#3A3631}
+button{font-family:inherit}
+@keyframes blink{0%,90%,100%{transform:scaleY(1)}94%{transform:scaleY(0.1)}}
+.zeye{transform-box:fill-box;transform-origin:center;animation:blink 3.8s infinite}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.rise{animation:rise .55s cubic-bezier(.2,.8,.2,1) both}
+.press{transition:transform 120ms ease}.press:active{transform:scale(0.97)}
+.scr{overflow-y:auto;scrollbar-width:none}.scr::-webkit-scrollbar{display:none}.scr>*{flex-shrink:0}
+.dock{position:sticky;bottom:0;z-index:5;background:linear-gradient(180deg,rgba(245,240,231,0) 0%,#F5F0E7 34%)}
+.locked{background:#E6DFD3;color:#5C5852;border:1.5px solid #D3CDC3;box-sizing:border-box}
+.conf{position:absolute;left:50%;top:40%;width:8px;height:22px;border-radius:4px;opacity:0}
+@keyframes k1{0%{opacity:0;transform:translate(0,0) rotate(0) scale(.3)}12%{opacity:1}100%{opacity:0;transform:translate(-150px,-110px) rotate(-130deg) scale(1)}}
+@keyframes k2{0%{opacity:0;transform:translate(0,0) rotate(0) scale(.3)}12%{opacity:1}100%{opacity:0;transform:translate(150px,-100px) rotate(140deg) scale(1)}}
+@keyframes k3{0%{opacity:0;transform:translate(0,0) rotate(0) scale(.3)}12%{opacity:1}100%{opacity:0;transform:translate(-110px,-150px) rotate(-60deg) scale(1)}}
+@keyframes k4{0%{opacity:0;transform:translate(0,0) rotate(0) scale(.3)}12%{opacity:1}100%{opacity:0;transform:translate(115px,-150px) rotate(80deg) scale(1)}}
+@keyframes k5{0%{opacity:0;transform:translate(0,0) rotate(0) scale(.3)}12%{opacity:1}100%{opacity:0;transform:translate(-165px,-20px) rotate(-210deg) scale(1)}}
+@keyframes k6{0%{opacity:0;transform:translate(0,0) rotate(0) scale(.3)}12%{opacity:1}100%{opacity:0;transform:translate(165px,-30px) rotate(220deg) scale(1)}}
+@keyframes k7{0%{opacity:0;transform:translate(0,0) rotate(0) scale(.3)}12%{opacity:1}100%{opacity:0;transform:translate(-50px,-170px) rotate(40deg) scale(1)}}
+@keyframes k8{0%{opacity:0;transform:translate(0,0) rotate(0) scale(.3)}12%{opacity:1}100%{opacity:0;transform:translate(60px,-165px) rotate(-45deg) scale(1)}}
+.k1{animation:k1 1.6s cubic-bezier(.15,.7,.3,1) infinite}.k2{animation:k2 1.6s cubic-bezier(.15,.7,.3,1) infinite}.k3{animation:k3 1.6s cubic-bezier(.15,.7,.3,1) infinite}.k4{animation:k4 1.6s cubic-bezier(.15,.7,.3,1) infinite}
+.k5{animation:k5 1.6s cubic-bezier(.15,.7,.3,1) infinite}.k6{animation:k6 1.6s cubic-bezier(.15,.7,.3,1) infinite}.k7{animation:k7 1.6s cubic-bezier(.15,.7,.3,1) infinite}.k8{animation:k8 1.6s cubic-bezier(.15,.7,.3,1) infinite}
+
+@keyframes roam{from{transform:translateX(calc(var(--r) * -1))}to{transform:translateX(var(--r))}}
+@keyframes trot{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+@keyframes graze{0%,62%,100%{transform:rotate(0)}70%{transform:rotate(-4deg) translateY(2px)}86%{transform:rotate(-4deg) translateY(2px)}}
+@keyframes herdhop{0%,100%{transform:translateY(0) rotate(0)}20%{transform:translateY(-16px) rotate(-6deg)}40%{transform:translateY(0) rotate(4deg)}60%{transform:translateY(-9px) rotate(-3deg)}80%{transform:translateY(0) rotate(2deg)}}
+@keyframes swish{0%,100%{transform:rotate(-8deg)}50%{transform:rotate(14deg)}}
+.ztail{transform-box:fill-box;transform-origin:0% 0%;animation:swish 2.2s ease-in-out infinite}
+.roam{animation:roam var(--d) ease-in-out infinite alternate}
+.trot{animation:trot .95s ease-in-out infinite}
+.graze{animation:graze 6.5s ease-in-out infinite;transform-origin:30% 95%}
+.hop{animation:herdhop 1.3s cubic-bezier(.3,.7,.3,1) infinite;transform-origin:50% 95%}
+@media (prefers-reduced-motion: reduce){.roam,.trot,.graze,.hop,.ztail,.zeye{animation:none!important}}
+
+</style>
+</helmet>
+<div class="scr" style="width: 390px; height: 844px; box-sizing: border-box; background: radial-gradient(120% 55% at 100% 0%, #FFE9F3 0%, rgba(255,233,243,0) 60%), radial-gradient(100% 45% at 0% 22%, #F6FFD3 0%, rgba(246,255,211,0) 55%), linear-gradient(180deg, #FFFFFF 0%, #FBF8F2 50%, #F5F0E7 100%); color: #1D1A17; font-family: 'Figtree', system-ui, sans-serif; display: flex; flex-direction: column; position: relative">
+  <div style="padding: 52px 16px 0 16px; display: flex; align-items: center; justify-content: space-between">
+    <a href="Main.dc.html" aria-label="Back" style="width: 44px; height: 44px; border-radius: 22px; background: #FFFFFF; box-shadow: 0 1px 2px rgba(29,26,23,0.06), 0 6px 16px rgba(29,26,23,0.06); display: flex; align-items: center; justify-content: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1D1A17" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"></path></svg></a>
+    <span style="font-size: 13px; font-weight: 700; background: #FFFFFF; border-radius: 999px; padding: 7px 12px; box-shadow: 0 1px 2px rgba(29,26,23,0.05)">zebrasplit</span>
+  </div>
+
+  <div style="padding: 10px 20px 0 20px"><h1 style="margin: 0; font-size: 30px; line-height: 1.05; font-weight: 800; letter-spacing: -0.03em">Your account</h1></div>
+  <div style="margin: 14px 16px 0 16px; display: flex; background: rgba(29,26,23,0.06); border-radius: 999px; padding: 4px">
+    <a href="Account.dc.html" style="flex: 1; height: 36px; border-radius: 999px; display: flex; align-items: center; justify-content: center; text-decoration: none; font-size: 15px; background: #FFFFFF; box-shadow: 0 1px 3px rgba(29,26,23,0.1); font-weight: 800; color: #1D1A17">Account</a>
+    <a href="Closet.dc.html" style="flex: 1; height: 36px; border-radius: 999px; display: flex; align-items: center; justify-content: center; text-decoration: none; font-size: 15px; background: transparent; font-weight: 600; color: #6E6A63">Zebra</a>
+  </div>
+
+  <div style="margin: 14px 16px 0 16px; background: rgba(255,255,255,0.9); border-radius: 30px; padding: 16px; box-shadow: 0 1px 2px rgba(29,26,23,0.04), 0 14px 36px rgba(29,26,23,0.07); display: flex; align-items: center; gap: 14px">
+    <a href="Closet.dc.html" aria-label="Customize your zebra" style="width: 76px; height: 76px; border-radius: 38px; background: #FFF3F8; display: flex; align-items: center; justify-content: center; flex-shrink: 0; overflow: hidden"><svg width="64" height="66" viewBox="30 -8 200 208" aria-hidden="true"><defs><clipPath id="nacct"><path d="M124 140 C114 168 110 196 116 222 L206 222 C192 168 184 150 186 124 L140 110 Z"></path></clipPath></defs><path d="M141.3 52.2 L152.8 50.0 L168.6 45.0 L170.6 61.4 L187.0 60.9 L184.5 77.1 L200.5 80.5 L194.2 95.6 L209.0 102.5 L199.3 115.7 L212.0 124.9 L200.3 134.3 L213.0 138.4 L202.8 146.0 L215.1 143.8 L208.0 154.2 L208.7 163.1 L201.2 171.1 L195.5 165.7 L190.6 159.4 L187.0 152.3 L184.6 144.5 L183.4 135.8 L183.0 126.4 L182.5 117.9 L180.9 109.7 L178.3 101.7 L174.8 94.0 L170.5 86.7 L165.3 80.1 L159.4 74.3 L152.9 69.4 L145.8 65.5 L137.7 62.6 Z" fill="#1D1A17" stroke="#1D1A17" stroke-width="6" stroke-linejoin="round"></path><path d="M124 140 C114 168 110 196 116 222 L206 222 C192 168 184 150 186 124 L140 110 Z" fill="#FFFBF2" stroke="#1D1A17" stroke-width="5" stroke-linejoin="round"></path><g transform="rotate(-24 82 58)"><ellipse cx="82" cy="40" rx="15" ry="27" fill="#FFFBF2" stroke="#1D1A17" stroke-width="5"></ellipse><ellipse cx="82" cy="44" rx="7.5" ry="17" fill="#F5A9B8"></ellipse></g><g transform="rotate(24 158 58)"><ellipse cx="158" cy="40" rx="15" ry="27" fill="#FFFBF2" stroke="#1D1A17" stroke-width="5"></ellipse><ellipse cx="158" cy="44" rx="7.5" ry="17" fill="#F5A9B8"></ellipse></g><ellipse cx="120" cy="98" rx="60" ry="54" fill="#1D1A17" stroke="#1D1A17" stroke-width="10"></ellipse><ellipse cx="120" cy="140" rx="42" ry="28" fill="#1D1A17" stroke="#1D1A17" stroke-width="10"></ellipse><ellipse cx="120" cy="98" rx="60" ry="54" fill="#FFFBF2"></ellipse><ellipse cx="120" cy="140" rx="42" ry="28" fill="#9B9590"></ellipse><ellipse cx="120" cy="134" rx="30" ry="12" fill="#ABA59F" opacity="0.7"></ellipse><path d="M104 136 q-3 6 2 9 M136 136 q3 6 -2 9" stroke="#3C3833" stroke-width="4" fill="none" stroke-linecap="round"></path><ellipse cx="76" cy="118" rx="12" ry="7.5" fill="#F7A8BC"></ellipse><ellipse cx="164" cy="118" rx="12" ry="7.5" fill="#F7A8BC"></ellipse><path d="M88 100 q9 -11 18 0 M134 100 q9 -11 18 0" stroke="#1D1A17" stroke-width="6.5" fill="none" stroke-linecap="round"></path><path d="M100 52 C96 40 102 30 112 28 C110 36 116 40 120 34 C120 26 128 20 138 22 C132 30 136 38 144 38 C140 50 124 58 100 52 Z" fill="#1D1A17" stroke="#1D1A17" stroke-width="3" stroke-linejoin="round"></path><rect x="76" y="83" width="42" height="27" rx="12" fill="#1D1A17" fill-opacity="0.5" stroke="#1D1A17" stroke-width="5.5"></rect><rect x="122" y="83" width="42" height="27" rx="12" fill="#1D1A17" fill-opacity="0.5" stroke="#1D1A17" stroke-width="5.5"></rect><path d="M118 92 L122 92 M76 90 L60 84 M164 90 L180 84" stroke="#1D1A17" stroke-width="5.5" fill="none" stroke-linecap="round"></path><path d="M84 90 L92 88 M130 90 L138 88" stroke="#FFFFFF" stroke-opacity="0.85" stroke-width="4.0" stroke-linecap="round"></path><path d="M74 64 C72 32 98 16 122 16 C146 16 170 32 168 64 Z" fill="#E2FF2B" stroke="#1D1A17" stroke-width="5" stroke-linejoin="round"></path><path d="M122 17 L122 62 M100 22 C94 36 94 50 96 62 M144 22 C150 36 150 50 148 62" stroke="#1D1A17" stroke-opacity="0.25" stroke-width="4.0" fill="none" stroke-linecap="round"></path><path d="M66 62 Q120 50 174 62 Q178 72 168 76 Q120 64 72 76 Q62 72 66 62 Z" fill="#1D1A17" stroke="#1D1A17" stroke-width="4.0" stroke-linejoin="round"></path><circle cx="122" cy="15" r="5.5" fill="#1D1A17"></circle></svg></a>
+    <span style="display: flex; flex-direction: column; gap: 2px; flex-grow: 1">
+      <span style="font-size: 20px; font-weight: 800; letter-spacing: -0.01em">Apollo</span>
+      <span style="font-size: 13px; color: #6E6A63">+1 (415) ••• ••12</span>
+    </span>
+  </div>
+
+  <span style="margin: 18px 20px 6px 20px; font-size: 12px; font-weight: 800; letter-spacing: 0.08em; color: #6E6A63">PAYMENTS</span>
+  <div style="margin: 0 16px; background: #FFFFFF; border-radius: 24px; padding: 4px 16px; box-shadow: 0 1px 2px rgba(29,26,23,0.04), 0 8px 24px rgba(29,26,23,0.05); display: flex; flex-direction: column">
+      <div style="display: flex; align-items: center; gap: 12px; padding: 11px 0; ">
+        <span style="width: 34px; height: 34px; border-radius: 12px; background: #F3EFE8; display: flex; align-items: center; justify-content: center; flex-shrink: 0"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1D1A17" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 5l5 14 4-8 5-6"></path></svg></span>
+        <span style="display: flex; flex-direction: column; flex-grow: 1; min-width: 0"><span style="font-size: 15px; font-weight: 700; ">Venmo</span><span style="font-size: 12px; color: #6E6A63">@apollo-r</span></span>
+        <span style="font-size: 13px; font-weight: 800; text-decoration: underline">Check it</span>
+      </div>
+  </div>
+
+  <span style="margin: 18px 20px 6px 20px; font-size: 12px; font-weight: 800; letter-spacing: 0.08em; color: #6E6A63">NOTIFICATIONS</span>
+  <div style="margin: 0 16px; background: #FFFFFF; border-radius: 24px; padding: 4px 16px; box-shadow: 0 1px 2px rgba(29,26,23,0.04), 0 8px 24px rgba(29,26,23,0.05); display: flex; flex-direction: column">
+      <div style="display: flex; align-items: center; gap: 12px; padding: 11px 0; ">
+        <span style="width: 34px; height: 34px; border-radius: 12px; background: #F3EFE8; display: flex; align-items: center; justify-content: center; flex-shrink: 0"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1D1A17" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"></path><path d="M10 20a2 2 0 0 0 4 0"></path></svg></span>
+        <span style="display: flex; flex-direction: column; flex-grow: 1; min-width: 0"><span style="font-size: 15px; font-weight: 700; ">Nudges</span><span style="font-size: 12px; color: #6E6A63">When someone boops you</span></span>
+        <span style="width: 46px; height: 28px; border-radius: 14px; background: #1D1A17; display: flex; align-items: center; justify-content: flex-end; padding: 0 3px; box-sizing: border-box; flex-shrink: 0"><span style="width: 22px; height: 22px; border-radius: 11px; background: #E2FF2B"></span></span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 12px; padding: 11px 0; border-top: 1px solid #F0EBE2">
+        <span style="width: 34px; height: 34px; border-radius: 12px; background: #F3EFE8; display: flex; align-items: center; justify-content: center; flex-shrink: 0"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1D1A17" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="18" height="12" rx="3"></rect><circle cx="12" cy="12" r="2.5"></circle></svg></span>
+        <span style="display: flex; flex-direction: column; flex-grow: 1; min-width: 0"><span style="font-size: 15px; font-weight: 700; ">Payments</span><span style="font-size: 12px; color: #6E6A63">When money lands or is marked paid</span></span>
+        <span style="width: 46px; height: 28px; border-radius: 14px; background: #1D1A17; display: flex; align-items: center; justify-content: flex-end; padding: 0 3px; box-sizing: border-box; flex-shrink: 0"><span style="width: 22px; height: 22px; border-radius: 11px; background: #E2FF2B"></span></span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 12px; padding: 11px 0; border-top: 1px solid #F0EBE2">
+        <span style="width: 34px; height: 34px; border-radius: 12px; background: #F3EFE8; display: flex; align-items: center; justify-content: center; flex-shrink: 0"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1D1A17" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12v18l-2.4-1.5-2.4 1.5-2.4-1.5-2.4 1.5L6 21z"></path><path d="M9 8h6M9 12h6"></path></svg></span>
+        <span style="display: flex; flex-direction: column; flex-grow: 1; min-width: 0"><span style="font-size: 15px; font-weight: 700; ">New expenses</span><span style="font-size: 12px; color: #6E6A63">When someone adds to your dazzle</span></span>
+        <span style="width: 46px; height: 28px; border-radius: 14px; background: #DDD8CE; display: flex; align-items: center; justify-content: flex-start; padding: 0 3px; box-sizing: border-box; flex-shrink: 0"><span style="width: 22px; height: 22px; border-radius: 11px; background: #FFFFFF"></span></span>
+      </div>
+  </div>
+
+  <div style="margin: 18px 16px 0 16px; background: #1D1A17; color: #FFFFFF; border-radius: 24px; padding: 16px; display: flex; flex-direction: column; gap: 8px">
+    <span style="font-size: 12px; font-weight: 800; letter-spacing: 0.08em; color: #E2FF2B">ZEBRASPLIT PRO</span>
+    <span style="font-size: 18px; font-weight: 800">Extras for the herd</span>
+    <span style="font-size: 13px; line-height: 1.4; color: #D3CDC3">Premium recaps, exports, trip budgets and a new outfit every month. Splitting, stripes and settling up always stay free.</span>
+    <span style="align-self: flex-start; height: 36px; padding: 0 14px; border-radius: 999px; background: #E2FF2B; color: #1D1A17; font-size: 14px; font-weight: 800; display: flex; align-items: center">See Pro</span>
+  </div>
+
+  <span style="margin: 18px 20px 6px 20px; font-size: 12px; font-weight: 800; letter-spacing: 0.08em; color: #6E6A63">PURCHASES</span>
+  <div style="margin: 0 16px; background: #FFFFFF; border-radius: 24px; padding: 4px 16px; box-shadow: 0 1px 2px rgba(29,26,23,0.04), 0 8px 24px rgba(29,26,23,0.05); display: flex; flex-direction: column">
+      <div style="display: flex; align-items: center; gap: 12px; padding: 11px 0; ">
+        <span style="width: 34px; height: 34px; border-radius: 12px; background: #F3EFE8; display: flex; align-items: center; justify-content: center; flex-shrink: 0"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1D1A17" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="10" width="16" height="10" rx="2"></rect><path d="M3 7h18v3H3zM12 7v13M12 7c-2-4-6-3-5 0M12 7c2-4 6-3 5 0"></path></svg></span>
+        <span style="display: flex; flex-direction: column; flex-grow: 1; min-width: 0"><span style="font-size: 15px; font-weight: 700; ">Gifts</span><span style="font-size: 12px; color: #6E6A63">1 received · Tiara from Priya</span></span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6E6A63" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M9 5l7 7-7 7"></path></svg>
+      </div>
+      <div style="display: flex; align-items: center; gap: 12px; padding: 11px 0; border-top: 1px solid #F0EBE2">
+        <span style="width: 34px; height: 34px; border-radius: 12px; background: #F3EFE8; display: flex; align-items: center; justify-content: center; flex-shrink: 0"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1D1A17" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.5-5.8"></path><path d="M4 4v4h4"></path></svg></span>
+        <span style="display: flex; flex-direction: column; flex-grow: 1; min-width: 0"><span style="font-size: 15px; font-weight: 700; ">Restore purchases</span><span style="font-size: 12px; color: #6E6A63">Bring back outfits on a new phone</span></span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6E6A63" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M9 5l7 7-7 7"></path></svg>
+      </div>
+  </div>
+
+  <span style="margin: 18px 20px 6px 20px; font-size: 12px; font-weight: 800; letter-spacing: 0.08em; color: #6E6A63">HELP</span>
+  <div style="margin: 0 16px; background: #FFFFFF; border-radius: 24px; padding: 4px 16px; box-shadow: 0 1px 2px rgba(29,26,23,0.04), 0 8px 24px rgba(29,26,23,0.05); display: flex; flex-direction: column">
+      <div style="display: flex; align-items: center; gap: 12px; padding: 11px 0; ">
+        <span style="width: 34px; height: 34px; border-radius: 12px; background: #F3EFE8; display: flex; align-items: center; justify-content: center; flex-shrink: 0"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1D1A17" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 .8-1 1.5M12 17h.01"></path></svg></span>
+        <span style="display: flex; flex-direction: column; flex-grow: 1; min-width: 0"><span style="font-size: 15px; font-weight: 700; ">Help and FAQ</span></span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6E6A63" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M9 5l7 7-7 7"></path></svg>
+      </div>
+      <div style="display: flex; align-items: center; gap: 12px; padding: 11px 0; border-top: 1px solid #F0EBE2">
+        <span style="width: 34px; height: 34px; border-radius: 12px; background: #F3EFE8; display: flex; align-items: center; justify-content: center; flex-shrink: 0"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1D1A17" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"></rect><path d="M4 7l8 6 8-6"></path></svg></span>
+        <span style="display: flex; flex-direction: column; flex-grow: 1; min-width: 0"><span style="font-size: 15px; font-weight: 700; ">Contact support</span><span style="font-size: 12px; color: #6E6A63">support@zebrasplit.com</span></span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6E6A63" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M9 5l7 7-7 7"></path></svg>
+      </div>
+      <div style="display: flex; align-items: center; gap: 12px; padding: 11px 0; border-top: 1px solid #F0EBE2">
+        <span style="width: 34px; height: 34px; border-radius: 12px; background: #F3EFE8; display: flex; align-items: center; justify-content: center; flex-shrink: 0"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1D1A17" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="3"></rect><path d="M8 11V8a4 4 0 0 1 8 0v3"></path></svg></span>
+        <span style="display: flex; flex-direction: column; flex-grow: 1; min-width: 0"><span style="font-size: 15px; font-weight: 700; ">Privacy</span><span style="font-size: 12px; color: #6E6A63">Delete your data · privacy@zebrasplit.com</span></span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6E6A63" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M9 5l7 7-7 7"></path></svg>
+      </div>
+      <div style="display: flex; align-items: center; gap: 12px; padding: 11px 0; border-top: 1px solid #F0EBE2">
+        <span style="width: 34px; height: 34px; border-radius: 12px; background: #F3EFE8; display: flex; align-items: center; justify-content: center; flex-shrink: 0"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1D1A17" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3h7l4 4v14H7z"></path><path d="M10 12h5M10 16h5"></path></svg></span>
+        <span style="display: flex; flex-direction: column; flex-grow: 1; min-width: 0"><span style="font-size: 15px; font-weight: 700; ">Terms</span></span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6E6A63" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M9 5l7 7-7 7"></path></svg>
+      </div>
+  </div>
+
+  <div style="margin: 18px 16px 34px 16px; background: #FFFFFF; border-radius: 24px; padding: 4px 16px; box-shadow: 0 1px 2px rgba(29,26,23,0.04), 0 8px 24px rgba(29,26,23,0.05); display: flex; flex-direction: column">
+      <div style="display: flex; align-items: center; gap: 12px; padding: 11px 0; ">
+        <span style="width: 34px; height: 34px; border-radius: 12px; background: #F3EFE8; display: flex; align-items: center; justify-content: center; flex-shrink: 0"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#A3195F" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v8"></path><path d="M6.5 7a8 8 0 1 0 11 0"></path></svg></span>
+        <span style="display: flex; flex-direction: column; flex-grow: 1; min-width: 0"><span style="font-size: 15px; font-weight: 700; color: #A3195F">Sign out</span></span>
+        
+      </div>
+  </div>
+  <span style="margin: -20px 0 30px 0; text-align: center; font-size: 11px; color: #6E6A63">zebrasplit 1.0 (42)</span>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

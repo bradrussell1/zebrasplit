@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Your account: zebra</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;600;700;800&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#1D1A17;text-decoration:none}a:hover{color:#3A3631}
+</style>
+</helmet>
+<div style="width: 390px; height: 1100px; box-sizing: border-box; padding: 20px 16px 24px 16px; display: flex; flex-direction: column; gap: 14px; font-family: 'Figtree', system-ui, sans-serif; color: #1D1A17; background: radial-gradient(120% 40% at 100% 0%, #FFE9F3 0%, rgba(255,233,243,0) 60%), radial-gradient(100% 35% at 0% 18%, #F6FFD3 0%, rgba(246,255,211,0) 55%), linear-gradient(180deg, #FFFFFF 0%, #FBF8F2 50%, #F5F0E7 100%)">
+
+  <div style="display: flex; align-items: center; justify-content: space-between">
+    <a href="Main.dc.html" aria-label="Back to home" style="width: 44px; height: 44px; border-radius: 999px; background: #FFFFFF; display: flex; align-items: center; justify-content: center">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1D1A17" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg>
+    </a>
+    <span style="padding: 6px 12px; border-radius: 999px; background: #FFFFFF; font-size: 13px; font-weight: 800">zebrasplit</span>
+  </div>
+  <h1 style="margin: 0; font-size: 32px; font-weight: 800; letter-spacing: -0.035em">Your account</h1>
+
+  <div role="tablist" aria-label="Account sections" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; padding: 4px; border-radius: 999px; background: #F3EFE8">
+    <a href="Account.dc.html" role="tab" aria-selected="false" style="min-height: 40px; border-radius: 999px; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 600; color: #6E6A63">Account</a>
+    <a href="AccountZebra.dc.html" role="tab" aria-selected="true" style="min-height: 40px; border-radius: 999px; background: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 800">Zebra</a>
+  </div>
+
+  <div style="border-radius: 26px; background: #FFFFFF; overflow: hidden">
+    <div style="position: relative; height: 250px; display: flex; align-items: flex-end; justify-content: center; background: linear-gradient(180deg, #FFFFFF 0%, #F6FFD3 100%)">
+      <span style="position: absolute; left: 14px; top: 12px; font-size: 12px; font-weight: 800; letter-spacing: 0.08em; color: #6E6A63">YOUR ZEBRA</span>
+      <span style="position: absolute; right: 12px; top: 10px; padding: 5px 10px; border-radius: 999px; background: #FAF7F2; font-size: 12px; font-weight: 700">Seen in 2 dazzles</span>
+      <span style="padding-bottom: 8px"><dc-import name="Zebra" mood="{{mood}}" outfit="{{outfit}}" size="170" hint-size="170px,225px"></dc-import></span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 6px; padding: 10px 12px; overflow-x: auto">
+      <span style="font-size: 13px; color: #6E6A63; flex-shrink: 0">Try a mood</span>
+      <sc-for list="{{moods}}" as="m" hint-placeholder-count="7">
+        <button type="button" onClick="{{m.pick}}" aria-pressed="{{m.pressed}}" style="flex-shrink: 0; min-height: 36px; padding: 0 12px; border-radius: 999px; border: 1.5px solid {{m.border}}; background: {{m.bg}}; color: {{m.fg}}; font-family: inherit; font-size: 13px; font-weight: 700; cursor: pointer">{{m.label}}</button>
+      </sc-for>
+    </div>
+  </div>
+
+  <div style="display: flex; align-items: baseline; justify-content: space-between">
+    <span style="font-size: 22px; font-weight: 800; letter-spacing: -0.02em">Wardrobe</span>
+    <span style="font-size: 12px; color: #6E6A63">Wearing: {{wearingLabel}}</span>
+  </div>
+  <div role="tablist" aria-label="Wardrobe category" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; padding: 4px; border-radius: 999px; background: #F3EFE8">
+    <sc-for list="{{cats}}" as="c" hint-placeholder-count="3">
+      <button type="button" role="tab" onClick="{{c.pick}}" aria-selected="{{c.pressed}}" style="min-height: 38px; border: none; border-radius: 999px; background: {{c.bg}}; font-family: inherit; font-size: 14px; font-weight: {{c.weight}}; color: {{c.fg}}; cursor: pointer">{{c.label}}</button>
+    </sc-for>
+  </div>
+  <span style="font-size: 12px; color: #6E6A63">{{catHint}}</span>
+
+  <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px">
+    <sc-for list="{{items}}" as="it" hint-placeholder-count="4">
+      <button type="button" onClick="{{it.pick}}" aria-label="{{it.name}}, {{it.tag}}" style="padding: 8px 6px 10px 6px; border-radius: 20px; border: 2px solid {{it.border}}; background: #FFFFFF; font-family: inherit; display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer">
+        <span style="width: 100%; height: 76px; border-radius: 14px; background: #FFF3F8; display: flex; align-items: flex-end; justify-content: center; overflow: hidden">
+          <dc-import name="Zebra" mood="happy" outfit="{{it.id}}" size="62" hint-size="62px,72px"></dc-import>
+        </span>
+        <span style="font-size: 13px; font-weight: 800; color: #1D1A17">{{it.name}}</span>
+        <span style="padding: 3px 10px; border-radius: 999px; background: {{it.tagBg}}; color: {{it.tagFg}}; font-size: 11px; font-weight: 800">{{it.tag}}</span>
+      </button>
+    </sc-for>
+  </div>
+
+  <div style="flex: 1"></div>
+  <a href="Shop.dc.html" style="align-self: center; display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 22px; border-radius: 999px; background: #E2FF2B; font-size: 15px; font-weight: 800">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1D1A17" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 8h14l-1.2 12H6.2z"></path><path d="M9 8V6.5a3 3 0 0 1 6 0V8"></path></svg>
+    Shop
+  </a>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1100}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { mood: 'happy', cat: 'eyewear', wear: { eyewear: 'shades', clothing: '', accessories: 'lei' } }; }
+  renderVals() {
+    var self = this;
+    var st = this.state;
+    var all = {
+      eyewear: { hint: 'Glasses and sunglasses. One at a time.', items: [
+        { id: 'glasses', name: 'Round glasses', own: true }, { id: 'shades', name: 'Sunglasses', own: true },
+        { id: 'hearts', name: 'Heart shades', price: '$0.99' }] },
+      clothing: { hint: 'Tops and hats. One at a time.', items: [
+        { id: 'tee', name: 'Zebra tee', own: true }, { id: 'beanie', name: 'Beanie', own: true },
+        { id: 'hoodie', name: 'Hoodie', price: '$0.99' }] },
+      accessories: { hint: 'Neckwear and extras. One at a time.', items: [
+        { id: 'lei', name: 'Lei', own: true }, { id: 'scarf', name: 'Scarf', own: true },
+        { id: 'chain', name: 'Gold chain', price: '$0.99' }, { id: 'tiara', name: 'Tiara', price: '$0.99' },
+        { id: 'sash', name: 'Bride sash', price: 'Pack' }, { id: 'crown', name: 'Crown', earn: true }] }
+    };
+    var names = { glasses: 'Round glasses', shades: 'Sunglasses', tee: 'Zebra tee', beanie: 'Beanie', lei: 'Lei', scarf: 'Scarf' };
+    var cur = all[st.cat];
+    var items = cur.items.map(function (d) {
+      var wearing = st.wear[st.cat] === d.id;
+      var tag = wearing ? 'Wearing' : d.own ? 'Wear' : d.earn ? 'Earn it' : d.price;
+      return {
+        id: d.id, name: d.name, tag: tag,
+        border: wearing ? '#1D1A17' : '#FFFFFF',
+        tagBg: wearing ? '#1D1A17' : d.own ? '#F3EFE8' : d.earn ? '#F3EFE8' : '#E2FF2B',
+        tagFg: wearing ? '#E2FF2B' : '#1D1A17',
+        pick: function () {
+          if (!d.own) return;
+          var w = Object.assign({}, self.state.wear);
+          w[self.state.cat] = w[self.state.cat] === d.id ? '' : d.id;
+          self.setState({ wear: w });
+        }
+      };
+    });
+    var worn = [st.wear.eyewear, st.wear.clothing, st.wear.accessories].filter(function (x) { return x; });
+    var moodList = ['hi', 'happy', 'wink', 'sleepy', 'starry', 'love', 'worried'];
+    var catList = [['eyewear', 'Eyewear'], ['clothing', 'Clothing'], ['accessories', 'Accessories']];
+    return {
+      mood: st.mood,
+      outfit: worn.length ? worn.join(',') : 'none',
+      wearingLabel: worn.length ? worn.map(function (x) { return names[x]; }).join(', ') : 'Nothing',
+      catHint: cur.hint,
+      items: items,
+      moods: moodList.map(function (m) {
+        var on = st.mood === m;
+        return { label: m.charAt(0).toUpperCase() + m.slice(1), pressed: on ? 'true' : 'false', bg: on ? '#1D1A17' : '#FFFFFF', fg: on ? '#FFFBF2' : '#1D1A17', border: on ? '#1D1A17' : '#E8E2D8', pick: function () { self.setState({ mood: m }); } };
+      }),
+      cats: catList.map(function (c) {
+        var on = st.cat === c[0];
+        return { label: c[1], pressed: on ? 'true' : 'false', bg: on ? '#FFFFFF' : 'transparent', fg: on ? '#1D1A17' : '#6E6A63', weight: on ? 800 : 600, pick: function () { self.setState({ cat: c[0] }); } };
+      })
+    };
+  }
+}
+</script>
+</body>
+</html>

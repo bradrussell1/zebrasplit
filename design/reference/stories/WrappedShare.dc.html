@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Wrapped share card</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;600;700;800;900&amp;display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 540px; height: 960px; box-sizing: border-box; padding: 76px 36px 104px 36px; display: flex; flex-direction: column; gap: 20px; overflow: hidden; font-family: 'Figtree', system-ui, sans-serif; color: #FFFBF2; background: #1D1A17">
+
+  <div style="display: flex; align-items: center; justify-content: space-between">
+    <span style="font-size: 22px; font-weight: 800; letter-spacing: -0.03em">zebrasplit</span>
+    <span style="padding: 6px 12px; border-radius: 999px; background: #E2FF2B; color: #1D1A17; font-size: 13px; font-weight: 800; letter-spacing: 0.06em">WRAPPED 2026</span>
+  </div>
+
+  <div style="display: flex; align-items: center; gap: 18px">
+    <span style="flex-shrink: 0; width: 170px; height: 170px; border-radius: 999px; background: #E2FF2B; display: flex; align-items: flex-end; justify-content: center; overflow: hidden">
+      <dc-import name="Zebra" mood="starry" outfit="shades,lei" size="150" hint-size="150px,175px"></dc-import>
+    </span>
+    <div style="display: flex; flex-direction: column; gap: 4px">
+      <span style="font-size: 18px; font-weight: 700; color: #E8E2D8">Apollo is</span>
+      <span style="font-size: 48px; line-height: 0.95; font-weight: 900; letter-spacing: -0.045em">The<br>Treasurer</span>
+    </div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px">
+    <div style="border-radius: 22px; background: #3A3631; padding: 14px"><div style="font-size: 40px; font-weight: 900; letter-spacing: -0.04em">4</div><div style="font-size: 14px; font-weight: 700; color: #E8E2D8">dazzles</div></div>
+    <div style="border-radius: 22px; background: #3A3631; padding: 14px"><div style="font-size: 40px; font-weight: 900; letter-spacing: -0.04em">11</div><div style="font-size: 14px; font-weight: 700; color: #E8E2D8">nights away</div></div>
+    <div style="border-radius: 22px; background: #3A3631; padding: 14px"><div style="font-size: 40px; font-weight: 900; letter-spacing: -0.04em">14</div><div style="font-size: 14px; font-weight: 700; color: #E8E2D8">zebras</div></div>
+  </div>
+
+  <div style="border-radius: 24px; background: #FFFBF2; color: #1D1A17; padding: 18px 20px; display: flex; flex-direction: column; gap: 4px">
+    <span style="font-size: 14px; font-weight: 700; color: #6E6A63">Trips split this year</span>
+    <span style="font-size: 52px; line-height: 1; font-weight: 900; letter-spacing: -0.05em">$14,906</span>
+    <span style="font-size: 15px; font-weight: 700">Top category: Dining, 31%</span>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 10px">
+    <span style="font-size: 14px; font-weight: 800; letter-spacing: 0.08em; color: #E2FF2B">YOUR TOP HERD</span>
+    <div style="display: flex; align-items: flex-end; gap: 14px">
+      <sc-for list="{{herd}}" as="z" hint-placeholder-count="3">
+        <span style="display: flex; flex-direction: column; align-items: center; gap: 4px">
+          <dc-import name="Zebra" mood="{{z.mood}}" outfit="{{z.outfit}}" size="70" hint-size="70px,82px"></dc-import>
+          <span style="font-size: 15px; font-weight: 800">{{z.name}}</span>
+        </span>
+      </sc-for>
+    </div>
+  </div>
+
+  <div style="flex: 1"></div>
+  <div style="display: flex; align-items: flex-end; justify-content: space-between">
+    <span style="font-size: 18px; line-height: 1.2; font-weight: 800">Split the trip<br>Not the friendship</span>
+    <span style="font-size: 15px; font-weight: 700; color: #E8E2D8">zebrasplit.com</span>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":540,"height":960}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      herd: [
+        { name: 'Jen', mood: 'starry', outfit: 'none' },
+        { name: 'Mike', mood: 'wink', outfit: 'none' },
+        { name: 'Priya', mood: 'happy', outfit: 'glasses' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,10 +1,10 @@
-import { formatCents } from "@bunktab/core";
+import { formatCents, herdZebraLabel, outfitDescription } from "@bunktab/core";
 import { color, layout, palette, space } from "@bunktab/theme";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState, type ReactNode } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { ActionSheet, AmountPill, Avatar, Card, Press, ScreenBackground, ScreenSkeleton, StatusPill, TextLink, TopBar, ZText, useToast } from "@/ui";
+import { ActionSheet, AmountPill, Card, Press, ScreenBackground, ScreenSkeleton, StatusPill, TextLink, TopBar, Zebra, ZText, useToast } from "@/ui";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { hasNoExpenses } from "@/lib/tripExtras";
@@ -54,12 +54,24 @@ export default function MemberScreen() {
       <TopBar onBack={() => router.back()} />
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + space[32] }]} showsVerticalScrollIndicator={false}>
         <View style={styles.head}>
-          <Avatar name={m.display_name ?? "?"} uri={m.photo_url} size={88} done={!!m.done_at} />
+          {/* their zebra, in what it's wearing: the herd's own likeness, not an initial */}
+          <Zebra
+            variant="full"
+            size={168}
+            striped={!!m.done_at}
+            outfit={m.outfit}
+            mood={m.done_at ? "happy" : "hi"}
+            animate={{ blink: true, swish: true }}
+            accessibilityLabel={herdZebraLabel({ name, isMe, done: !!m.done_at, mood: m.done_at ? "happy" : "hi", outfit: m.outfit })}
+          />
           <ZText variant="title1" accessibilityRole="header">{name}</ZText>
           <View style={styles.headMeta}>
             <ZText variant="caption" color={color.textSecondary}>{m.role === "owner" ? "Dazzle owner" : "Member"}{m.removed_at ? " · removed" : ""}</ZText>
-            {m.done_at ? <StatusPill label="Done" complete /> : null}
+            {m.done_at ? <StatusPill label="Striped" complete /> : <StatusPill label="Adding" />}
           </View>
+          {outfitDescription(m.outfit) ? (
+            <ZText variant="caption" color={color.textMuted}>Wearing {outfitDescription(m.outfit)}</ZText>
+          ) : null}
         </View>
 
         <Card style={styles.list}>
