@@ -32,3 +32,4 @@ jobs:
           supabase functions deploy send-invite --no-verify-jwt --project-ref "$PROJECT_REF"
           supabase functions deploy push --no-verify-jwt --project-ref "$PROJECT_REF"
           supabase functions deploy purge-trip-media --no-verify-jwt --project-ref "$PROJECT_REF"
+          supabase functions deploy revenuecat-webhook --no-verify-jwt --project-ref "$PROJECT_REF"

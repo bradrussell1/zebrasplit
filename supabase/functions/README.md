@@ -215,10 +215,12 @@ for 72 hours and replays receipts on restore and reinstall, so every path is ide
 rather than failing, because that means the store sold something this deploy has not
 shipped yet and the retry after the next deploy will succeed.
 
-Refunds come back as `CANCELLATION`/`EXPIRATION`/`REFUND` and go to `revoke_purchase()`,
-which uses the `purchases` ledger rather than the pack contents: buy the Jersey pack,
-buy the blue jersey separately, refund the pack, and only the three jerseys no other
-purchase covers are removed. Revoked items also come off the zebra.
+Nothing takes an outfit away. A refund is money back, not stripes back: an item your
+friends have already seen on your zebra stays yours, and the refund is Apple's business
+with the buyer. `REFUND`, `CANCELLATION` and `EXPIRATION` are logged and answered 200 like
+any other event we do not act on. `public.purchases` still records every purchase, so the
+decision is reversible: the revoke path is in git history (migration
+`20261022000004`) and can come back if the policy ever changes.
 
 `purge-trip-media` (shared secret) is called by the `trips` delete trigger
 and removes `covers/<trip>/*` and `receipts/<trip>/*`. `send-invite` refuses

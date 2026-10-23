@@ -19,9 +19,8 @@ import { earnProgress, useWardrobe } from "@/lib/wardrobe";
  * the scrolling, so this never ends up as a scroll view inside a scroll view.
  *
  * Tapping something you own equips it or takes it off; one item per slot, so equipping
- * replaces. Tapping a locked earned item says how far off you are. Tapping a paid item
- * tries it on and says the shop isn't open, rather than offering a button that cannot
- * work until the store products exist.
+ * replaces. Only things you own are here — everything else lives in the Shop, because a
+ * wardrobe full of clothes you cannot wear reads as a shop with the prices taken off.
  *
  * Moods here are a preview and are never saved — a zebra's mood in a herd follows the
  * money and the Done gate, not a preference.
@@ -189,7 +188,7 @@ export function ZebraTab({ loadingSlot }: { loadingSlot?: ReactNode }) {
 
         <InsetPanel style={styles.soon}>
           <ZText variant="caption" color={color.textSecondary}>
-            The Shop, packs and gifting open with in-app purchases. Everything free and everything you earn works now.
+            More hats, chains and jerseys are in the Shop. Everything you earn is free and arrives on its own.
           </ZText>
         </InsetPanel>
     </>

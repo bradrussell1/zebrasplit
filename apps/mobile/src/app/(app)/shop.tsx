@@ -12,10 +12,11 @@ import { useWardrobe } from "@/lib/wardrobe";
  * The Shop (design/reference/stories/Shop.dc.html): the whole catalogue in one grid,
  * with the packs above it, over a preview zebra wearing your current look.
  *
- * Buying is not open. The store products don't exist until the paid-app agreement,
- * tax and banking are done, so every paid tile here previews and says so rather than
- * offering a button that cannot work. Everything free, and everything earned, works —
- * and the try-on works on all 33, which is most of what a storefront is for.
+ * Tapping a tile tries it on; the button under the stage buys it. Nothing here grants
+ * anything — the store sells, RevenueCat verifies, the webhook writes user_cosmetics —
+ * so the Shop's job is to preview, to price, and to wait for the grant before it says
+ * the thing is yours. In a build with no RevenueCat key, buyProduct says so and the
+ * try-on still works on all 33, which is most of what a storefront is for.
  *
  * The Gift tab from the board is deliberately absent rather than disabled: gifting is
  * a purchase, so there is nothing behind it yet and a dead tab is worse than none. It
@@ -127,7 +128,7 @@ export default function ShopScreen() {
     setPack(null);
     setPreview(c.id);
     if (!owned.has(c.id) && c.status === "paid") {
-      show({ message: `Trying on the ${c.name.toLowerCase()}. Buying opens with in-app purchases.`, duration: 3500 });
+      show({ message: `Trying on the ${c.name.toLowerCase()}. Buy it below to keep it.`, duration: 3500 });
     }
   }
 
@@ -230,7 +231,7 @@ export default function ShopScreen() {
 
         <InsetPanel style={styles.soon}>
           <ZText variant="caption" color={color.textSecondary}>
-            Buying, packs and gifting open once in-app purchases are set up with Apple. Splitting, stripes and settling up always stay free.
+            Outfits are the only thing we sell. Splitting, stripes and settling up are free, and always will be.
           </ZText>
         </InsetPanel>
       </ScrollView>

@@ -10,6 +10,12 @@
 // and reinstall, so every path through this has to be safe to run twice. grant_purchase()
 // is idempotent; the rest is bookkeeping.
 //
+// Nothing here takes an outfit away. A refund is money back, not stripes back: an item
+// that showed up on your zebra in front of your friends stays yours, and the refund is
+// Apple's business with the buyer. So REFUND, CANCELLATION and EXPIRATION are logged and
+// acknowledged like any other event we do not act on. public.purchases still records what
+// was bought, which is what makes the decision reversible if it ever needs to be.
+//
 // Setup: RevenueCat dashboard → Integrations → Webhooks, URL
 // https://<ref>.supabase.co/functions/v1/revenuecat-webhook with an Authorization header
 // matching REVENUECAT_WEBHOOK_SECRET. Deploy with --no-verify-jwt: the caller is
@@ -22,8 +28,6 @@ const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE
 
 /** Events that mean "this person owns this now". */
 const GRANTING = new Set(["INITIAL_PURCHASE", "NON_RENEWING_PURCHASE", "PRODUCT_CHANGE", "RENEWAL", "UNCANCELLATION", "TRANSFER"]);
-/** Events that take it away again. A refunded outfit comes off the zebra. */
-const REVOKING = new Set(["CANCELLATION", "EXPIRATION", "REFUND", "REFUND_REVERSED"]);
 
 Deno.serve(withSentry("revenuecat-webhook", async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -38,7 +42,7 @@ Deno.serve(withSentry("revenuecat-webhook", async (req) => {
   const event = body?.event;
   if (!event?.type) return json({ error: "no event" }, 400);
 
-  // 2. Who, and what. app_user_id is the Supabase user id, set by Purchases.logIn().
+  // 2. Who, and what. app_user_id is the Supabase user id, set by Purchases.configure().
   //    An anonymous RevenueCat id ($RCAnonymousID:…) means the buy happened before we
   //    identified the user; the TRANSFER event that follows the login carries the real
   //    one, so there is nothing to do here but wait for it.
@@ -55,21 +59,14 @@ Deno.serve(withSentry("revenuecat-webhook", async (req) => {
   }
   if (!productId) return json({ ok: true, skipped: "no product" });
 
-  // 3. Grant or revoke. Anything else (a test ping, a billing issue) is acknowledged
-  //    and ignored, because a non-200 makes RevenueCat retry it for three days.
+  // 3. Grant, or acknowledge. Anything we do not act on — a refund, a billing issue, a
+  //    test ping — gets a 200, because a non-200 makes RevenueCat retry it for three days.
   if (GRANTING.has(type)) {
     const { data, error } = await admin.rpc("grant_purchase", { p_user_id: userId, p_product_id: productId });
     if (error) { console.error(JSON.stringify({ event: type, product: productId, error: error.message })); return json({ error: "grant failed" }, 500); }
     console.log(JSON.stringify({ event: type, product: productId, granted: data }));
     if (data === 0) console.error(JSON.stringify({ event: type, product: productId, note: "store sold a product this deploy does not know" }));
     return json({ ok: true, granted: data });
-  }
-
-  if (REVOKING.has(type)) {
-    const { data, error } = await admin.rpc("revoke_purchase", { p_user_id: userId, p_product_id: productId });
-    if (error) { console.error(JSON.stringify({ event: type, product: productId, error: error.message })); return json({ error: "revoke failed" }, 500); }
-    console.log(JSON.stringify({ event: type, product: productId, revoked: data }));
-    return json({ ok: true, revoked: data });
   }
 
   console.log(JSON.stringify({ event: type, ignored: true }));
