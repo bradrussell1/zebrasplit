@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Button, HeroCard, InsetPanel, Press, ScreenBackground, ScreenSkeleton, SegmentedControl, TopBar, Zebra, ZText, haptic, useToast } from "@/ui";
-import { buyProduct, restorePurchases, storePrices, waitForGrant } from "@/lib/purchases";
+import { buyProduct, purchasesEnabled, restorePurchases, storePrices, waitForGrant } from "@/lib/purchases";
 import { useWardrobe } from "@/lib/wardrobe";
 
 /**
@@ -41,10 +41,23 @@ export default function ShopScreen() {
   // is quoting a price they will never see. The catalogue is the fallback for the moment
   // before the store answers, and for a build with no RevenueCat key.
   useEffect(() => {
-    void storePrices([
+    let alive = true;
+    const ids = [
       ...PACKS.map((p) => packProduct(p.id)),
       ...COSMETICS.filter((c) => c.status === "paid").map((c) => cosmeticProduct(c.id)),
-    ]).then(setPrices);
+    ];
+    // the SDK may still be configuring when the Shop opens, and an empty answer is
+    // indistinguishable from a slow store, so ask again a couple of times before
+    // settling for the catalogue's dollars
+    void (async () => {
+      for (let i = 0; i < 3; i++) {
+        const got = await storePrices(ids);
+        if (!alive) return;
+        if (Object.keys(got).length > 0) { setPrices(got); return; }
+        await new Promise((r) => setTimeout(r, 600 + i * 600));
+      }
+    })();
+    return () => { alive = false; };
   }, []);
 
   if (loading) {
@@ -88,7 +101,11 @@ export default function ShopScreen() {
    * price of its own, so it points at the pack instead.
    */
   function cta() {
+    // a build with no RevenueCat key (Android, until Play is open) says so where a Buy
+    // button would be, rather than offering one whose only outcome is an error. Owned,
+    // Earn it and pack-only still read normally: none of them is a purchase.
     if (packDef) {
+      if (!purchasesEnabled) return <Button kind="locked" height={40} label="Not on sale yet" />;
       const product = packProduct(packDef.id);
       return <Button height={40} label={`Buy Now · ${priceOf(product, packDef.price)}`} loading={busy} onPress={() => buy(product, packDef.name, [...packDef.items])} />;
     }
@@ -104,6 +121,7 @@ export default function ShopScreen() {
         ? <Button kind="secondary" onWhite height={40} label={`Only in ${home.name}`} onPress={() => { setPreview(null); setPack(home.id); }} />
         : <Button kind="locked" height={40} label="Only in a pack" />;
     }
+    if (!purchasesEnabled) return <Button kind="locked" height={40} label="Not on sale yet" />;
     const product = cosmeticProduct(item.id);
     return <Button height={40} label={`Buy Now · ${priceOf(product, item.price)}`} loading={busy} onPress={() => buy(product, item.name, [item.id])} />;
   }
@@ -147,7 +165,12 @@ export default function ShopScreen() {
     setPack(null);
     setPreview(c.id);
     if (!owned.has(c.id) && c.status === "paid") {
-      show({ message: `Trying on the ${c.name.toLowerCase()}. Buy it below to keep it.`, duration: 3500 });
+      show({
+        message: purchasesEnabled
+          ? `Trying on the ${c.name.toLowerCase()}. Buy it below to keep it.`
+          : `Trying on the ${c.name.toLowerCase()}. Not on sale here yet.`,
+        duration: 3500,
+      });
     }
   }
 
@@ -236,6 +259,7 @@ export default function ShopScreen() {
           </View>
         </View>
 
+        {purchasesEnabled ? (
         <View style={styles.restore}>
           <Button
             kind="secondary"
@@ -247,6 +271,7 @@ export default function ShopScreen() {
             accessibilityLabel="Restore purchases you've already made"
           />
         </View>
+        ) : null}
 
         <InsetPanel style={styles.soon}>
           <ZText variant="caption" color={color.textSecondary}>

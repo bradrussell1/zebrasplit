@@ -70,7 +70,7 @@ export async function signOutOfPurchases(): Promise<void> {
 
 /** Prices to show, keyed by product id. Empty when purchases are not configured. */
 export async function storePrices(productIds: string[]): Promise<Record<string, string>> {
-  if (!apiKey || productIds.length === 0) return {};
+  if (!apiKey || !configured || productIds.length === 0) return {};
   try {
     const products: PurchasesStoreProduct[] = await Purchases.getProducts(productIds);
     return Object.fromEntries(products.map((p) => [p.identifier, p.priceString]));
@@ -90,6 +90,9 @@ export type BuyResult =
  */
 export async function buyProduct(productId: string): Promise<BuyResult> {
   if (!apiKey) return { ok: false, cancelled: false, message: "Buying isn't open in this build yet." };
+  // the Shop can be reached before the session callback has configured the SDK; asking
+  // StoreKit anything now throws an SDK error nobody should have to read
+  if (!configured) return { ok: false, cancelled: false, message: "Still waking up. Try that again in a second." };
   try {
     const [product] = await Purchases.getProducts([productId]);
     if (!product) return { ok: false, cancelled: false, message: "That item isn't in the store yet." };
@@ -112,6 +115,7 @@ export async function buyProduct(productId: string): Promise<BuyResult> {
  */
 export async function restorePurchases(): Promise<BuyResult> {
   if (!apiKey) return { ok: false, cancelled: false, message: "Buying isn't open in this build yet." };
+  if (!configured) return { ok: false, cancelled: false, message: "Still waking up. Try that again in a second." };
   try {
     await Purchases.restorePurchases();
     return { ok: true };
