@@ -50,7 +50,7 @@ export const COSMETICS: readonly CosmeticDef[] = [
   { id: "stars", name: "Star shades", slot: "faceneck", layer: "face", drawOrder: 5, clipped: false, hidesHeadSlot: false, status: "paid", price: "0.99", earnRule: null, packs: [] },
   { id: "goggles", name: "Ski goggles", slot: "faceneck", layer: "face", drawOrder: 5, clipped: false, hidesHeadSlot: false, status: "paid", price: "0.99", earnRule: null, packs: [] },
   { id: "chain", name: "Gold chain", slot: "faceneck", layer: "throat", drawOrder: 4, clipped: false, hidesHeadSlot: false, status: "paid", price: "0.99", earnRule: null, packs: [] },
-  { id: "sash", name: "Bride sash", slot: "faceneck", layer: "torso", drawOrder: 1, clipped: true, hidesHeadSlot: false, status: "paid", price: "0.99", earnRule: null, packs: ["bachelorette"] },
+  { id: "sash", name: "Bride sash", slot: "faceneck", layer: "torso", drawOrder: 1, clipped: true, hidesHeadSlot: false, status: "pack", price: null, earnRule: null, packs: ["bachelorette"] },
   { id: "lei", name: "Lei", slot: "faceneck", layer: "throat", drawOrder: 4, clipped: false, hidesHeadSlot: false, status: "paid", price: "0.99", earnRule: null, packs: [] },
   { id: "hearts", name: "Heart shades", slot: "faceneck", layer: "face", drawOrder: 5, clipped: false, hidesHeadSlot: false, status: "paid", price: "0.99", earnRule: null, packs: [] },
   { id: "tee", name: "Zebra tee", slot: "body", layer: "torso", drawOrder: 1, clipped: true, hidesHeadSlot: false, status: "free", price: null, earnRule: null, packs: [] },

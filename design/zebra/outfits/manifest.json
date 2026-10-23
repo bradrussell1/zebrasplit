@@ -261,8 +261,8 @@
       "draw_order": 1,
       "clip": "body (bust: neck)",
       "hides_head_slot": false,
-      "status": "paid",
-      "price_or_rule": "0.99",
+      "status": "pack",
+      "price_or_rule": "In the Bachelorette pack only",
       "in_packs": [
         "bachelorette"
       ]

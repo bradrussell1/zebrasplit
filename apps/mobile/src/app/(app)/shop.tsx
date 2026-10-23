@@ -1,5 +1,5 @@
 import { COSMETICS, OUTFIT_SLOTS, PACKS, SLOT_LABELS, cosmeticById, outfitDescription, type CosmeticDef, type OutfitSlot, type PackDef } from "@bunktab/core";
-import { color, layout, palette, radius, shadow, space } from "@bunktab/theme";
+import { color, layout, palette, radius, shadow, size, space } from "@bunktab/theme";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
@@ -77,11 +77,17 @@ export default function ShopScreen() {
     return prices[productId] ?? `$${fallback}`;
   }
 
+  /**
+   * Being in a pack is not a reason to hide a price. Every cap and every jersey can
+   * be bought on its own for $0.99; the pack is the discount for wanting all four,
+   * and a shelf of "Pack" tags hid the cheaper way in. Only a true pack exclusive —
+   * status "pack", with no product of its own — has no price to show.
+   */
   function tagFor(c: CosmeticDef): string {
     if (owned.has(c.id)) return OWNED;
     if (c.status === "free") return "Free";
     if (c.status === "earned") return "Earn it";
-    if (c.packs.length) return "Pack";
+    if (c.status === "pack") return "Pack";
     return priceOf(cosmeticProduct(c.id), c.price);
   }
 
@@ -174,10 +180,25 @@ export default function ShopScreen() {
     }
   }
 
+  /**
+   * What you can act on, first. An unearned item and a pack exclusive are the two
+   * tiles a tap cannot buy, so they go to the end of their slot rather than sitting
+   * among the prices looking like something priced wrong. Everything else keeps the
+   * catalogue's order, and an earned item you already own keeps its place too.
+   */
+  const shelf = COSMETICS
+    .filter((c) => c.slot === slot)
+    .map((c, i) => ({ c, i, rank: c.status === "pack" ? 2 : c.status === "earned" && !owned.has(c.id) ? 1 : 0 }))
+    .sort((a, b) => a.rank - b.rank || a.i - b.i)
+    .map((x) => x.c);
+
   return (
     <View style={styles.screen}>
       <ScreenBackground />
-      <TopBar onBack={() => router.back()} />
+      <TopBar
+        onBack={() => router.back()}
+        right={<Button kind="secondary" onWhite height={size.pillSmall} label="My Zebra" onPress={() => router.push("/(app)/zebra")} accessibilityLabel="Go to your zebra" />}
+      />
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + space[32] }]} showsVerticalScrollIndicator={false}>
         <View style={styles.head}>
           <ZText variant="title1" accessibilityRole="header">Shop</ZText>
@@ -239,7 +260,7 @@ export default function ShopScreen() {
             onChange={(s) => { setPreview(null); setPack(null); setSlot(s); }}
           />
           <View style={styles.grid}>
-            {COSMETICS.filter((c) => c.slot === slot).map((c) => {
+            {shelf.map((c) => {
               const tag = tagFor(c);
               return (
                 <Press
