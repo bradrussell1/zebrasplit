@@ -16,6 +16,11 @@
  * and cannot grant anything; the secret that can is the webhook's, and it lives in
  * Supabase. With no key configured every call here is a no-op that reports "not open",
  * which is what a build without purchases should do.
+ *
+ * Who RevenueCat thinks you are matters more than it looks. The webhook grants to
+ * app_user_id, so if that is stale by one sign-out, somebody's crown lands on somebody
+ * else's zebra. Hence configurePurchases() tracks the id it last set and logs the new
+ * user in when it changes, and signOut() clears it.
  */
 import { Platform } from "react-native";
 import Purchases, { LOG_LEVEL, PURCHASES_ERROR_CODE, type PurchasesStoreProduct } from "react-native-purchases";
@@ -29,17 +34,38 @@ const apiKey = Platform.select({
 export const purchasesEnabled = !!apiKey;
 
 let configured = false;
+let currentUser: string | null = null;
 
 /**
- * Called once the user is known. RevenueCat's app_user_id is the Supabase user id, which
- * is what lets the webhook say who bought the thing; without it a purchase arrives
- * anonymous and cannot be granted to anybody.
+ * Called whenever the user is known, which includes the second user on a shared phone.
+ * RevenueCat's app_user_id is the Supabase user id, and it is what lets the webhook say
+ * who bought the thing; without it a purchase arrives anonymous and cannot be granted to
+ * anybody, and if it is *stale* the purchase is granted to whoever signed in first.
+ *
+ * configure() may only be called once per launch, so a change of user is a logIn(), not
+ * a second configure.
  */
 export async function configurePurchases(userId: string): Promise<void> {
-  if (!apiKey || configured) return;
-  if (__DEV__) Purchases.setLogLevel(LOG_LEVEL.WARN);
-  Purchases.configure({ apiKey, appUserID: userId });
-  configured = true;
+  if (!apiKey || currentUser === userId) return;
+  if (!configured) {
+    if (__DEV__) Purchases.setLogLevel(LOG_LEVEL.WARN);
+    Purchases.configure({ apiKey, appUserID: userId });
+    configured = true;
+  } else {
+    await Purchases.logIn(userId);
+  }
+  currentUser = userId;
+}
+
+/**
+ * Signing out hands the SDK back to an anonymous id, so nothing bought by the next
+ * person on this phone is attributed to the last one. Never throws: a device that
+ * cannot reach RevenueCat must still be able to sign out.
+ */
+export async function signOutOfPurchases(): Promise<void> {
+  if (!apiKey || !configured || currentUser === null) return;
+  currentUser = null;
+  try { await Purchases.logOut(); } catch { /* already anonymous, or no signal */ }
 }
 
 /** Prices to show, keyed by product id. Empty when purchases are not configured. */

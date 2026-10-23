@@ -1,6 +1,6 @@
 import type { Session } from "@supabase/supabase-js";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { configurePurchases } from "./purchases";
+import { configurePurchases, signOutOfPurchases } from "./purchases";
 import { registerForPush, unregisterPush } from "./push";
 import { isNetworkError, supabase } from "./supabase";
 
@@ -111,6 +111,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     refreshProfile: async () => { if (session) await loadProfile(session.user.id); },
     signOut: async () => {
       if (session) await unregisterPush(session.user.id).catch(() => undefined);
+      // hand RevenueCat back to an anonymous id, so the next person to sign in on this
+      // phone is not credited with what this one bought
+      await signOutOfPurchases().catch(() => undefined);
       // a global sign-out revokes the refresh token on the server; if that call fails (no signal,
       // a token the server no longer knows) the local session is still cleared, so the device is
       // never left "signed out" in name only (feedback round 1, item 2)

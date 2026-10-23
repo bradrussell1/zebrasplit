@@ -1,11 +1,11 @@
 import { COSMETICS, OUTFIT_SLOTS, PACKS, SLOT_LABELS, cosmeticById, outfitDescription, type CosmeticDef, type OutfitSlot, type PackDef } from "@bunktab/core";
 import { color, layout, palette, radius, shadow, space } from "@bunktab/theme";
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Button, HeroCard, InsetPanel, Press, ScreenBackground, ScreenSkeleton, SegmentedControl, TopBar, Zebra, ZText, haptic, useToast } from "@/ui";
-import { buyProduct, restorePurchases, waitForGrant } from "@/lib/purchases";
+import { buyProduct, restorePurchases, storePrices, waitForGrant } from "@/lib/purchases";
 import { useWardrobe } from "@/lib/wardrobe";
 
 /**
@@ -34,6 +34,18 @@ export default function ShopScreen() {
   const [preview, setPreview] = useState<string | null>(null);
   const [pack, setPack] = useState<string | null>(null);
   const [slot, setSlot] = useState<OutfitSlot>("head");
+  const [prices, setPrices] = useState<Record<string, string>>({});
+
+  // What the store will actually charge, in the buyer's own currency. We sell in 175
+  // countries; the catalogue's "0.99" is a US number, so quoting it to someone in Tokyo
+  // is quoting a price they will never see. The catalogue is the fallback for the moment
+  // before the store answers, and for a build with no RevenueCat key.
+  useEffect(() => {
+    void storePrices([
+      ...PACKS.map((p) => packProduct(p.id)),
+      ...COSMETICS.filter((c) => c.status === "paid").map((c) => cosmeticProduct(c.id)),
+    ]).then(setPrices);
+  }, []);
 
   if (loading) {
     return <View style={styles.screen}><ScreenBackground /><TopBar onBack={() => router.back()} /><ScreenSkeleton rows={3} /></View>;
@@ -47,12 +59,17 @@ export default function ShopScreen() {
   for (const c of packItems) staged[c.slot] = c.id;
   if (item) staged[item.slot] = item.id;
 
+  /** The store's price string, or the catalogue's dollars until the store answers. */
+  function priceOf(productId: string, fallback: string | null): string {
+    return prices[productId] ?? `$${fallback}`;
+  }
+
   function tagFor(c: CosmeticDef): string {
     if (owned.has(c.id)) return OWNED;
     if (c.status === "free") return "Free";
     if (c.status === "earned") return "Earn it";
     if (c.packs.length) return "Pack";
-    return `$${c.price}`;
+    return priceOf(cosmeticProduct(c.id), c.price);
   }
 
   /** What the task reads as on a Redeem button, in the second person. */
@@ -72,7 +89,8 @@ export default function ShopScreen() {
    */
   function cta() {
     if (packDef) {
-      return <Button height={40} label={`Buy Now · $${packDef.price}`} loading={busy} onPress={() => buy(`com.zebrasplit.pack.${packDef.id}`, packDef.name, [...packDef.items])} />;
+      const product = packProduct(packDef.id);
+      return <Button height={40} label={`Buy Now · ${priceOf(product, packDef.price)}`} loading={busy} onPress={() => buy(product, packDef.name, [...packDef.items])} />;
     }
     if (!item) return null;
     // a free item is granted on sign-up, so it reads the same as anything else you have
@@ -86,7 +104,8 @@ export default function ShopScreen() {
         ? <Button kind="secondary" onWhite height={40} label={`Only in ${home.name}`} onPress={() => { setPreview(null); setPack(home.id); }} />
         : <Button kind="locked" height={40} label="Only in a pack" />;
     }
-    return <Button height={40} label={`Buy Now · $${item.price}`} loading={busy} onPress={() => buy(`com.zebrasplit.cosmetic.${item.id}`, item.name, [item.id])} />;
+    const product = cosmeticProduct(item.id);
+    return <Button height={40} label={`Buy Now · ${priceOf(product, item.price)}`} loading={busy} onPress={() => buy(product, item.name, [item.id])} />;
   }
 
   /**
@@ -178,12 +197,12 @@ export default function ShopScreen() {
                 onPress={() => { setPreview(null); setPack(p.id); }}
                 scaleTo={0.97}
                 accessibilityRole="button"
-                accessibilityLabel={`${p.name}, $${p.price}`}
+                accessibilityLabel={`${p.name}, ${priceOf(packProduct(p.id), p.price)}`}
                 style={[styles.packCard, pack === p.id ? styles.packOn : null]}
               >
                 <Zebra variant="full" size={92} striped mood="happy" outfit={lookFor(p)} decorative />
                 <ZText variant="bodyStrong" numberOfLines={1}>{p.name}</ZText>
-                <ZText variant="caption" color={color.textMuted}>${p.price}</ZText>
+                <ZText variant="caption" color={color.textMuted}>{priceOf(packProduct(p.id), p.price)}</ZText>
               </Press>
             ))}
           </ScrollView>
@@ -238,6 +257,11 @@ export default function ShopScreen() {
     </View>
   );
 }
+
+/** The store product behind a cosmetic or a pack. Derived, never typed, so these
+ *  cannot drift from docs/ops/iap-products.md or from what the store was told. */
+function cosmeticProduct(id: string) { return `com.zebrasplit.cosmetic.${id}`; }
+function packProduct(id: string) { return `com.zebrasplit.pack.${id}`; }
 
 function lookFor(p: PackDef) {
   const look: Record<string, string> = {};
