@@ -10,6 +10,10 @@ Every answer below was read off the code and schema, not assumed:
 - Contacts the user picks become `invites` rows holding that person's phone number.
 - Receipt photos and trip covers go to the `receipts` / `covers` buckets; avatars to `avatars`.
 - Push tokens are stored per device in `devices`.
+- In-app purchases go through RevenueCat, which is told the Supabase user id as its
+  `app_user_id` and keeps its own record of what that person bought; our side keeps
+  `public.purchases` (user id, product id). Both are purchase history linked to identity.
+  RevenueCat is a processor, not a data broker: nothing is shared for advertising.
 - Sentry runs with `sendDefaultPii: false`, never calls `setUser`, and scrubs phone
   numbers and dollar amounts in `beforeSend` — so diagnostics are **not** linked to identity.
 - There is no analytics SDK in the app (no Firebase, Segment, Amplitude, AppsFlyer, Branch…).
@@ -35,6 +39,7 @@ third-party data for advertising or measurement. No ATT prompt is required.
 | Contacts | Contacts *(only the people the user picks to invite)* | Yes | App Functionality |
 | User Content | Photos or Videos *(receipts, trip covers, avatar)* | Yes | App Functionality |
 | User Content | Other User Content *(trip names, expense descriptions, comments)* | Yes | App Functionality |
+| Purchases | Purchase History *(which outfits were bought: `public.purchases`, and RevenueCat's own record)* | Yes | App Functionality |
 | Identifiers | User ID | Yes | App Functionality |
 | Identifiers | Device ID *(push token)* | Yes | App Functionality |
 | Usage Data | Product Interaction *(Sentry session counts)* | No | Analytics |
@@ -49,10 +54,17 @@ Say no to all of these — they are the ones a reviewer is most likely to query:
 
 - **Payment Info** — no card, bank or account credentials are ever collected. The Pay
   button opens Venmo / Cash App / PayPal with the amount pre-filled; the money moves
-  entirely inside that app.
+  entirely inside that app. In-app purchases are charged by Apple: we are told that a
+  product was bought, never how it was paid for.
 - **Precise or Coarse Location** — the app requests no location permission.
 - **Health & Fitness**, **Sensitive Info**, **Browsing History**, **Search History**,
-  **Purchases**, **Advertising Data**, **Audio Data**.
+  **Advertising Data**, **Audio Data**.
+
+> **Purchases moved.** It belonged here until the Shop had something to sell. Version
+> 1.1.0 adds 27 in-app purchases, so **Purchase History** is now collected and linked —
+> see the table above. Change this in App Store Connect **before** submitting 1.1.0: a
+> privacy label that is accurate for the build you last shipped is still wrong for the
+> one under review.
 
 ## Optional-disclosure notes
 
