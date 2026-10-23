@@ -55,7 +55,7 @@ Everything is settled and written into `ZEBRASPLIT_HERD_STORIES_PROMPT.md`. Part
 ## Yours to do outside the code
 
 - App Store Connect and Play Console:
-  - **Products:** 32 items, 5 packs (Bachelorette plus four Jersey colors) and 2 gift products.
+  - **Products:** 33 items, 3 packs (Bachelorette, Jersey, Hat) and 2 gift products. 27 store SKUs — the tiara is pack-only and the gift products wait for gifting. See `docs/ops/iap-products.md`.
   - **Agreements:** the paid apps agreement, tax and banking, and the small-business program.
 - Privacy Policy and store privacy labels: update them for purchases, gifting and AI-written stories.
 - FAQ: wardrobe purchases go through Apple and Google, not Venmo.

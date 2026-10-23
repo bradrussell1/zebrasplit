@@ -1,0 +1,18 @@
+-- ---------------------------------------------------------------------------
+-- A fourth cosmetic status: 'pack'.
+--
+-- The tiara is no longer earned by sending a gift - gifting grants nothing now -
+-- but it is not individually purchasable either. It exists only inside the
+-- Bachelorette pack, which is the whole reason that pack is worth $2.99 when two
+-- of its three items cost $0.99 apiece.
+--
+-- 'free', 'earned' and 'paid' could not say that. A pack-only item has no price
+-- of its own and no store product behind it, so the existing constraints already
+-- fit it: price_usd must be null for anything that is not 'paid', and earn_rule
+-- must be null for anything that is not 'earned'.
+--
+-- This is a migration of its own because Postgres will not let a new enum value
+-- be *used* in the transaction that added it, and db-apply.mjs sends each file
+-- as a single query. The row that uses it is in the next migration.
+-- ---------------------------------------------------------------------------
+alter type public.cosmetic_status add value if not exists 'pack';
