@@ -4,7 +4,8 @@ import { useRouter } from "expo-router";
 import { useState } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Button, HeroCard, InsetPanel, Press, ScreenBackground, ScreenSkeleton, SegmentedControl, TopBar, Zebra, ZText, useToast } from "@/ui";
+import { Button, HeroCard, InsetPanel, Press, ScreenBackground, ScreenSkeleton, SegmentedControl, TopBar, Zebra, ZText, haptic, useToast } from "@/ui";
+import { buyProduct, restorePurchases, waitForGrant } from "@/lib/purchases";
 import { useWardrobe } from "@/lib/wardrobe";
 
 /**
@@ -27,7 +28,8 @@ export default function ShopScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { show } = useToast();
-  const { owned, outfit, loading } = useWardrobe();
+  const { owned, outfit, loading, reload } = useWardrobe();
+  const [busy, setBusy] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
   const [pack, setPack] = useState<string | null>(null);
   const [slot, setSlot] = useState<OutfitSlot>("head");
@@ -63,31 +65,62 @@ export default function ShopScreen() {
    * One button, one state. Owned and Redeem are both dead buttons on purpose: owning a
    * thing twice is not a purchase, and an earned item is granted the moment the task is
    * done rather than claimed, so Redeem can only ever be the sign that says what to go
-   * and do. A pack-only item has no price of its own, so it points at the pack instead.
+   * and do. A free item reads "Owned" like any other: people find out it was free by
+   * already having it, which is the nicest way to learn it. A pack-only item has no
+   * price of its own, so it points at the pack instead.
    */
   function cta() {
     if (packDef) {
-      return <Button height={40} label={`Buy Now · $${packDef.price}`} onPress={() => buy(packDef.name)} />;
+      return <Button height={40} label={`Buy Now · $${packDef.price}`} loading={busy} onPress={() => buy(`com.zebrasplit.pack.${packDef.id}`, packDef.name, [...packDef.items])} />;
     }
     if (!item) return null;
-    if (owned.has(item.id)) return <Button kind="locked" height={40} label="Owned" />;
-    if (item.status === "free") return <Button kind="locked" height={40} label="Free · it's already yours" />;
+    // a free item is granted on sign-up, so it reads the same as anything else you have
+    if (owned.has(item.id) || item.status === "free") return <Button kind="locked" height={40} label="Owned" />;
     if (item.status === "earned") {
       return <Button kind="locked" height={40} label={`Redeem · ${taskFor(item.earnRule)}`} />;
     }
     if (item.status === "pack") {
       const home = PACKS.find((p) => p.id === item.packs[0]);
       return home
-        ? <Button kind="secondary" onWhite height={40} label={`Only in the ${home.name} · $${home.price}`} onPress={() => { setPreview(null); setPack(home.id); }} />
+        ? <Button kind="secondary" onWhite height={40} label={`Only in ${home.name}`} onPress={() => { setPreview(null); setPack(home.id); }} />
         : <Button kind="locked" height={40} label="Only in a pack" />;
     }
-    return <Button height={40} label={`Buy Now · $${item.price}`} onPress={() => buy(item.name)} />;
+    return <Button height={40} label={`Buy Now · $${item.price}`} loading={busy} onPress={() => buy(`com.zebrasplit.cosmetic.${item.id}`, item.name, [item.id])} />;
   }
 
-  // Until StoreKit is wired the button is honest about why nothing happened; the label
-  // is already the real one, so only this body changes when purchases land.
-  function buy(what: string) {
-    show({ message: `${what} isn't buyable yet — in-app purchases open with the next release.`, duration: 3500 });
+  /**
+   * Buy one product. The app does not grant anything: the store sells it, RevenueCat
+   * verifies the receipt, the webhook writes user_cosmetics, and only then is it yours.
+   * So this waits for the grant to land before saying so, and reloads the wardrobe from
+   * the database rather than guessing. A slow webhook is not a failure, just a wait that
+   * outlived the button.
+   */
+  async function buy(productId: string, what: string, grants: string[]) {
+    if (busy) return;
+    setBusy(true);
+    const res = await buyProduct(productId);
+    if (!res.ok) {
+      setBusy(false);
+      if (!res.cancelled) show({ message: res.message, duration: 4000 });
+      return;
+    }
+    const landed = await waitForGrant(grants);
+    await reload();
+    setBusy(false);
+    haptic.light();
+    show({
+      message: landed ? `${what} is yours. Wear it from your closet.` : `${what} is paid for. It'll appear in a moment.`,
+      duration: 4000,
+    });
+  }
+
+  async function restore() {
+    if (busy) return;
+    setBusy(true);
+    const res = await restorePurchases();
+    await reload();
+    setBusy(false);
+    show({ message: res.ok ? "Anything you've bought is back." : res.cancelled ? "" : res.message, duration: 4000 });
   }
 
   function tapItem(c: CosmeticDef) {
@@ -183,6 +216,18 @@ export default function ShopScreen() {
           </View>
         </View>
 
+        <View style={styles.restore}>
+          <Button
+            kind="secondary"
+            onWhite
+            height={40}
+            label="Restore Purchases"
+            loading={busy}
+            onPress={restore}
+            accessibilityLabel="Restore purchases you've already made"
+          />
+        </View>
+
         <InsetPanel style={styles.soon}>
           <ZText variant="caption" color={color.textSecondary}>
             Buying, packs and gifting open once in-app purchases are set up with Apple. Splitting, stripes and settling up always stay free.
@@ -221,5 +266,6 @@ const styles = StyleSheet.create({
     borderWidth: 2, borderColor: "transparent",
   },
   tileOn: { borderColor: palette.volt },
+  restore: { marginTop: space[8] },
   soon: { paddingVertical: space[10] },
 });
