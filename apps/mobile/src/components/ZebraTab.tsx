@@ -1,5 +1,5 @@
 import {
-  COSMETICS, EARN_RULES, PACKS, SLOT_LABELS, OUTFIT_SLOTS, cosmeticById, hiddenByHood, hoodIsUp,
+  COSMETICS, EARN_RULES, SLOT_LABELS, OUTFIT_SLOTS, cosmeticById, hiddenByHood, hoodIsUp,
   outfitDescription, type CosmeticDef, type OutfitSlot, type ZebraMood,
 } from "@bunktab/core";
 import { color, palette, radius, shadow, size, space } from "@bunktab/theme";
@@ -48,57 +48,32 @@ export function ZebraTab({ loadingSlot }: { loadingSlot?: ReactNode }) {
   const hooded = hoodIsUp(staged);
   const underHood = hiddenByHood(staged);
 
-  /** The tag on a tile, which is also what tapping it will do. */
-  function tagFor(c: CosmeticDef): { label: string; tone: "wearing" | "own" | "locked" | "price" } {
+  /**
+   * The tag on a tile, which is also what tapping it will do. Every tile here is
+   * something you own, so there is no locked or priced state to describe: the grid is
+   * filtered to your own items and the Shop carries everything else.
+   */
+  function tagFor(c: CosmeticDef): { label: string; tone: "wearing" | "own" } {
     if (staged[c.slot] === c.id) return { label: hooded && c.slot === "head" ? "Under the hood" : "Wearing", tone: "wearing" };
-    if (owned.has(c.id)) return { label: c.status === "earned" ? "Earned · Wear" : "Wear", tone: "own" };
-    if (c.status === "earned") return { label: lockLabel(c), tone: "locked" };
-    return { label: `$${c.price}`, tone: "price" };
-  }
-
-  function lockLabel(c: CosmeticDef): string {
-    if (c.earnRule === "trips_5") return `${settledTrips} of 5 trips`;
-    if (c.earnRule === "first_trip") return "First trip";
-    return "Send a gift";
+    return { label: c.status === "earned" ? "Earned · Wear" : "Wear", tone: "own" };
   }
 
   async function tap(c: CosmeticDef) {
     if (busy) return;
-    if (owned.has(c.id)) {
-      const takingOff = outfit[c.slot] === c.id;
-      setBusy(true);
-      setTryOn(null);
-      const err = await equip(c.slot, takingOff ? null : c.id);
-      setBusy(false);
-      if (err) { show({ message: err }); return; }
-      haptic.light();
-      show({ message: takingOff ? `${c.name} off.` : `${c.name} on. Your herd will see it.` });
-      return;
-    }
-    // not owned: try it on so the tap does something, and say why it can't be worn
-    setTryOn(c.id);
-    if (c.status === "earned") {
-      show({
-        message: c.earnRule === "trips_5"
-          ? `Finish 5 trips to earn the ${c.name.toLowerCase()}. You're at ${settledTrips}.`
-          : `Settle your first trip to earn the ${c.name.toLowerCase()}.`,
-        duration: 4000,
-      });
-      return;
-    }
-    if (c.status === "pack") {
-      const pack = PACKS.find((p) => p.id === c.packs[0]);
-      show({
-        message: `The ${c.name.toLowerCase()} only comes in the ${pack?.name ?? "pack"}.`,
-        duration: 4000,
-      });
-      return;
-    }
-    show({ message: `Trying on the ${c.name.toLowerCase()}. The shop isn't open yet — it opens with in-app purchases.`, duration: 4000 });
+    const takingOff = outfit[c.slot] === c.id;
+    setBusy(true);
+    setTryOn(null);
+    const err = await equip(c.slot, takingOff ? null : c.id);
+    setBusy(false);
+    if (err) { show({ message: err }); return; }
+    haptic.light();
+    show({ message: takingOff ? `${c.name} off.` : `${c.name} on. Your herd will see it.` });
   }
 
   const wearing = outfitDescription(staged);
-  const items = COSMETICS.filter((c) => c.slot === slot);
+  // Your closet is what you own. Everything else belongs in the Shop - a wardrobe
+  // full of things you cannot wear reads as a shop with the prices taken off.
+  const items = COSMETICS.filter((c) => c.slot === slot && owned.has(c.id));
 
   return (
     <>
@@ -132,7 +107,7 @@ export function ZebraTab({ loadingSlot }: { loadingSlot?: ReactNode }) {
 
         {/* mood preview, never saved */}
         <View style={styles.moodRow}>
-          <ZText variant="label" color={color.textMuted}>Try a mood</ZText>
+          <ZText variant="headline">Try a mood on</ZText>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.moods}>
             {MOODS.map((m) => (
               <Button key={m} label={`${m[0]!.toUpperCase()}${m.slice(1)}`} kind={mood === m ? "ink" : "secondary"} onWhite height={size.pillSmall} onPress={() => setMood(m)} accessibilityLabel={`Try the ${m} mood`} />
@@ -153,7 +128,14 @@ export function ZebraTab({ loadingSlot }: { loadingSlot?: ReactNode }) {
               : "One top at a time. A body item covers the chest only, so your stripes still show."}
         </ZText>
 
-        {/* the grid */}
+        {/* the grid: only what you own, so an empty slot says where to go */}
+        {items.length === 0 ? (
+          <InsetPanel style={styles.empty}>
+            <ZText variant="caption" color={color.textSecondary}>
+              Nothing for this slot yet. Free items are already yours — the rest are in the Shop.
+            </ZText>
+          </InsetPanel>
+        ) : null}
         <View style={styles.grid}>
           {items.map((c) => {
             const tag = tagFor(c);
@@ -175,17 +157,17 @@ export function ZebraTab({ loadingSlot }: { loadingSlot?: ReactNode }) {
                   decorative
                 />
                 <ZText variant="micro" numberOfLines={1}>{c.name}</ZText>
-                <ZText variant="micro" color={tag.tone === "wearing" ? color.text : tag.tone === "locked" ? color.textMuted : color.textSecondary} numberOfLines={1}>
-                  {tag.tone === "locked" ? `🔒 ${tag.label}` : tag.label}
+                <ZText variant="micro" color={tag.tone === "wearing" ? color.text : color.textSecondary} numberOfLines={1}>
+                  {tag.label}
                 </ZText>
               </Press>
             );
           })}
         </View>
 
-        {/* how the three earned items are earned */}
+        {/* how the earned items are earned */}
         <Card style={styles.earn}>
-          <ZText variant="overline" color={color.textMuted}>Earn outfits</ZText>
+          <ZText variant="overline" color={color.textMuted}>Earned Outfits</ZText>
           {Object.entries(EARN_RULES).map(([rule, id]) => {
             const c = cosmeticById(id);
             if (!c) return null;
@@ -196,7 +178,7 @@ export function ZebraTab({ loadingSlot }: { loadingSlot?: ReactNode }) {
                 <View style={styles.flex}>
                   <ZText variant="bodyStrong">{c.name}</ZText>
                   <ZText variant="caption" color={color.textMuted}>
-                    {rule === "first_trip" ? "Settle your first trip" : rule === "trips_5" ? `Settle five trips · ${settledTrips} of 5` : "Send your first gift"}
+                    {rule === "first_trip" ? "Settle your first trip" : `Settle five trips · ${settledTrips} of 5`}
                   </ZText>
                 </View>
                 {got ? <ZText variant="captionStrong">Earned</ZText> : null}
@@ -232,4 +214,5 @@ const styles = StyleSheet.create({
   earn: { gap: space[10] },
   earnRow: { flexDirection: "row", alignItems: "center", gap: space[12] },
   soon: { paddingVertical: space[10] },
+  empty: { marginTop: space[8] },
 });

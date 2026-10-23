@@ -1,10 +1,10 @@
-import { COSMETICS, OUTFIT_SLOTS, PACKS, SLOT_LABELS, cosmeticById, outfitDescription, type CosmeticDef, type PackDef } from "@bunktab/core";
+import { COSMETICS, OUTFIT_SLOTS, PACKS, SLOT_LABELS, cosmeticById, outfitDescription, type CosmeticDef, type OutfitSlot, type PackDef } from "@bunktab/core";
 import { color, layout, palette, radius, shadow, space } from "@bunktab/theme";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Button, HeroCard, InsetPanel, Press, ScreenBackground, ScreenSkeleton, TopBar, Zebra, ZText, useToast } from "@/ui";
+import { Button, HeroCard, InsetPanel, Press, ScreenBackground, ScreenSkeleton, SegmentedControl, TopBar, Zebra, ZText, useToast } from "@/ui";
 import { useWardrobe } from "@/lib/wardrobe";
 
 /**
@@ -30,6 +30,7 @@ export default function ShopScreen() {
   const { owned, outfit, loading } = useWardrobe();
   const [preview, setPreview] = useState<string | null>(null);
   const [pack, setPack] = useState<string | null>(null);
+  const [slot, setSlot] = useState<OutfitSlot>("head");
 
   if (loading) {
     return <View style={styles.screen}><ScreenBackground /><TopBar onBack={() => router.back()} /><ScreenSkeleton rows={3} /></View>;
@@ -49,6 +50,44 @@ export default function ShopScreen() {
     if (c.status === "earned") return "Earn it";
     if (c.packs.length) return "Pack";
     return `$${c.price}`;
+  }
+
+  /** What the task reads as on a Redeem button, in the second person. */
+  function taskFor(rule: string | null): string {
+    if (rule === "trips_5") return "settle 5 trips";
+    if (rule === "first_trip") return "settle your first trip";
+    return "keep using Zebrasplit";
+  }
+
+  /**
+   * One button, one state. Owned and Redeem are both dead buttons on purpose: owning a
+   * thing twice is not a purchase, and an earned item is granted the moment the task is
+   * done rather than claimed, so Redeem can only ever be the sign that says what to go
+   * and do. A pack-only item has no price of its own, so it points at the pack instead.
+   */
+  function cta() {
+    if (packDef) {
+      return <Button height={40} label={`Buy Now · $${packDef.price}`} onPress={() => buy(packDef.name)} />;
+    }
+    if (!item) return null;
+    if (owned.has(item.id)) return <Button kind="locked" height={40} label="Owned" />;
+    if (item.status === "free") return <Button kind="locked" height={40} label="Free · it's already yours" />;
+    if (item.status === "earned") {
+      return <Button kind="locked" height={40} label={`Redeem · ${taskFor(item.earnRule)}`} />;
+    }
+    if (item.status === "pack") {
+      const home = PACKS.find((p) => p.id === item.packs[0]);
+      return home
+        ? <Button kind="secondary" onWhite height={40} label={`Only in the ${home.name} · $${home.price}`} onPress={() => { setPreview(null); setPack(home.id); }} />
+        : <Button kind="locked" height={40} label="Only in a pack" />;
+    }
+    return <Button height={40} label={`Buy Now · $${item.price}`} onPress={() => buy(item.name)} />;
+  }
+
+  // Until StoreKit is wired the button is honest about why nothing happened; the label
+  // is already the real one, so only this body changes when purchases land.
+  function buy(what: string) {
+    show({ message: `${what} isn't buyable yet — in-app purchases open with the next release.`, duration: 3500 });
   }
 
   function tapItem(c: CosmeticDef) {
@@ -87,14 +126,7 @@ export default function ShopScreen() {
                   {packItems.map((c) => c.name).join(" · ")}
                 </ZText>
               ) : null}
-              {!packDef && item && owned.has(item.id) ? (
-                // the Shop is a storefront, not a wardrobe: wearing happens in Your zebra
-                <Button kind="secondary" onWhite height={40} label="In your closet · wear it there" onPress={() => router.push("/(app)/zebra")} />
-              ) : !packDef && item && item.status === "earned" ? (
-                <Button kind="locked" height={40} label={`Earn it: ${item.earnRule === "trips_5" ? "5 trips" : item.earnRule === "first_trip" ? "first trip" : "send a gift"}`} />
-              ) : (
-                <Button kind="locked" height={40} label={`${packDef ? `$${packDef.price}` : `$${item!.price}`} · opens with purchases`} />
-              )}
+              {cta()}
               <Press onPress={() => { setPreview(null); setPack(null); }} scaleTo={0.97} accessibilityRole="button" accessibilityLabel="Clear the preview">
                 <ZText variant="caption" color={color.textMuted}>Back to your look</ZText>
               </Press>
@@ -123,34 +155,33 @@ export default function ShopScreen() {
           </ScrollView>
         </View>
 
-        {/* the catalogue, a section per slot */}
-        {OUTFIT_SLOTS.map((s) => {
-          const items = COSMETICS.filter((c) => c.slot === s);
-          return (
-            <View key={s} style={styles.section}>
-              <ZText variant="overline" color={color.textMuted}>{SLOT_LABELS[s]} · {items.length}</ZText>
-              <View style={styles.grid}>
-                {items.map((c) => {
-                  const tag = tagFor(c);
-                  return (
-                    <Press
-                      key={c.id}
-                      onPress={() => tapItem(c)}
-                      scaleTo={0.97}
-                      accessibilityRole="button"
-                      accessibilityLabel={`${c.name}, ${tag}`}
-                      style={[styles.tile, preview === c.id ? styles.tileOn : null]}
-                    >
-                      <Zebra variant={c.slot === "body" ? "full" : "bust"} size={c.slot === "body" ? 70 : 66} striped mood="hi" outfit={{ [c.slot]: c.id }} decorative />
-                      <ZText variant="micro" numberOfLines={1}>{c.name}</ZText>
-                      <ZText variant="micro" color={tag === OWNED ? color.text : color.textMuted}>{tag}</ZText>
-                    </Press>
-                  );
-                })}
-              </View>
-            </View>
-          );
-        })}
+        {/* the catalogue: one slot at a time, on the same control the closet uses */}
+        <View style={styles.section}>
+          <SegmentedControl
+            options={OUTFIT_SLOTS.map((s) => ({ key: s, label: SLOT_LABELS[s] }))}
+            value={slot}
+            onChange={(s) => { setPreview(null); setPack(null); setSlot(s); }}
+          />
+          <View style={styles.grid}>
+            {COSMETICS.filter((c) => c.slot === slot).map((c) => {
+              const tag = tagFor(c);
+              return (
+                <Press
+                  key={c.id}
+                  onPress={() => tapItem(c)}
+                  scaleTo={0.97}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${c.name}, ${tag}`}
+                  style={[styles.tile, preview === c.id ? styles.tileOn : null]}
+                >
+                  <Zebra variant={c.slot === "body" ? "full" : "bust"} size={c.slot === "body" ? 70 : 66} striped mood="hi" outfit={{ [c.slot]: c.id }} decorative />
+                  <ZText variant="micro" numberOfLines={1}>{c.name}</ZText>
+                  <ZText variant="micro" color={tag === OWNED ? color.text : color.textMuted}>{tag}</ZText>
+                </Press>
+              );
+            })}
+          </View>
+        </View>
 
         <InsetPanel style={styles.soon}>
           <ZText variant="caption" color={color.textSecondary}>

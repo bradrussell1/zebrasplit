@@ -40,23 +40,37 @@ describe("herdLayout", () => {
    * out after review, so zebras now overlap rather than queue. What stays true is the
    * shape of a row, not the board's exact widths.
    */
-  it("keeps the board's proportions between rows", () => {
+  it("draws every zebra the same size, whatever row it stands in", () => {
+    // A dazzle is a group of equals, so perspective is gone: the front row no longer
+    // reads as the important one. Depth comes from the lift and the overlap instead.
+    for (const n of [2, 5, 6, 8, 9, 10, 11, 12]) {
+      const slots = herdLayout(n, FIELD.w, FIELD.h);
+      const widths = new Set(slots.map((s) => s.width.toFixed(6)));
+      const heights = new Set(slots.map((s) => s.height.toFixed(6)));
+      expect(widths.size, `${n} zebras`).toBe(1);
+      expect(heights.size, `${n} zebras`).toBe(1);
+    }
+  });
+
+  it("sizes everyone to what the back row used to be", () => {
     const slots = herdLayout(6, FIELD.w, FIELD.h);
     expect(slots).toHaveLength(6);
     const front = slots.filter((s) => s.row === 0);
-    const back = slots.filter((s) => s.row === 1);
-    expect(back[0]!.width / front[0]!.width).toBeCloseTo(HERD.depthScale, 5);
     expect(front.every((s) => s.y + s.height === front[0]!.y + front[0]!.height)).toBe(true);
+    // two rows, so one step back: everyone is drawn at depthScale of the old front row
+    const widest = ((FIELD.w - 4 * FIELD.w * HERD.gapFactor) / 3) * HERD.aspect * HERD.crowdFactor;
+    expect(front[0]!.width).toBeCloseTo((widest * HERD.depthScale) / HERD.aspect, 4);
     // evenly spaced, and the step is the room a name tag has to itself
     const gaps = front.slice(1).map((s, i) => s.x - front[i]!.x);
     for (const g of gaps) expect(g).toBeCloseTo(front[0]!.step, 5);
   });
 
   it("draws a herd big enough to read, overlapping rather than shrinking to fit", () => {
-    // the complaint this answers: four zebras across a 358 pt field came out 71 pt wide
+    // the complaint this answers: four zebras across a 358 pt field came out 71 pt wide.
+    // The bar is lower than it was now that nobody is drawn at the old front-row size.
     for (const n of [6, 8, 12]) {
       const s = herdLayout(n, FIELD.w, FIELD.h);
-      expect(s[0]!.width, `${n} zebras`).toBeGreaterThan(90);
+      expect(s[0]!.width, `${n} zebras`).toBeGreaterThan(60);
       // ...and a tag gets a whole step, so two names never collide side by side
       expect(s[0]!.step).toBeGreaterThan(55);
     }
@@ -105,11 +119,20 @@ describe("herdLayout", () => {
     }
   });
 
-  it("offsets a back row half a step so nobody hides behind anybody", () => {
-    const slots = herdLayout(6, FIELD.w, FIELD.h);
-    const front = slots.filter((s) => s.row === 0).map((s) => s.x + s.width / 2);
-    const back = slots.filter((s) => s.row === 1).map((s) => s.x + s.width / 2);
-    for (const b of back) for (const f of front) expect(Math.abs(b - f)).toBeGreaterThan(8);
+  it("stands nobody directly behind anybody, at every herd size and width", () => {
+    // Equal sizes took away the thing that used to hide this: when the back row was
+    // narrower, its centres moved a few points even where the rows lined up exactly.
+    // The row offset now has to carry it alone, so check every n rather than just six.
+    for (const w of [320, 358, 390, 430]) {
+      for (let n = 2; n <= 12; n++) {
+        const slots = herdLayout(n, w, FIELD.h);
+        for (const a of slots) for (const b of slots) {
+          if (a.row === b.row) continue;
+          const apart = Math.abs(a.x + a.width / 2 - (b.x + b.width / 2));
+          expect(apart, `${n} zebras at ${w}: rows ${a.row} and ${b.row}`).toBeGreaterThan(8);
+        }
+      }
+    }
   });
 
   it("draws the front row over the rows behind it", () => {
