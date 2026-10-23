@@ -13,12 +13,12 @@ describe("the launch wardrobe", () => {
     expect(cosmeticsForSlot("body")).toHaveLength(11);
   });
 
-  it("is 6 free, 2 earned, 24 paid and 1 pack-only (B3)", () => {
+  it("is 6 free, 2 earned, 23 paid and 2 pack-only (B3)", () => {
     const by = (s: string) => COSMETICS.filter((c) => c.status === s).length;
     expect(by("free")).toBe(6);
     expect(by("earned")).toBe(2);
-    expect(by("paid")).toBe(24);
-    expect(by("pack")).toBe(1);
+    expect(by("paid")).toBe(23);
+    expect(by("pack")).toBe(2);
     expect(by("free") + by("earned") + by("paid") + by("pack")).toBe(COSMETICS.length);
   });
 
@@ -43,8 +43,9 @@ describe("the launch wardrobe", () => {
   });
 
   it("gives a pack-only item no price and no earn rule, and a pack that has it", () => {
+    // the tiara and the bride sash: the two things the Bachelorette pack is for
     const packOnly = COSMETICS.filter((c) => c.status === "pack");
-    expect(packOnly.map((c) => c.id)).toEqual(["tiara"]);
+    expect(packOnly.map((c) => c.id).sort()).toEqual(["sash", "tiara"]);
     for (const c of packOnly) {
       expect(c.price).toBeNull();
       expect(c.earnRule).toBeNull();

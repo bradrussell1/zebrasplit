@@ -15,6 +15,7 @@
       "bundleIdentifier": "com.bunktab.app",
       "supportsTablet": false,
       "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
         "NSContactsUsageDescription": "Zebrasplit reads your contacts on this device so you can pick who to invite. Only the numbers you choose are sent.",
         "NSCameraUsageDescription": "Zebrasplit uses the camera to photograph receipts.",
         "NSPhotoLibraryUsageDescription": "Zebrasplit uses your photos for receipts and trip covers.",
