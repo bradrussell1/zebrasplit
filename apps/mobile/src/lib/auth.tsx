@@ -1,5 +1,6 @@
 import type { Session } from "@supabase/supabase-js";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { configurePurchases, signOutOfPurchases } from "./purchases";
 import { registerForPush, unregisterPush } from "./push";
 import { isNetworkError, supabase } from "./supabase";
 
@@ -63,7 +64,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     supabase.auth.getSession().then(async ({ data }) => {
       if (!alive) return;
       setSession(data.session);
-      if (data.session) { await loadProfile(data.session.user.id); registerForPush(data.session.user.id).catch(() => undefined); }
+      if (data.session) {
+        await loadProfile(data.session.user.id);
+        registerForPush(data.session.user.id).catch(() => undefined);
+        // RevenueCat has to know who is buying, or the purchase arrives anonymous
+        // and the webhook has nobody to grant it to
+        configurePurchases(data.session.user.id).catch(() => undefined);
+      }
       setLoading(false);
     }).catch(() => { if (alive) setLoading(false); });
     // supabase-js holds its auth lock while this callback runs: other client
@@ -81,6 +88,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
           await loadProfile(s.user.id);
           if (event === "SIGNED_IN") registerForPush(s.user.id).catch(() => undefined);
+          configurePurchases(s.user.id).catch(() => undefined);
         } else {
           setProfile(null);
           setPendingPasswordReset(false);
@@ -103,6 +111,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     refreshProfile: async () => { if (session) await loadProfile(session.user.id); },
     signOut: async () => {
       if (session) await unregisterPush(session.user.id).catch(() => undefined);
+      // hand RevenueCat back to an anonymous id, so the next person to sign in on this
+      // phone is not credited with what this one bought
+      await signOutOfPurchases().catch(() => undefined);
       // a global sign-out revokes the refresh token on the server; if that call fails (no signal,
       // a token the server no longer knows) the local session is still cleared, so the device is
       // never left "signed out" in name only (feedback round 1, item 2)

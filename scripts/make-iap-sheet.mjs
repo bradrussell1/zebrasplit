@@ -3,7 +3,7 @@
 //
 // Apple's limits are tight and silently truncate in the UI: display name 30
 // characters, description 45. Both are asserted here rather than discovered
-// after pasting 28 rows by hand. Product IDs are permanent once created - they
+// after pasting every row by hand. Product IDs are permanent once created - they
 // cannot be deleted or reused on the account - and they need not match the
 // bundle id, which is stuck on com.bunktab.app forever. Users never see these,
 // but we read them in sales reports for years, so they carry the current brand.
@@ -93,7 +93,7 @@ const md = [
   "- **The prefix is the brand, not the bundle id.** Matching the bundle is convention,",
   "  not a requirement. `com.bunktab.app` is frozen for the life of the app; these are",
   "  not, and they show up in sales and revenue reports we read for years.",
-  "- **All 28 are Non-Consumable.** An outfit is a permanent unlock, not a currency.",
+  `- **All ${rows.length} are Non-Consumable.** An outfit is a permanent unlock, not a currency.`,
   "- **The first purchase ships with a version.** App Store Connect requires the first",
   "  in-app purchase to be submitted alongside a new app version, so these go to review",
   "  attached to 1.1.0 rather than on their own.",

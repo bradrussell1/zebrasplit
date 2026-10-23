@@ -18,7 +18,11 @@ export const HERD = {
   maxDrawn: 12,
   /** Row counts: up to 4 in one row, 5–8 in two, 9–12 in three (A10). */
   rowBreaks: [4, 8, 12] as const,
-  /** Each row back is this much smaller than the one in front of it. */
+  /**
+   * Each row back was once this much smaller than the one in front. Every zebra is now
+   * drawn at the back row's size instead, so a dazzle reads as a group of equals; this
+   * is what sets that one size (depthScale^(rows-1)).
+   */
   depthScale: 0.82,
   /**
    * ...and its feet sit this fraction of a front-row zebra's height higher.
@@ -87,53 +91,63 @@ export function herdLayout(n: number, width: number, height: number): HerdSlot[]
   const rows = herdRows(n);
   if (rows.length === 0 || width <= 0 || height <= 0) return [];
 
-  // The front row sizes itself to fit across: width = c·size + (c+1)·gap.
+  // Every zebra is drawn at one size, whatever row it stands in: the size the back row
+  // used to be. Perspective made the front row read as the important one and the back
+  // row as scenery, when the whole point is that a dazzle is a group of equals. The
+  // depth now comes from the lift and the overlap alone.
   const gap = width * HERD.gapFactor;
   const frontCount = rows[0]!;
-  // its share of the row, widened by crowdFactor so neighbours overlap like a herd
-  let frontH = ((width - (frontCount + 1) * gap) / frontCount) * HERD.aspect * HERD.crowdFactor;
+  const uniform = Math.pow(HERD.depthScale, rows.length - 1);
+
+  // The front row holds the most zebras, so it is still what the width has to fit:
+  // each one's share of the row, widened by crowdFactor so neighbours overlap like a
+  // herd, then taken down to the back row's size.
+  let h = ((width - (frontCount + 1) * gap) / frontCount) * HERD.aspect * HERD.crowdFactor * uniform;
 
   // ...but height has the final say. A herd stands on a band of fixed height, so a row
   // of three on a wide screen would otherwise size itself from the width alone and come
   // out enormous. Two bounds: the whole lifted stack has to fit above the tag margin,
-  // and no single zebra may be taller than maxFrontFactor of the field.
+  // and no single zebra may be taller than maxFrontFactor of the field — measured, like
+  // the width, against what a front-row zebra would have been.
   const bottom = height * HERD.bottomFactor;
   const stack = height - bottom;
-  const back = Math.pow(HERD.depthScale, rows.length - 1);
-  const fits = stack / (HERD.rowLift * (rows.length - 1) + back);
-  frontH = Math.min(frontH, fits, height * HERD.maxFrontFactor);
-  const frontW = frontH / HERD.aspect;
+  const fits = stack / (HERD.rowLift * (rows.length - 1) + 1);
+  h = Math.min(h, fits, height * HERD.maxFrontFactor * uniform);
+  const w = h / HERD.aspect;
+
+  // Where each row starts, measured in steps rather than points, so the step can be
+  // solved for afterwards and every row is guaranteed to land inside the field.
+  //
+  // Nobody may stand directly behind anybody. That used to be handled by starting each
+  // row back half a front-row step to the right, but that only worked because the rows
+  // were different sizes: the back zebra's narrower box moved its centre by a few points
+  // and hid the fact that its last zebra sat on exactly the same line as the front row's.
+  // Now that every zebra is one size, the offset has to do the job by itself.
+  //
+  // A row holding fewer zebras than the longest is centred against it, which moves it by
+  // some number of half steps — so the per-row offset has to survive that. Each row's
+  // standing line can land on its own offset or half a step from it, which is 2·rows
+  // lines in all; spacing the offsets by 1/(2·rows) of a step spreads those lines evenly
+  // and leaves the largest gap available, and the odd numerator over an even denominator
+  // means no combination ever comes out whole. Every n is checked in the tests.
+  const maxCount = Math.max(...rows);
+  const offsets = rows.map((count, r) => r / (2 * rows.length) + (maxCount - count) / 2);
+  // Rows spread across the field rather than packing: the step is whatever divides the
+  // space evenly once the furthest-right zebra is made to land on the margin, so zebras
+  // overlap when there are many and spread when there are few, and a name tag always
+  // has a whole step to itself.
+  const units = Math.max(...rows.map((count, r) => offsets[r]! + (count - 1)));
+  const step = units > 0 ? (width - 2 * gap - w) / units : 0;
 
   const slots: HerdSlot[] = [];
-  const frontStep = frontCount > 1 ? (width - 2 * gap - frontW) / (frontCount - 1) : 0;
   let index = 0;
   for (let row = 0; row < rows.length; row++) {
     const count = rows[row]!;
-    const scale = Math.pow(HERD.depthScale, row);
-    const w = frontW * scale;
-    const h = frontH * scale;
-    // The front row is centred. Every row behind it starts half a front-row step to the
-    // right, so no zebra stands directly behind another — and because a back row often
-    // holds as many zebras as the front, that offset would otherwise push it off the
-    // edge. Rather than give up the offset, the row closes its own gaps to fit, which is
-    // exactly the squeeze the board makes by hand on its six-zebra field.
-    // Rows spread across the field rather than packing: the step is whatever divides
-    // the space evenly, so zebras overlap when there are many and spread when there are
-    // few, and a name tag always has a whole step to itself.
-    const spread = (n: number, start: number) => (n > 1 ? (width - start - gap - w) / (n - 1) : 0);
-    let left: number;
-    let step: number;
-    if (row === 0) {
-      step = spread(count, gap);
-      left = count > 1 ? gap : (width - w) / 2;
-    } else {
-      // half a front-row step to the right, so nobody stands directly behind anybody
-      left = gap + frontStep / 2;
-      step = spread(count, left);
-      if (step <= 0) { step = spread(count, gap); left = count > 1 ? gap : (width - w) / 2; }
-    }
-    // every row's feet, lifted a constant step back from the front row's
-    const feet = height - bottom - frontH * HERD.rowLift * row;
+    const left = units > 0 ? gap + offsets[row]! * step : (width - w) / 2;
+    // every row's feet, lifted a constant step back from the front row's. The lift is
+    // measured in drawn zebras now that every zebra is one size, so the rows stay as
+    // tight as they looked when the front row was the tall one.
+    const feet = height - bottom - h * HERD.rowLift * row;
     const y = feet - h;
     for (let i = 0; i < count; i++) {
       slots.push({ index: index++, row, step, x: left + i * step, y, width: w, height: h, z: rows.length - row });

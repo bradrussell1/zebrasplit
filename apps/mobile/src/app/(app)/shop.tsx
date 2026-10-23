@@ -1,20 +1,22 @@
-import { COSMETICS, OUTFIT_SLOTS, PACKS, SLOT_LABELS, cosmeticById, outfitDescription, type CosmeticDef, type PackDef } from "@bunktab/core";
+import { COSMETICS, OUTFIT_SLOTS, PACKS, SLOT_LABELS, cosmeticById, outfitDescription, type CosmeticDef, type OutfitSlot, type PackDef } from "@bunktab/core";
 import { color, layout, palette, radius, shadow, space } from "@bunktab/theme";
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Button, HeroCard, InsetPanel, Press, ScreenBackground, ScreenSkeleton, TopBar, Zebra, ZText, useToast } from "@/ui";
+import { Button, HeroCard, InsetPanel, Press, ScreenBackground, ScreenSkeleton, SegmentedControl, TopBar, Zebra, ZText, haptic, useToast } from "@/ui";
+import { buyProduct, purchasesEnabled, restorePurchases, storePrices, waitForGrant } from "@/lib/purchases";
 import { useWardrobe } from "@/lib/wardrobe";
 
 /**
  * The Shop (design/reference/stories/Shop.dc.html): the whole catalogue in one grid,
  * with the packs above it, over a preview zebra wearing your current look.
  *
- * Buying is not open. The store products don't exist until the paid-app agreement,
- * tax and banking are done, so every paid tile here previews and says so rather than
- * offering a button that cannot work. Everything free, and everything earned, works —
- * and the try-on works on all 33, which is most of what a storefront is for.
+ * Tapping a tile tries it on; the button under the stage buys it. Nothing here grants
+ * anything — the store sells, RevenueCat verifies, the webhook writes user_cosmetics —
+ * so the Shop's job is to preview, to price, and to wait for the grant before it says
+ * the thing is yours. In a build with no RevenueCat key, buyProduct says so and the
+ * try-on still works on all 33, which is most of what a storefront is for.
  *
  * The Gift tab from the board is deliberately absent rather than disabled: gifting is
  * a purchase, so there is nothing behind it yet and a dead tab is worse than none. It
@@ -27,9 +29,36 @@ export default function ShopScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { show } = useToast();
-  const { owned, outfit, loading } = useWardrobe();
+  const { owned, outfit, loading, reload } = useWardrobe();
+  const [busy, setBusy] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
   const [pack, setPack] = useState<string | null>(null);
+  const [slot, setSlot] = useState<OutfitSlot>("head");
+  const [prices, setPrices] = useState<Record<string, string>>({});
+
+  // What the store will actually charge, in the buyer's own currency. We sell in 175
+  // countries; the catalogue's "0.99" is a US number, so quoting it to someone in Tokyo
+  // is quoting a price they will never see. The catalogue is the fallback for the moment
+  // before the store answers, and for a build with no RevenueCat key.
+  useEffect(() => {
+    let alive = true;
+    const ids = [
+      ...PACKS.map((p) => packProduct(p.id)),
+      ...COSMETICS.filter((c) => c.status === "paid").map((c) => cosmeticProduct(c.id)),
+    ];
+    // the SDK may still be configuring when the Shop opens, and an empty answer is
+    // indistinguishable from a slow store, so ask again a couple of times before
+    // settling for the catalogue's dollars
+    void (async () => {
+      for (let i = 0; i < 3; i++) {
+        const got = await storePrices(ids);
+        if (!alive) return;
+        if (Object.keys(got).length > 0) { setPrices(got); return; }
+        await new Promise((r) => setTimeout(r, 600 + i * 600));
+      }
+    })();
+    return () => { alive = false; };
+  }, []);
 
   if (loading) {
     return <View style={styles.screen}><ScreenBackground /><TopBar onBack={() => router.back()} /><ScreenSkeleton rows={3} /></View>;
@@ -43,19 +72,105 @@ export default function ShopScreen() {
   for (const c of packItems) staged[c.slot] = c.id;
   if (item) staged[item.slot] = item.id;
 
+  /** The store's price string, or the catalogue's dollars until the store answers. */
+  function priceOf(productId: string, fallback: string | null): string {
+    return prices[productId] ?? `$${fallback}`;
+  }
+
   function tagFor(c: CosmeticDef): string {
     if (owned.has(c.id)) return OWNED;
     if (c.status === "free") return "Free";
     if (c.status === "earned") return "Earn it";
     if (c.packs.length) return "Pack";
-    return `$${c.price}`;
+    return priceOf(cosmeticProduct(c.id), c.price);
+  }
+
+  /** What the task reads as on a Redeem button, in the second person. */
+  function taskFor(rule: string | null): string {
+    if (rule === "trips_5") return "settle 5 trips";
+    if (rule === "first_trip") return "settle your first trip";
+    return "keep using Zebrasplit";
+  }
+
+  /**
+   * One button, one state. Owned and Redeem are both dead buttons on purpose: owning a
+   * thing twice is not a purchase, and an earned item is granted the moment the task is
+   * done rather than claimed, so Redeem can only ever be the sign that says what to go
+   * and do. A free item reads "Owned" like any other: people find out it was free by
+   * already having it, which is the nicest way to learn it. A pack-only item has no
+   * price of its own, so it points at the pack instead.
+   */
+  function cta() {
+    // a build with no RevenueCat key (Android, until Play is open) says so where a Buy
+    // button would be, rather than offering one whose only outcome is an error. Owned,
+    // Earn it and pack-only still read normally: none of them is a purchase.
+    if (packDef) {
+      if (!purchasesEnabled) return <Button kind="locked" height={40} label="Not on sale yet" />;
+      const product = packProduct(packDef.id);
+      return <Button height={40} label={`Buy Now · ${priceOf(product, packDef.price)}`} loading={busy} onPress={() => buy(product, packDef.name, [...packDef.items])} />;
+    }
+    if (!item) return null;
+    // a free item is granted on sign-up, so it reads the same as anything else you have
+    if (owned.has(item.id) || item.status === "free") return <Button kind="locked" height={40} label="Owned" />;
+    if (item.status === "earned") {
+      return <Button kind="locked" height={40} label={`Redeem · ${taskFor(item.earnRule)}`} />;
+    }
+    if (item.status === "pack") {
+      const home = PACKS.find((p) => p.id === item.packs[0]);
+      return home
+        ? <Button kind="secondary" onWhite height={40} label={`Only in ${home.name}`} onPress={() => { setPreview(null); setPack(home.id); }} />
+        : <Button kind="locked" height={40} label="Only in a pack" />;
+    }
+    if (!purchasesEnabled) return <Button kind="locked" height={40} label="Not on sale yet" />;
+    const product = cosmeticProduct(item.id);
+    return <Button height={40} label={`Buy Now · ${priceOf(product, item.price)}`} loading={busy} onPress={() => buy(product, item.name, [item.id])} />;
+  }
+
+  /**
+   * Buy one product. The app does not grant anything: the store sells it, RevenueCat
+   * verifies the receipt, the webhook writes user_cosmetics, and only then is it yours.
+   * So this waits for the grant to land before saying so, and reloads the wardrobe from
+   * the database rather than guessing. A slow webhook is not a failure, just a wait that
+   * outlived the button.
+   */
+  async function buy(productId: string, what: string, grants: string[]) {
+    if (busy) return;
+    setBusy(true);
+    const res = await buyProduct(productId);
+    if (!res.ok) {
+      setBusy(false);
+      if (!res.cancelled) show({ message: res.message, duration: 4000 });
+      return;
+    }
+    const landed = await waitForGrant(grants);
+    await reload();
+    setBusy(false);
+    haptic.light();
+    show({
+      message: landed ? `${what} is yours. Wear it from your closet.` : `${what} is paid for. It'll appear in a moment.`,
+      duration: 4000,
+    });
+  }
+
+  async function restore() {
+    if (busy) return;
+    setBusy(true);
+    const res = await restorePurchases();
+    await reload();
+    setBusy(false);
+    show({ message: res.ok ? "Anything you've bought is back." : res.cancelled ? "" : res.message, duration: 4000 });
   }
 
   function tapItem(c: CosmeticDef) {
     setPack(null);
     setPreview(c.id);
     if (!owned.has(c.id) && c.status === "paid") {
-      show({ message: `Trying on the ${c.name.toLowerCase()}. Buying opens with in-app purchases.`, duration: 3500 });
+      show({
+        message: purchasesEnabled
+          ? `Trying on the ${c.name.toLowerCase()}. Buy it below to keep it.`
+          : `Trying on the ${c.name.toLowerCase()}. Not on sale here yet.`,
+        duration: 3500,
+      });
     }
   }
 
@@ -87,14 +202,7 @@ export default function ShopScreen() {
                   {packItems.map((c) => c.name).join(" · ")}
                 </ZText>
               ) : null}
-              {!packDef && item && owned.has(item.id) ? (
-                // the Shop is a storefront, not a wardrobe: wearing happens in Your zebra
-                <Button kind="secondary" onWhite height={40} label="In your closet · wear it there" onPress={() => router.push("/(app)/zebra")} />
-              ) : !packDef && item && item.status === "earned" ? (
-                <Button kind="locked" height={40} label={`Earn it: ${item.earnRule === "trips_5" ? "5 trips" : item.earnRule === "first_trip" ? "first trip" : "send a gift"}`} />
-              ) : (
-                <Button kind="locked" height={40} label={`${packDef ? `$${packDef.price}` : `$${item!.price}`} · opens with purchases`} />
-              )}
+              {cta()}
               <Press onPress={() => { setPreview(null); setPack(null); }} scaleTo={0.97} accessibilityRole="button" accessibilityLabel="Clear the preview">
                 <ZText variant="caption" color={color.textMuted}>Back to your look</ZText>
               </Press>
@@ -112,55 +220,73 @@ export default function ShopScreen() {
                 onPress={() => { setPreview(null); setPack(p.id); }}
                 scaleTo={0.97}
                 accessibilityRole="button"
-                accessibilityLabel={`${p.name}, $${p.price}`}
+                accessibilityLabel={`${p.name}, ${priceOf(packProduct(p.id), p.price)}`}
                 style={[styles.packCard, pack === p.id ? styles.packOn : null]}
               >
                 <Zebra variant="full" size={92} striped mood="happy" outfit={lookFor(p)} decorative />
                 <ZText variant="bodyStrong" numberOfLines={1}>{p.name}</ZText>
-                <ZText variant="caption" color={color.textMuted}>${p.price}</ZText>
+                <ZText variant="caption" color={color.textMuted}>{priceOf(packProduct(p.id), p.price)}</ZText>
               </Press>
             ))}
           </ScrollView>
         </View>
 
-        {/* the catalogue, a section per slot */}
-        {OUTFIT_SLOTS.map((s) => {
-          const items = COSMETICS.filter((c) => c.slot === s);
-          return (
-            <View key={s} style={styles.section}>
-              <ZText variant="overline" color={color.textMuted}>{SLOT_LABELS[s]} · {items.length}</ZText>
-              <View style={styles.grid}>
-                {items.map((c) => {
-                  const tag = tagFor(c);
-                  return (
-                    <Press
-                      key={c.id}
-                      onPress={() => tapItem(c)}
-                      scaleTo={0.97}
-                      accessibilityRole="button"
-                      accessibilityLabel={`${c.name}, ${tag}`}
-                      style={[styles.tile, preview === c.id ? styles.tileOn : null]}
-                    >
-                      <Zebra variant={c.slot === "body" ? "full" : "bust"} size={c.slot === "body" ? 70 : 66} striped mood="hi" outfit={{ [c.slot]: c.id }} decorative />
-                      <ZText variant="micro" numberOfLines={1}>{c.name}</ZText>
-                      <ZText variant="micro" color={tag === OWNED ? color.text : color.textMuted}>{tag}</ZText>
-                    </Press>
-                  );
-                })}
-              </View>
-            </View>
-          );
-        })}
+        {/* the catalogue: one slot at a time, on the same control the closet uses */}
+        <View style={styles.section}>
+          <SegmentedControl
+            options={OUTFIT_SLOTS.map((s) => ({ key: s, label: SLOT_LABELS[s] }))}
+            value={slot}
+            onChange={(s) => { setPreview(null); setPack(null); setSlot(s); }}
+          />
+          <View style={styles.grid}>
+            {COSMETICS.filter((c) => c.slot === slot).map((c) => {
+              const tag = tagFor(c);
+              return (
+                <Press
+                  key={c.id}
+                  onPress={() => tapItem(c)}
+                  scaleTo={0.97}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${c.name}, ${tag}`}
+                  style={[styles.tile, preview === c.id ? styles.tileOn : null]}
+                >
+                  <Zebra variant={c.slot === "body" ? "full" : "bust"} size={c.slot === "body" ? 70 : 66} striped mood="hi" outfit={{ [c.slot]: c.id }} decorative />
+                  <ZText variant="micro" numberOfLines={1}>{c.name}</ZText>
+                  <ZText variant="micro" color={tag === OWNED ? color.text : color.textMuted}>{tag}</ZText>
+                </Press>
+              );
+            })}
+          </View>
+        </View>
+
+        {purchasesEnabled ? (
+        <View style={styles.restore}>
+          <Button
+            kind="secondary"
+            onWhite
+            height={40}
+            label="Restore Purchases"
+            loading={busy}
+            onPress={restore}
+            accessibilityLabel="Restore purchases you've already made"
+          />
+        </View>
+        ) : null}
 
         <InsetPanel style={styles.soon}>
           <ZText variant="caption" color={color.textSecondary}>
-            Buying, packs and gifting open once in-app purchases are set up with Apple. Splitting, stripes and settling up always stay free.
+            Outfits are the only thing we sell. Splitting, stripes and settling up are free, and always will be.
           </ZText>
         </InsetPanel>
       </ScrollView>
     </View>
   );
 }
+
+/** The store product behind a cosmetic or a pack. Derived, never typed, so these
+ *  cannot drift from docs/ops/iap-products.md or from what the store was told. */
+function cosmeticProduct(id: string) { return `com.zebrasplit.cosmetic.${id}`; }
+function packProduct(id: string) { return `com.zebrasplit.pack.${id}`; }
 
 function lookFor(p: PackDef) {
   const look: Record<string, string> = {};
@@ -190,5 +316,6 @@ const styles = StyleSheet.create({
     borderWidth: 2, borderColor: "transparent",
   },
   tileOn: { borderColor: palette.volt },
+  restore: { marginTop: space[8] },
   soon: { paddingVertical: space[10] },
 });

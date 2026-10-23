@@ -1,0 +1,15 @@
+-- ---------------------------------------------------------------------------
+-- No refunds.
+--
+-- A refund is money back, not stripes back. An outfit your friends have already
+-- seen on your zebra stays yours; whether Apple hands the money back is Apple's
+-- business with the buyer, and taking the crown off someone's head days later is
+-- a worse experience than the few dollars are worth.
+--
+-- So revoke_purchase() goes away rather than sitting there unused: the webhook no
+-- longer calls it, and a service-role function that can strip a wardrobe should
+-- not exist if nothing is meant to use it. public.purchases stays — it is the
+-- record of what was bought, and it is what would make this reversible. The
+-- function body is in 20261022000004 if that day ever comes.
+-- ---------------------------------------------------------------------------
+drop function if exists public.revoke_purchase(uuid, text);

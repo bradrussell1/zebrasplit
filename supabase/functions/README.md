@@ -201,6 +201,27 @@ now returns the masked number only.
 
 ## Media purge
 
+`revenuecat-webhook` (shared secret in the `Authorization` header, deployed
+`--no-verify-jwt`) is the only thing that turns a purchase into an owned outfit. The
+app asks StoreKit to sell a product; RevenueCat verifies the receipt with Apple or
+Google and posts the event here; this calls `grant_purchase()` as the service role,
+which writes `user_cosmetics`. The client is never trusted with any of it, so a
+tampered build can call every purchase API and still own nothing.
+
+Set `REVENUECAT_WEBHOOK_SECRET` in Supabase secrets and paste the same value into
+RevenueCat → Integrations → Webhooks, along with the function URL. RevenueCat retries
+for 72 hours and replays receipts on restore and reinstall, so every path is idempotent:
+`grant_purchase()` is `on conflict do nothing`, and an unknown product id returns 0
+rather than failing, because that means the store sold something this deploy has not
+shipped yet and the retry after the next deploy will succeed.
+
+Nothing takes an outfit away. A refund is money back, not stripes back: an item your
+friends have already seen on your zebra stays yours, and the refund is Apple's business
+with the buyer. `REFUND`, `CANCELLATION` and `EXPIRATION` are logged and answered 200 like
+any other event we do not act on. `public.purchases` still records every purchase, so the
+decision is reversible: the revoke path is in git history (migration
+`20261022000004`) and can come back if the policy ever changes.
+
 `purge-trip-media` (shared secret) is called by the `trips` delete trigger
 and removes `covers/<trip>/*` and `receipts/<trip>/*`. `send-invite` refuses
 to resend a text within 24 h of a successful send for the same invite.
