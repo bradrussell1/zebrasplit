@@ -9,10 +9,22 @@
 // SID, so it works whatever state the record is in: it updates in place when
 // Twilio allows that, and files a fresh one when it doesn't.
 //
-// Usage (run from the repo root; BUSINESS_EMAIL must exist and receive mail):
-//   TWILIO_ACCOUNT_SID=AC… TWILIO_AUTH_TOKEN=… BUSINESS_EMAIL=support@zebrasplit.com node scripts/tollfree-resubmit.mjs
-// Use the same address the /sms disclosure page shows (support@zebrasplit.com today):
-// a reviewer compares the contact in the submission against the one on that page.
+// Usage. Put the Twilio credentials in ~/.config/zebrasplit/env beside the
+// Supabase ones, so they never appear on a command line or in shell history:
+//
+//   TWILIO_ACCOUNT_SID=AC...
+//   TWILIO_AUTH_TOKEN=...
+//
+// then, from the repo root:
+//
+//   set -a; . ~/.config/zebrasplit/env; set +a
+//   NOTIFY_EMAIL=bradley@zebrasplit.com BUSINESS_EMAIL=support@zebrasplit.com \
+//     node scripts/tollfree-resubmit.mjs
+//
+// BUSINESS_EMAIL must exist and receive mail, and should be the address the /sms
+// disclosure page shows (support@zebrasplit.com today): a reviewer compares the
+// contact in the submission against the one printed on that page. NOTIFY_EMAIL is
+// where Twilio sends the outcome, so make it an address a person reads.
 //
 // It first tries to UPDATE the rejected request (HH8ad9…); if Twilio refuses
 // (e.g. status no longer editable), it creates a new verification with the
@@ -34,9 +46,19 @@ async function twilio(method, path, form) {
   return [r.status, await r.json().catch(() => ({}))];
 }
 
-const [, nums] = await (async () => { const r = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${SID}/IncomingPhoneNumbers.json?PhoneNumber=%2B18336127553`, { headers: { Authorization: auth } }); return [r.status, await r.json()]; })();
+const [numStatus, nums] = await (async () => { const r = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${SID}/IncomingPhoneNumbers.json?PhoneNumber=%2B18336127553`, { headers: { Authorization: auth } }); return [r.status, await r.json()]; })();
+// distinguish "wrong credentials" from "right account, no such number": they look
+// identical if you only check whether a number came back
+if (numStatus === 401) { console.error("Twilio rejected the credentials (401). Check TWILIO_ACCOUNT_SID (starts AC) and TWILIO_AUTH_TOKEN - placeholders like AC... will do this."); process.exit(1); }
+if (numStatus >= 400) { console.error(`Twilio returned ${numStatus}: ${nums.message ?? JSON.stringify(nums).slice(0, 200)}`); process.exit(1); }
 const pn = nums.incoming_phone_numbers?.[0];
-if (!pn) { console.error("Toll-free number +1 833 612 7553 not found on this account"); process.exit(1); }
+if (!pn) {
+  const [, all] = await (async () => { const r = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${SID}/IncomingPhoneNumbers.json?PageSize=50`, { headers: { Authorization: auth } }); return [r.status, await r.json()]; })();
+  const have = (all.incoming_phone_numbers ?? []).map((n) => n.phone_number);
+  console.error(`+1 833 612 7553 is not on this account. Numbers here: ${have.join(", ") || "(none)"}`);
+  console.error("If the list is empty or missing it, the number is probably on a different Twilio (sub)account.");
+  process.exit(1);
+}
 
 const fields = {
   BusinessType: "SOLE_PROPRIETOR",
