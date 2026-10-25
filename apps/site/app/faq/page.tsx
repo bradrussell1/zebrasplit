@@ -11,7 +11,7 @@ import s from "./faq.module.css";
 
 export const metadata: Metadata = {
   title: "FAQ",
-  description: "Questions? We've got stripes. How Zebrasplit splits trip costs, what the stripes mean, and how settling up in Venmo works.",
+  description: "Questions? We've got stripes. How Zebrasplit splits trip costs, what the stripes mean, and how settling up in Venmo, Cash App or PayPal works.",
   alternates: { canonical: "/faq" },
 };
 
