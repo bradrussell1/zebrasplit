@@ -2,7 +2,8 @@
 /**
  * Confetti (DESIGN_SYSTEM.md §9): 16 rounded 8 × 22 stripes in ink, volt and pink thrown from
  * a point along 8 fixed trajectories, rotating up to ±220°, scaling 0.3 → 1 and fading, 1.5 s,
- * with a second wave 220 ms later. Rendered only while `fire` is set; nothing under Reduce Motion.
+ * with a second wave 220 ms later (8 pieces = one wave, the herd board's burst). Rendered only
+ * while `fire` is set; nothing under Reduce Motion.
  */
 import { useReducedMotion } from "@/lib/motion";
 import s from "./confetti.module.css";
@@ -10,12 +11,12 @@ import s from "./confetti.module.css";
 const TRAJECTORIES: [number, number][] = [[150, -110], [-150, -110], [110, -150], [-110, -150], [60, -170], [-60, -170], [170, -40], [-170, -40]];
 const TONES = ["ink", "volt", "pink"] as const;
 
-export function Confetti({ fire }: { fire: number | string | null }) {
+export function Confetti({ fire, pieces = 16 }: { fire: number | string | null; pieces?: 8 | 16 }) {
   const reduced = useReducedMotion();
   if (!fire || reduced) return null;
   return (
     <span key={String(fire)} className={s.stage} aria-hidden="true">
-      {Array.from({ length: 16 }, (_, i) => {
+      {Array.from({ length: pieces }, (_, i) => {
         const [tx, ty] = TRAJECTORIES[i % 8]!;
         const wave = i >= 8 ? 1 : 0;
         const rot = ((i * 73) % 440) - 220;
