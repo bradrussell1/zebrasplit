@@ -1,12 +1,13 @@
-/* Zebra motion (DESIGN_SYSTEM.md §9). Durations and curves are motion tokens. */
+/* Zebra motion (DESIGN_SYSTEM.md §9 and the Trip-Herd board). Durations and curves are motion tokens. */
 .root { display: inline-block; line-height: 0; flex-shrink: 0; }
 .layer { display: block; width: 100%; height: 100%; transform-origin: 50% 100%; }
-.svg { display: block; overflow: hidden; transform-origin: 50% 100%; }
+.svg { display: block; overflow: visible; transform-origin: 50% 50%; }
+.fluid .svg { width: 100%; height: auto; }
 
 .fade { transition: opacity var(--zs-motion-mood-crossfade) ease; }
 
-/* Stripe earned: ink grows down from the stripe's top edge, 460 ms spring-pop, staggered 40 ms. */
-.stripeInk { transform-box: fill-box; transform-origin: 50% 0%; transition: transform var(--zs-motion-spring-pop) var(--zs-ease-spring-pop); }
+/* Stripe earned: ink grows down from the stripe's top edge, 520 ms spring, staggered 40 ms on the old meter. */
+.stripeInk { transform-box: fill-box; transform-origin: 50% 0%; transition: transform var(--zs-motion-stripe-grow) var(--zs-ease-stripe-grow); }
 
 /* Blink: loop 3.8 s; eyes scaleY to 0.1 about their own centre at 94 % of the cycle. */
 .blink { transform-box: fill-box; transform-origin: 50% 50%; animation: blink var(--zs-motion-blink-period) linear infinite; }
@@ -43,6 +44,37 @@
   100% { transform: translateY(0) rotate(0deg); }
 }
 
+/* Herd idles. Trot: a 3 px bounce every 0.95 s. */
+.trot { animation: trot var(--zs-motion-trot-period) ease-in-out infinite; }
+@keyframes trot {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(calc(var(--zs-motion-trot-translate-y) * 1px)); }
+}
+
+/* Graze: the head tips down for a moment in a 6.5 s loop, pivoting near the front hooves. */
+.graze { animation: graze var(--zs-motion-graze-period) ease-in-out infinite; transform-origin: 30% 95%; }
+@keyframes graze {
+  0%, 62%, 100% { transform: rotate(0deg); }
+  70%, 86% { transform: rotate(calc(var(--zs-motion-graze-rotate-deg) * 1deg)) translateY(calc(var(--zs-motion-graze-translate-y) * 1px)); }
+}
+
+/* Hop (celebration): 1.3 s loop peaking at −16 and −9 px with a ±6° lean. */
+.hop { animation: hop var(--zs-motion-herd-hop-period) var(--zs-ease-herd-hop) infinite; transform-origin: 50% 95%; }
+@keyframes hop {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  20% { transform: translateY(calc(var(--zs-motion-herd-hop-peak1) * 1px)) rotate(calc(var(--zs-motion-herd-hop-tilt-deg) * -1deg)); }
+  40% { transform: translateY(0) rotate(4deg); }
+  60% { transform: translateY(calc(var(--zs-motion-herd-hop-peak2) * 1px)) rotate(-3deg); }
+  80% { transform: translateY(0) rotate(2deg); }
+}
+
+/* Roam: drift left and right by --r over --d, alternating; a negative delay starts mid-stride. */
+.roam { animation: roam var(--d) ease-in-out infinite alternate; }
+@keyframes roam {
+  from { transform: translateX(calc(var(--r) * -1)); }
+  to { transform: translateX(var(--r)); }
+}
+
 /* Sleepy z's float. */
 .zz { animation: zz calc(var(--zs-motion-zz-period) / 2) ease-in-out infinite alternate; }
 @keyframes zz {
@@ -50,9 +82,13 @@
   to { transform: translateY(calc(var(--zs-motion-zz-travel-y) * 1px)); opacity: 0.5; }
 }
 
+/* Off-screen: every loop holds its frame. */
+.root[data-paused], .root[data-paused] * { animation-play-state: paused; }
+
 /* Reduce Motion: loops stop; the stripe becomes a 250 ms fade-length change. */
-.root[data-reduced] .blink, .root[data-reduced] .swish, .root[data-reduced] .bob, .root[data-reduced] .dance, .root[data-reduced] .zz { animation: none; }
+.root[data-reduced] .blink, .root[data-reduced] .swish, .root[data-reduced] .bob, .root[data-reduced] .dance, .root[data-reduced] .zz,
+.root[data-reduced] .trot, .root[data-reduced] .graze, .root[data-reduced] .hop, .root[data-reduced].roam { animation: none; }
 .root[data-reduced] .stripeInk { transition-duration: var(--zs-motion-mood-crossfade); transition-timing-function: ease; transition-delay: 0ms !important; }
 @media (prefers-reduced-motion: reduce) {
-  .blink, .swish, .bob, .dance, .zz { animation: none; }
+  .blink, .swish, .bob, .dance, .zz, .trot, .graze, .hop, .roam { animation: none; }
 }

@@ -8,7 +8,7 @@ export function Footer({ current }: { current?: "privacy" | "terms" | "feedback"
       <div className={`container ${s.inner}`}>
         <div className={s.brand}>
           <Wordmark size="footer" />
-          <span className={s.legal}>© 2026 Zebrasplit. Venmo and PayPal are trademarks of PayPal, Inc. and Cash App is a trademark of Block, Inc. Zebrasplit is not affiliated with any of them.</span>
+          <span className={s.legal}>© 2026 Zebrasplit. Venmo and PayPal are trademarks of PayPal, Inc. Cash App is a trademark of Block, Inc. Zebrasplit is not affiliated with them.</span>
         </div>
         <nav aria-label="Footer" className={s.links}>
           <Link href="/privacy" className={s.link} aria-current={current === "privacy" ? "page" : undefined}>Privacy</Link>

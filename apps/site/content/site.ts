@@ -7,7 +7,7 @@ export const site = {
   name: "Zebrasplit",
   tagline: "Split the trip. Not the friendship.",
   title: "Zebrasplit · Split the trip. Not the friendship.",
-  description: "Keep the Dazzle organized. Track the tab, earn your stripes, and when it's time to close out, everyone pays exactly once via Venmo.",
+  description: "Track who paid what, wait until the whole dazzle earns its stripes, then settle up once in Venmo, Cash App or PayPal.",
   joinDescription: "Join the Dazzle to add expenses and settle up.",
 } as const;
 

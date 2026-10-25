@@ -1,12 +1,18 @@
 .row { display: flex; flex-wrap: wrap; gap: var(--zs-space-12); align-items: center; }
+.center { justify-content: center; }
 .badge { display: inline-flex; border-radius: var(--zs-radius-tile); line-height: 0; transition: transform var(--zs-motion-color-change) ease; }
 .badge:hover { transform: translateY(-1px); }
 .img { height: 40px; width: auto; }
 .lg .img { height: 48px; }
-.coming { display: inline-flex; align-items: center; gap: var(--zs-space-12); min-height: var(--zs-layout-min-tap-target); padding: var(--zs-space-12) var(--zs-space-22, 22px) var(--zs-space-12) var(--zs-space-18, 18px); border-radius: var(--zs-radius-pill); background: var(--zs-ink); color: var(--zs-color-text-on-ink); }
+/* Hero: ink pill, volt line icon, "Coming soon to the" over "App Store". */
+.coming { display: inline-flex; align-items: center; gap: var(--zs-space-10); min-height: 52px; padding: 0 22px 0 18px; border-radius: var(--zs-radius-pill); background: var(--zs-ink); color: var(--zs-hide); }
 .coming .icon { color: var(--zs-color-accent-on-ink); display: inline-flex; }
 .comingOnInk { background: var(--zs-hide); color: var(--zs-ink); }
 .comingOnInk .icon { color: var(--zs-ink); }
 .text { display: flex; flex-direction: column; line-height: 1.1; text-align: left; }
 .lead { font-size: var(--zs-fs-micro); font-weight: 600; opacity: 0.8; }
-.store { font-size: var(--zs-fs-headline); font-weight: 700; }
+.store { font-size: var(--zs-fs-button); font-weight: 800; }
+/* Final CTA: one-line pills, volt for iOS and cream for Android, ink text on both. */
+.band { display: inline-flex; align-items: center; min-height: var(--zs-layout-min-tap-target); padding: var(--zs-space-14) 22px; border-radius: var(--zs-radius-pill); color: var(--zs-ink); font-size: var(--zs-fs-body-m); font-weight: 800; line-height: 1.1; }
+.bandVolt { background: var(--zs-volt); }
+.bandCream { background: var(--zs-hide); }

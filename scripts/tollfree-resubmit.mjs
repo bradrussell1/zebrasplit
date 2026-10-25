@@ -1,8 +1,30 @@
-// Resubmit the Twilio toll-free verification for +1 833 612 7553 after the
-// 2026-09-29 rejection (30482 official-domain email, 30513 consent).
+// Amend (or resubmit) the Twilio toll-free verification for +1 833 612 7553.
 //
-// Usage (run from the repo root once brad@zebrasplit.com exists and can receive mail):
-//   TWILIO_ACCOUNT_SID=AC… TWILIO_AUTH_TOKEN=… BUSINESS_EMAIL=brad@zebrasplit.com node scripts/tollfree-resubmit.mjs
+// Written after the 2026-09-29 rejection (30482 official-domain email, 30513
+// consent), and needed again on 2026-10-23: the in-review submission still
+// described the app as Checkm8, with check-m8.io disclosure links and a gmail
+// notification address — the same 30482 ground it was rejected on before.
+//
+// It looks up the current verification for the number rather than assuming a
+// SID, so it works whatever state the record is in: it updates in place when
+// Twilio allows that, and files a fresh one when it doesn't.
+//
+// Usage. Put the Twilio credentials in ~/.config/zebrasplit/env beside the
+// Supabase ones, so they never appear on a command line or in shell history:
+//
+//   TWILIO_ACCOUNT_SID=AC...
+//   TWILIO_AUTH_TOKEN=...
+//
+// then, from the repo root:
+//
+//   set -a; . ~/.config/zebrasplit/env; set +a
+//   NOTIFY_EMAIL=bradley@zebrasplit.com BUSINESS_EMAIL=support@zebrasplit.com \
+//     node scripts/tollfree-resubmit.mjs
+//
+// BUSINESS_EMAIL must exist and receive mail, and should be the address the /sms
+// disclosure page shows (support@zebrasplit.com today): a reviewer compares the
+// contact in the submission against the one printed on that page. NOTIFY_EMAIL is
+// where Twilio sends the outcome, so make it an address a person reads.
 //
 // It first tries to UPDATE the rejected request (HH8ad9…); if Twilio refuses
 // (e.g. status no longer editable), it creates a new verification with the
@@ -11,9 +33,10 @@ const SID = process.env.TWILIO_ACCOUNT_SID, TOK = process.env.TWILIO_AUTH_TOKEN,
 if (!SID || !TOK || !EMAIL) { console.error("Set TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN and BUSINESS_EMAIL"); process.exit(1); }
 if (!/@(zebrasplit\.com|bunktab\.com|check-m8\.io)$/i.test(EMAIL)) { console.error(`BUSINESS_EMAIL must be on the official domain (got ${EMAIL}); Twilio rejects free-mail addresses (30482).`); process.exit(1); }
 
-const REJECTED_SID = "HH8ad9189e807aae6d9ba06862e335e417";
 const OPT_IN_IMAGE = "https://zebrasplit.com/compliance/invite-opt-in.png";
-const SMS_PAGE = "https://zebrasplit.com/sms";
+// the apex redirects here, so cite the address that actually answers: a reviewer
+// should never follow a hop (the check-m8.io links are exactly that bug)
+const SMS_PAGE = "https://app.zebrasplit.com/sms";
 const SAMPLE = "Zebrasplit: Bradley added you to 'Tahoe long weekend' to split trip expenses. Open it: https://zebrasplit.com/join/3f9a1c2e\nReply STOP to opt out.";
 const CONSENT = "I have these people's permission to send them one text from Zebrasplit about this trip. They can reply STOP to opt out. Msg & data rates may apply.";
 
@@ -23,15 +46,26 @@ async function twilio(method, path, form) {
   return [r.status, await r.json().catch(() => ({}))];
 }
 
-const [, nums] = await (async () => { const r = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${SID}/IncomingPhoneNumbers.json?PhoneNumber=%2B18336127553`, { headers: { Authorization: auth } }); return [r.status, await r.json()]; })();
+const [numStatus, nums] = await (async () => { const r = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${SID}/IncomingPhoneNumbers.json?PhoneNumber=%2B18336127553`, { headers: { Authorization: auth } }); return [r.status, await r.json()]; })();
+// distinguish "wrong credentials" from "right account, no such number": they look
+// identical if you only check whether a number came back
+if (numStatus === 401) { console.error("Twilio rejected the credentials (401). Check TWILIO_ACCOUNT_SID (starts AC) and TWILIO_AUTH_TOKEN - placeholders like AC... will do this."); process.exit(1); }
+if (numStatus >= 400) { console.error(`Twilio returned ${numStatus}: ${nums.message ?? JSON.stringify(nums).slice(0, 200)}`); process.exit(1); }
 const pn = nums.incoming_phone_numbers?.[0];
-if (!pn) { console.error("Toll-free number +1 833 612 7553 not found on this account"); process.exit(1); }
+if (!pn) {
+  const [, all] = await (async () => { const r = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${SID}/IncomingPhoneNumbers.json?PageSize=50`, { headers: { Authorization: auth } }); return [r.status, await r.json()]; })();
+  const have = (all.incoming_phone_numbers ?? []).map((n) => n.phone_number);
+  console.error(`+1 833 612 7553 is not on this account. Numbers here: ${have.join(", ") || "(none)"}`);
+  console.error("If the list is empty or missing it, the number is probably on a different Twilio (sub)account.");
+  process.exit(1);
+}
 
 const fields = {
   BusinessType: "SOLE_PROPRIETOR",
   BusinessName: "Zebrasplit (Bradley Russell, sole proprietor)",
   BusinessWebsite: "https://www.zebrasplit.com",
-  NotificationEmail: EMAIL,
+  // the outcome notice goes to a person; the public contact matches the /sms page
+  NotificationEmail: process.env.NOTIFY_EMAIL || EMAIL,
   BusinessContactEmail: EMAIL,
   BusinessContactFirstName: "Bradley",
   BusinessContactLastName: "Russell",
@@ -53,16 +87,21 @@ const fields = {
     "Consent flow: (1) a signed-in Zebrasplit user opens 'Grab the Check' -> step 2 'Invite the group' and picks friends from contacts or types numbers; " +
     "(2) a required checkbox appears: \"" + CONSENT + "\" with a link 'How Zebrasplit texts work' to " + SMS_PAGE + "; " +
     "(3) the Create button is disabled until the box is checked; (4) one invitation text per person is sent from the Messaging Service with STOP instructions. " +
-    "Program disclosure (sender, frequency, opt-out, rates, sample message): " + SMS_PAGE + ". Privacy policy with the SMS section: https://www.zebrasplit.com/privacy. " +
+    "Program disclosure (sender, frequency, opt-out, rates, sample message): " + SMS_PAGE + ". Privacy policy with the SMS section: https://zebrasplit.com/privacy. " +
     "Contact: " + EMAIL + ".",
 };
 
-let [st, body] = await twilio("POST", `/Tollfree/Verifications/${REJECTED_SID}`, fields);
-let how = "updated the rejected request";
+// whatever verification this number already has, in whatever state
+const [, list] = await twilio("GET", `/Tollfree/Verifications?TollfreePhoneNumberSid=${pn.sid}`);
+const current = (list.verifications ?? [])[0];
+console.log(current ? `current verification ${current.sid} is ${current.status}` : "no existing verification for this number");
+
+let st = 400, body = {}, how = "updated the existing request";
+if (current) [st, body] = await twilio("POST", `/Tollfree/Verifications/${current.sid}`, fields);
 if (st >= 400) {
-  console.log(`update refused (${st}: ${body.message ?? ""}); creating a new verification instead`);
+  console.log(current ? `update refused (${st}: ${body.message ?? ""}); filing a new verification instead` : "filing a new verification");
   [st, body] = await twilio("POST", "/Tollfree/Verifications", fields);
-  how = "created a new verification";
+  how = "filed a new verification";
 }
 if (st >= 400) { console.error(`failed (${st})`, body.message ?? body, body.rejection_reason ?? ""); process.exit(1); }
 console.log(`${how}: ${body.sid} -> ${body.status}`);
