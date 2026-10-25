@@ -1,0 +1,18 @@
+/* The herd field (Trip-Herd.dc.html). The 358 × 250 scene scales with the panel width, up to ×1.5. */
+.field { position: relative; width: 100%; container-type: inline-size; --s: min(1.5, tan(atan2(100cqw, 358px))); }
+.hills { position: absolute; left: 0; right: 0; top: 22px; bottom: 0; width: 100%; height: calc(100% - 22px); }
+.sceneBox { position: relative; width: calc(358px * var(--s)); height: calc(250px * var(--s)); margin: 22px auto 3px; }
+.scene { position: relative; transform: scale(var(--s)); transform-origin: 0 0; }
+.grass { position: absolute; left: 0; top: 0; }
+.zebraBtn { position: absolute; display: block; border: 0; padding: 0; margin: 0; background: transparent; cursor: pointer; z-index: 2; border-radius: var(--zs-radius-tile); -webkit-tap-highlight-color: transparent; }
+.zebraBtn.back { z-index: 1; }
+.zebraBtn:focus-visible { outline: 2px solid var(--zs-ink); outline-offset: 4px; }
+.tag {
+  position: absolute; transform: translateX(-50%); z-index: 9; pointer-events: none; white-space: nowrap;
+  font-size: var(--zs-fs-tag); line-height: var(--zs-lh-tag); font-weight: 800; padding: 1px 7px; border-radius: var(--zs-radius-pill);
+  background: var(--zs-white); color: var(--zs-color-text-muted); box-shadow: var(--zs-shadow-hairline);
+  transition: background-color var(--zs-motion-mood-crossfade) ease, color var(--zs-motion-mood-crossfade) ease;
+}
+.tagOn { background: var(--zs-ink); color: var(--zs-color-text-on-ink); }
+/* Off-screen: every loop in the field holds its frame. */
+.paused * { animation-play-state: paused; }

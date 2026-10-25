@@ -168,6 +168,8 @@ export const radius = {
   row: 22,       // single list-row cards
   card: 24,      // standard cards
   hero: 30,      // hero cards (balance, zebra stage), bottom sheet top corners
+  cardL: 28,     // marketing-site cards (homepage v2 board)
+  band: 36,      // marketing-site bands (problem, receipts, pay, free, final CTA) and scene panels
   bubble: { tl: 16, tr: 16, br: 16, bl: 4 }, // speech bubble (boop)
 } as const;
 
@@ -179,6 +181,10 @@ export const shadow = {
   hero:     { shadowColor: palette.ink, shadowOffset: { width: 0, height: 14 }, shadowOpacity: 0.07, shadowRadius: 18, elevation: 4 },
   sheet:    { shadowColor: palette.ink, shadowOffset: { width: 0, height: -8 }, shadowOpacity: 0.06, shadowRadius: 15, elevation: 8 },
   voltGlow: { shadowColor: '#8CA000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.25, shadowRadius: 10, elevation: 4 }, // primary volt CTA only
+  // marketing-site mocks (homepage v2 board): the phone frame, the receipt, and cards inside the phone
+  phone:    { shadowColor: palette.ink, shadowOffset: { width: 0, height: 30 }, shadowOpacity: 0.18, shadowRadius: 30, elevation: 6 },
+  receipt:  { shadowColor: palette.ink, shadowOffset: { width: 0, height: 16 }, shadowOpacity: 0.12, shadowRadius: 20, elevation: 4 },
+  cardSoft: { shadowColor: palette.ink, shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.06, shadowRadius: 9, elevation: 2 },
 } as const;
 
 export const size = {
@@ -228,6 +234,14 @@ export const motion = {
   twinkle: { period: 2600, minOpacity: 0.45 },
   zz: { period: 2400, travelY: -6 },
   liveDot: { period: 1400, minOpacity: 0.35 },
+  // The herd (Trip-Herd board): a zebra's stripes grow in over 520 ms with the spring curve,
+  // and every zebra on a field loops one small idle so the herd never moves in lockstep.
+  stripeGrow: { duration: 520, bezier: [0.3, 1.5, 0.5, 1] },
+  trot: { period: 950, translateY: -3 },
+  graze: { period: 6500, rotateDeg: -4, translateY: 2, dipFrom: 0.7, dipTo: 0.86 },
+  herdHop: { period: 1300, bezier: [0.3, 0.7, 0.3, 1], peak1: -16, peak2: -9, tiltDeg: 6 },
+  roam: { minPeriod: 5500, maxPeriod: 9400, stagger: 120 },
+  outfitBump: { duration: 150, scale: 1.03 },
 } as const;
 
 /**
@@ -291,11 +305,13 @@ export type TeamColor = keyof typeof outfit.team;
  * Fluid = clamp(min px, vw, max px); lineHeight is unitless; tracking is em.
  */
 export const siteType = {
-  hero:      { min: 44, vw: 6.4, max: 84, lineHeight: 0.98, tracking: -0.04 },  // homepage H1
+  hero:      { min: 44, vw: 6.4, max: 84, lineHeight: 0.98, tracking: -0.045 }, // homepage H1
   page:      { min: 40, vw: 5.6, max: 72, lineHeight: 1,    tracking: -0.04 },  // FAQ H1
   legal:     { min: 40, vw: 5.4, max: 68, lineHeight: 1,    tracking: -0.04 },  // Privacy / Terms H1
   band:      { min: 36, vw: 5,   max: 64, lineHeight: 1,    tracking: -0.04 },  // volt band, final CTA
-  section:   { min: 32, vw: 4,   max: 52, lineHeight: 1.04, tracking: -0.03 },  // section H2
+  section:   { min: 32, vw: 4,   max: 50, lineHeight: 1.04, tracking: -0.03 },  // section H2
+  freeBand:  { min: 32, vw: 4.2, max: 56, lineHeight: 1.02, tracking: -0.04 },  // "Zebrasplitting is free" (900)
+  cta:       { min: 36, vw: 5,   max: 62, lineHeight: 1,    tracking: -0.04 },  // "Create your Dazzle" (900)
   feature:   { min: 30, vw: 3.6, max: 46, lineHeight: 1.04, tracking: -0.03 },  // stripes demo H2, FAQ band
   joinTitle: { min: 34, vw: 9,   max: 40, lineHeight: 1,    tracking: -0.035 }, // /join trip name
 } as const;
@@ -309,7 +325,9 @@ export const siteText = {
   nav:       { size: 15, lineHeight: 1.4,  tracking: 0 },       // nav and footer links
   h2:        { size: 28, lineHeight: 1.15, tracking: -0.025 },  // legal and FAQ section headings
   h3:        { size: 24, lineHeight: 1.2,  tracking: -0.02 },   // how-it-works step titles
-  cardTitle: { size: 22, lineHeight: 1.2,  tracking: -0.02 },   // feature card titles
+  cardTitle: { size: 21, lineHeight: 1.2,  tracking: -0.02 },   // feature card titles
+  receiptMono: { size: 14, lineHeight: 1.5, tracking: 0 },      // the homepage receipt mock (IBM Plex Mono)
+  tag:       { size: 10, lineHeight: 1.4,  tracking: 0 },       // herd name tags
   wordmark:  { size: 26, lineHeight: 1,    tracking: -0.03 },   // nav wordmark (footer: 22)
   wordmarkS: { size: 22, lineHeight: 1,    tracking: -0.03 },
   amount:    { size: 26, lineHeight: 1,    tracking: -0.02 },   // phone-mock balance

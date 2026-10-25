@@ -23,8 +23,8 @@ export const faqSections: FaqSection[] = [
   ]),
   S("adding", "Adding expenses", [
     ["is-there-a-limit", "Is there a limit on how many expenses I can add?", "No. Log as many as the trip needs."],
-    ["ways-to-split-a-cost", "What are the ways to split a cost?", "Five ways:", ["Evenly", "Exact amounts", "Percentages", "Shares (e.g. a family counts as 2)", "By nights stayed, for lodging"]],
-    ["how-does-the-receipt-scan-work", "How does the receipt scan work?", "Snap a photo and Zebrasplit reads the total and fills it in. You can always correct it, and the photo stays on the expense as proof."],
+    ["ways-to-split-a-cost", "What are the ways to split a cost?", "Six ways:", ["Evenly", "By item, from a scanned receipt", "Exact amounts", "Percentages", "Shares (e.g. a family counts as 2)", "By nights stayed, for lodging"]],
+    ["how-does-the-receipt-scan-work", "How does receipt scanning work?", "Snap a photo and Zebrasplit reads every item, the tax and the total. Everyone taps what they ordered, and tax and tip are shared to match. Anything that doesn’t add up gets flagged for a quick check."],
     ["why-do-i-add-the-tip-separately", "Why do I add the tip separately?", "Receipts usually print before you write in the tip, so the tip gets its own field and is added on top of the total."],
     ["how-does-who-slept-where-work", "How does “Who slept where” work?", "Tap the nights each person stayed. Each night’s cost is shared only by the people there that night, so late arrivals pay less automatically."],
     ["can-we-use-different-currencies", "Can we use different currencies?", "Yes. Log in any currency. The exchange rate locks when you save, and everything settles in the trip’s main currency."],
@@ -37,7 +37,8 @@ export const faqSections: FaqSection[] = [
     ["why-only-one-or-two-payments", "Why do I only have one or two payments to make?", "Zebrasplit works out the smallest number of payments that settles everyone up, so you usually pay one person instead of five."],
   ]),
   S("money", "Money and payments", [
-    ["does-zebrasplit-handle-my-money", "Does Zebrasplit handle my money?", "No. Zebrasplit never touches or holds money and never asks for bank or card details. The Pay button opens Venmo, Cash App or PayPal with the amount already filled in, and you send it there."],
+    ["does-zebrasplit-handle-my-money", "Does Zebrasplit handle my money?", "No. Zebrasplit does the math and your payment app moves the money. We never hold funds or ask for bank or card details."],
+    ["which-payment-apps-work", "Which payment apps work?", "Venmo, Cash App and PayPal. You only see the apps the person you owe has set up. Paid in cash or Zelle? Mark it paid another way."],
     ["which-apps-can-i-get-paid-on", "Which apps can I get paid on?", "Venmo, Cash App or PayPal. Add at least one when you sign up, and as many as you like in Settings — the more you add, the easier you are to pay. Whoever owes you picks from the ones you've added."],
     ["can-i-pay-people-on-different-apps", "Can I pay different people on different apps?", "Yes. Each payment shows the app it will open, and you can switch it to any other app that person has added. If someone has nothing listed, or you paid by cash, Zelle or bank transfer, just mark the payment as paid."],
     ["how-do-i-know-someone-paid", "How do I know someone actually paid me?", "They mark the payment as paid, and you can confirm with “Got it”. The trip shows as settled once every payment is marked."],
@@ -48,13 +49,14 @@ export const faqSections: FaqSection[] = [
     ["do-you-sell-my-data-or-contacts", "Do you sell my data or contacts?", "No. Contacts are used only to invite people you choose."],
   ]),
   S("zebra", "Your zebra", [
+    ["what-are-the-zebra-outfits", "What are the zebra outfits?", "Your zebra is your avatar on every trip. Dress it with free outfits or new drops from the shop. Outfits are cosmetic only and never needed to split or settle."],
     ["can-i-customise-my-zebra", "Can I change how my zebra looks?", "Yes. Open Account → Zebra and pick one item for the head, one for the face and neck, and one for the body. Everyone in your Dazzles sees what you’re wearing."],
     ["how-do-i-get-outfits", "How do I get outfits?", "Some are free from the start, some you earn, and the rest are small one-off purchases. You earn the yellow cap by settling your first trip, the party hat at five, and the tiara by sending your first gift."],
     ["do-outfits-cost-real-money", "Do outfits cost real money?", "The paid ones do, and they’re bought through the App Store or Google Play like any other in-app purchase — never through Venmo, Cash App or PayPal. Those are only ever used to pay the people you travelled with, and Zebrasplit never touches that money."],
     ["does-an-outfit-change-my-split", "Does what I wear affect my share?", "No. Outfits are decoration. They change nothing about who owes what."],
   ]),
   S("pricing", "Pricing", [
-    ["is-zebrasplit-free", "Is Zebrasplit free?", "Splitting, stripes and settling up are free, and always will be. Outfits for your zebra are optional extras you can buy or earn; nothing about sharing costs with your group is behind them."],
+    ["is-zebrasplit-free", "Is Zebrasplit free?", "Yes. Splitting, stripes and settling up are free, with no expense limits or daily caps. Zebra outfits are optional and just for fun."],
   ]),
   S("after", "After the trip", [
     ["what-happens-when-the-trip-is-over", "What happens when the trip is over?", "Once everyone’s settled, the trip moves to Past and you get a recap: total, cost per person, biggest expense and who fronted the most. Inactive trips also move to Past automatically after 14 days."],
@@ -66,7 +68,7 @@ export const faqItems: FaqItem[] = faqSections.flatMap((s) => s.items);
 export const faqById = (id: string) => faqItems.find((f) => f.id === id);
 
 /** The five questions the marketing homepage preview shows, in this order. */
-export const homepageFaqIds = ["is-zebrasplit-free", "does-zebrasplit-handle-my-money", "do-my-friends-need-to-download-the-app", "what-if-someone-never-taps-done", "how-does-who-slept-where-work"] as const;
+export const homepageFaqIds = ["is-zebrasplit-free", "which-payment-apps-work", "how-does-the-receipt-scan-work", "what-are-the-zebra-outfits", "does-zebrasplit-handle-my-money"] as const;
 export const homepageFaq = (): FaqItem[] => homepageFaqIds.map((id) => faqById(id)!).filter(Boolean);
 
 /** Answer text with its bullet list folded in — for JSON-LD and anywhere plain text is needed. */

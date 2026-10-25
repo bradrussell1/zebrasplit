@@ -8,7 +8,7 @@ import { siteUrl } from "@/lib/env";
 import "@/styles/tokens.css";
 import "@/styles/globals.css";
 
-const figtree = Figtree({ subsets: ["latin"], weight: ["400", "600", "700", "800"], display: "swap", variable: "--font-figtree" });
+const figtree = Figtree({ subsets: ["latin"], weight: ["400", "600", "700", "800", "900"], display: "swap", variable: "--font-figtree" });
 // IBM Plex Mono is used only by the receipt mock on the homepage.
 const plexMono = IBM_Plex_Mono({ subsets: ["latin"], weight: ["400", "600"], display: "swap", variable: "--font-plex-mono" });
 

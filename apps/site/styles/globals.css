@@ -46,7 +46,10 @@ b, strong { font-weight: 700; }
 /* Type helpers (sizes from the token scale) */
 .eyebrow { font-size: var(--zs-fs-label); font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--zs-color-text-muted); }
 .display { font-weight: 800; letter-spacing: var(--zs-tracking-section); line-height: var(--zs-lh-section); font-size: var(--zs-fs-section); text-wrap: balance; }
-.display--hero { font-size: var(--zs-fs-hero); line-height: var(--zs-lh-hero); letter-spacing: var(--zs-tracking-hero); }
+.display--hero { font-size: var(--zs-fs-hero); line-height: var(--zs-lh-hero); letter-spacing: var(--zs-tracking-hero); font-weight: 900; }
+.display--free { font-size: var(--zs-fs-free-band); line-height: var(--zs-lh-free-band); letter-spacing: var(--zs-tracking-free-band); font-weight: 900; }
+.display--cta { font-size: var(--zs-fs-cta); line-height: var(--zs-lh-cta); letter-spacing: var(--zs-tracking-cta); font-weight: 900; }
+.display--tight { line-height: 1.02; }
 .display--page { font-size: var(--zs-fs-page); line-height: var(--zs-lh-page); letter-spacing: var(--zs-tracking-page); }
 .display--legal { font-size: var(--zs-fs-legal); line-height: var(--zs-lh-legal); letter-spacing: var(--zs-tracking-legal); }
 .display--band { font-size: var(--zs-fs-band); line-height: var(--zs-lh-band); letter-spacing: var(--zs-tracking-band); }
@@ -59,7 +62,9 @@ b, strong { font-weight: 700; }
 .tabular { font-variant-numeric: tabular-nums; }
 
 /* Section rhythm from the boards */
-.section { padding-top: 112px; padding-inline: var(--zs-space-24); }
+.section { padding-top: 104px; padding-inline: var(--zs-space-24); }
+/* A section already carries the gutter; the container inside it must not add a second one. */
+.section > .container { padding-inline: 0; }
 @media (max-width: 720px) { .section { padding-top: 72px; } }
 
 @media (prefers-reduced-motion: reduce) {
