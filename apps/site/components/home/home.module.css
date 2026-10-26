@@ -2,7 +2,10 @@
 
 /* Shared: bands, cards, two-column rows */
 .bandWrap { padding-inline: var(--zs-space-24); }
-.bandWrap > .band { padding-inline: clamp(28px, 5vw, 60px); }
+/* Bands are containers; the global `.section > .container` rule strips the gutter from
+   containers, so bands inside a section (and the problem band's wrapper) restate their own padding. */
+.bandWrap > .band, :global(.section) > .band { padding-inline: clamp(28px, 5vw, 60px); }
+:global(.section) > .free, :global(.section) > .cta { padding-inline: clamp(32px, 5vw, 60px); }
 .band { position: relative; border-radius: var(--zs-radius-band); padding: clamp(28px, 5vw, 60px); }
 .bandInk { background: var(--zs-ink); color: var(--zs-hide); }
 .bandWhite { background: var(--zs-white); }
