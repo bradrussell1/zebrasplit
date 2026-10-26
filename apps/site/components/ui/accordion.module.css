@@ -15,6 +15,6 @@
 .panel[data-reduced] { transition: none; }
 .panelInner { min-height: 0; overflow: hidden; }
 .body { display: flex; flex-direction: column; gap: var(--zs-space-12); padding: 0 var(--zs-layout-card-pad) var(--zs-space-22, 22px); }
-.a { font-size: var(--zs-fs-body-m); line-height: var(--zs-lh-body-m); color: var(--zs-color-text-secondary); }
+.a { font-size: var(--zs-fs-body-m); line-height: var(--zs-lh-body-m); color: var(--zs-color-text-secondary); max-width: 72ch; }   /* the card runs to the surface line; the answer stays readable */
 .pills { display: flex; flex-wrap: wrap; gap: var(--zs-space-8); }
 .pillItem { padding: var(--zs-space-8) var(--zs-space-14); border-radius: var(--zs-radius-pill); background: var(--zs-cream); box-shadow: inset 0 0 0 1.5px var(--zs-color-outline); font-size: var(--zs-fs-label); font-weight: 600; }

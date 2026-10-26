@@ -8,7 +8,7 @@ export function FinalCta({ urls }: { urls: StoreUrls }) {
   return (
     <section id="get" className={`${l.section} section`} aria-labelledby="get-title">
       <div className={l.container}>
-        <div className={`${l.band} ${s.bandInk} ${s.cta}`}>
+        <div className={`${l.band} ${s.bandInk} ${s.cta}`} data-align-right="surface">
           <h2 id="get-title" className="display display--cta" data-align="text">Create your Dazzle</h2>
           <p className={s.ctaSub}>Free on iPhone and Android.</p>
           <StoreBadges urls={urls} location="final_cta" onInk variant="band" />
