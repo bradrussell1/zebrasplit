@@ -7,9 +7,9 @@ export function FreeBand() {
   return (
     <section className={`${l.section} section`} aria-labelledby="free-title">
       <div className={l.container}>
-        <div className={`${l.band} ${s.bandVolt} ${l.split} ${s.free}`}>
+        <div className={`${l.band} ${s.bandVolt} ${l.split} ${s.free}`} data-align-right="surface">
           <h2 id="free-title" className={`display display--free ${s.freeTitle}`} data-align="text">Zebrasplitting is free<br />Actually free</h2>
-          <ul className={s.freeList} data-align="col2">
+          <ul className={s.freeList} data-align="col2" data-align-right="text">
             <li><Check />No expense limits, no daily caps</li>
             <li><Check />We never hold your money. Your payment app does.</li>
             <li><Check />Outfits are just for fun</li>

@@ -34,7 +34,7 @@ export function MeetYourZebra() {
             </div>
           </div>
           {/* a surface in column 2: its right edge reaches the surface line (2.3); the zebra stays centred inside it */}
-          <div className={`${s.zebraPanel} ${l.bleedRight}`} data-align="col2">
+          <div className={`${s.zebraPanel} ${l.bleedRight}`} data-align="col2" data-align-right="surface">
             <svg className={s.zebraHill} viewBox="0 0 520 160" preserveAspectRatio="none" aria-hidden="true"><path d="M0 40 Q130 10 270 34 T520 28 V160 H0 Z" fill="var(--zs-pasture-field)" /></svg>
             <svg className={s.zebraSparkles} viewBox="0 0 520 420" aria-hidden="true">
               <path d="M80 80 l5 12 l12 5 l-12 5 l-5 12 l-5 -12 l-12 -5 l12 -5 Z" fill="var(--zs-volt)" stroke="var(--zs-ink)" strokeWidth="2" />

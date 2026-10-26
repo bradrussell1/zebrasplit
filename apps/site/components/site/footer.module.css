@@ -1,9 +1,8 @@
-.footer { padding: 56px var(--zs-space-24) 48px; }
+.footer { padding: 56px var(--zs-layout-gutter) 48px; }
 .inner { display: flex; flex-wrap: wrap; gap: var(--zs-space-24); align-items: center; justify-content: space-between; }
 .brand { display: flex; flex-direction: column; gap: var(--zs-space-6); }
 .legal { font-size: var(--zs-fs-caption); color: var(--zs-color-text-muted); max-width: 640px; }
-.links { display: flex; flex-wrap: wrap; gap: var(--zs-space-4); }
-.link { font-size: var(--zs-fs-nav); font-weight: 600; padding: var(--zs-space-12); border-radius: var(--zs-radius-pill); min-height: var(--zs-layout-min-tap-target); display: inline-flex; align-items: center; }
+/* a gap between links, not padding, so the last link's text ends exactly on the surface line */
+.links { display: flex; flex-wrap: wrap; justify-content: flex-end; column-gap: 28px; margin-left: auto; }   /* when it wraps under the brand it still ends on the surface line */
+.link { font-size: var(--zs-fs-nav); font-weight: 600; padding-block: var(--zs-space-12); padding-inline: 0; border-radius: var(--zs-radius-pill); min-height: var(--zs-layout-min-tap-target); display: inline-flex; align-items: center; }
 .link[aria-current="page"] { font-weight: 700; text-decoration: underline; text-underline-offset: 6px; text-decoration-thickness: 2px; }
-.placeholder { color: var(--zs-color-text-muted); cursor: default; }
-.quiet { color: var(--zs-color-text-muted); }

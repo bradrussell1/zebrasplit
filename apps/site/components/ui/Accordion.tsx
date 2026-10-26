@@ -42,7 +42,7 @@ export function Accordion({ items, defaultOpen = null, mode = "multiple", headin
         const isOpen = open.has(it.id);
         const panelId = `${base}-${it.id}`;
         return (
-          <div key={it.id} id={it.id} className={[s.item, isOpen && s.open].filter(Boolean).join(" ")}>
+          <div key={it.id} id={it.id} className={[s.item, isOpen && s.open].filter(Boolean).join(" ")} data-align-right={alignFirst ? "surface" : undefined}>
             <H className={s.h}>
               <button type="button" className={s.trigger} aria-expanded={isOpen} aria-controls={panelId} onClick={() => toggle(it.id)}>
                 <span className={s.q} data-align={alignFirst && i === 0 ? "text" : undefined}>{it.question}</span>
