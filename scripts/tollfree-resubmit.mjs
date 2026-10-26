@@ -29,9 +29,21 @@
 // It first tries to UPDATE the rejected request (HH8ad9…); if Twilio refuses
 // (e.g. status no longer editable), it creates a new verification with the
 // same fields and says which path it took. Never commit credentials.
+// Rejected again 2026-10-26 on four grounds; what changed in answer to each:
+//   30482 (business email on the official domain): NotificationEmail is checked too, not
+//         just BusinessContactEmail — a gmail notify address fails the whole submission.
+//   30484 (business name must match official records): there is no registered DBA, so the
+//         business name is the sole proprietor's legal name, "Bradley Russell", with
+//         "doing business as Zebrasplit" in the narrative and on the /sms page.
+//   30508 (opt-in checkbox pre-selected): the proof screenshot must show the box unticked,
+//         which is its real default — never pass ?consent=1 when taking it.
+//   30513 (consent must not be a condition of service): creating the trip no longer waits
+//         for the box; it only decides whether Zebrasplit sends the text (invites.text_ok).
 const SID = process.env.TWILIO_ACCOUNT_SID, TOK = process.env.TWILIO_AUTH_TOKEN, EMAIL = process.env.BUSINESS_EMAIL;
 if (!SID || !TOK || !EMAIL) { console.error("Set TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN and BUSINESS_EMAIL"); process.exit(1); }
-if (!/@(zebrasplit\.com|bunktab\.com|check-m8\.io)$/i.test(EMAIL)) { console.error(`BUSINESS_EMAIL must be on the official domain (got ${EMAIL}); Twilio rejects free-mail addresses (30482).`); process.exit(1); }
+const official = (e) => /@(zebrasplit\.com|bunktab\.com|check-m8\.io)$/i.test(e);
+if (!official(EMAIL)) { console.error(`BUSINESS_EMAIL must be on the official domain (got ${EMAIL}); Twilio rejects free-mail addresses (30482).`); process.exit(1); }
+if (process.env.NOTIFY_EMAIL && !official(process.env.NOTIFY_EMAIL)) { console.error(`NOTIFY_EMAIL must be on the official domain too (got ${process.env.NOTIFY_EMAIL}); it is the address that failed 30482.`); process.exit(1); }
 
 const OPT_IN_IMAGE = "https://zebrasplit.com/compliance/invite-opt-in.png";
 // the apex redirects here, so cite the address that actually answers: a reviewer
@@ -62,7 +74,8 @@ if (!pn) {
 
 const fields = {
   BusinessType: "SOLE_PROPRIETOR",
-  BusinessName: "Zebrasplit (Bradley Russell, sole proprietor)",
+  // the name on official records (30484): a sole proprietor with no registered DBA is the person
+  BusinessName: "Bradley Russell",
   BusinessWebsite: "https://www.zebrasplit.com",
   // the outcome notice goes to a person; the public contact matches the /sms page
   NotificationEmail: process.env.NOTIFY_EMAIL || EMAIL,
@@ -82,11 +95,13 @@ const fields = {
   ProductionMessageSample: SAMPLE,
   TollfreePhoneNumberSid: pn.sid,
   UseCaseSummary:
-    "Zebrasplit is a trip expense-splitting app. When a user adds friends to a trip by phone number, each friend gets one transactional invitation text with a link to the trip, sent only after the inviter ticks a required consent checkbox (see opt-in image and " + SMS_PAGE + "). No recurring or marketing messages; max 50 invites per user per day. STOP/HELP handled by the Messaging Service; every text ends with Reply STOP to opt out. Login codes go through Twilio Verify, not this number.",
+    "Zebrasplit (Bradley Russell, sole proprietor, doing business as Zebrasplit) is a trip expense-splitting app. When a user adds friends to a trip by phone number, each friend can receive one transactional invitation text with a link to the trip. The text is sent only if the inviter ticks an optional consent checkbox, which is unticked by default (see opt-in image and " + SMS_PAGE + "). Texting is never a condition of using the app: the trip is created either way, and if the box is left unticked no message is sent and the inviter shares the link themselves. No recurring or marketing messages; max 50 invites per user per day. STOP/HELP handled by the Messaging Service; every text ends with Reply STOP to opt out. Login codes go through Twilio Verify, not this number.",
   AdditionalInformation:
-    "Consent flow: (1) a signed-in Zebrasplit user opens 'Grab the Check' -> step 2 'Invite the group' and picks friends from contacts or types numbers; " +
-    "(2) a required checkbox appears: \"" + CONSENT + "\" with a link 'How Zebrasplit texts work' to " + SMS_PAGE + "; " +
-    "(3) the Create button is disabled until the box is checked; (4) one invitation text per person is sent from the Messaging Service with STOP instructions. " +
+    "Consent flow: (1) a signed-in Zebrasplit user starts a trip -> step 2 'Invite the crew' and picks friends from contacts or types numbers; " +
+    "(2) an optional checkbox appears, unticked by default: \"" + CONSENT + "\" with a link 'How Zebrasplit texts work' to " + SMS_PAGE + "; " +
+    "(3) the Start button works whether or not the box is ticked: unticked, the trip is created, no text is sent, and the inviter is handed the invitation link to share however they like; " +
+    "(4) ticked, one invitation text per person is sent from the Messaging Service with STOP instructions. " +
+    "Business name: Bradley Russell is the sole proprietor's legal name; Zebrasplit is the product and trading name (no separate registered entity). " +
     "Program disclosure (sender, frequency, opt-out, rates, sample message): " + SMS_PAGE + ". Privacy policy with the SMS section: https://zebrasplit.com/privacy. " +
     "Contact: " + EMAIL + ".",
 };

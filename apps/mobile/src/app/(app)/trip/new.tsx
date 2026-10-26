@@ -4,7 +4,7 @@ import * as Contacts from "expo-contacts/legacy";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { openBrowserAsync } from "expo-web-browser";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ActivityIndicator, Image, StyleSheet, View } from "react-native";
+import { ActivityIndicator, Image, Share, StyleSheet, View } from "react-native";
 import { AuthScreen, FormError } from "@/components/AuthScreen";
 import { DateField } from "@/components/DatePicker";
 import { Avatar, Button, Chip, Icon, Input, Press, RowCard, SegmentedControl, StripeMeter, TextArea, TextLink, Zebra, ZText, useToast } from "@/ui";
@@ -29,6 +29,8 @@ type Pick = { phone: string; name: string };
 
 const TERMS = "https://www.zebrasplit.com/terms";
 const SMS_INFO = "https://www.zebrasplit.com/sms";
+// the same landing page the invite text links to (apex, see send-invite)
+const JOIN_BASE = "https://zebrasplit.com/join/";
 const MAX_ROWS = 60; // the list isn't virtualised; search narrows it
 
 export default function NewTripScreen() {
@@ -130,7 +132,8 @@ export default function NewTripScreen() {
   }
 
   async function finish() {
-    if (picks.length > 0 && !agreed) return setError("Agree to the Terms & Conditions to send invites.");
+    // Texting is optional (toll-free 30513): the Dazzle is created either way, and the
+    // consent box only decides whether Zebrasplit sends the invite text.
     setBusy(true); setError(null);
     const { data: trip, error: e1 } = await supabase.from("trips").insert({ title: title.trim(), description: description.trim() || null, start_date: start, end_date: end, base_currency: currency, created_by: me }).select("id").single();
     if (e1 || !trip) { setBusy(false); setError(e1?.message ?? "Couldn't start the Dazzle."); return; }
@@ -141,13 +144,22 @@ export default function NewTripScreen() {
         await supabase.from("trips").update({ cover_photo_url: path }).eq("id", trip.id);
       } catch { /* the Dazzle page offers the cover again */ }
     }
+    let links: { name: string; token: string }[] = [];
     if (picks.length) {
-      const { error: e2 } = await supabase.from("invites").insert(picks.map((p) => ({ trip_id: trip.id, phone: p.phone.replace(/^\+/, ""), invited_by: me })));
+      const { data: rows, error: e2 } = await supabase.from("invites").insert(picks.map((p) => ({ trip_id: trip.id, phone: p.phone.replace(/^\+/, ""), invited_by: me, text_ok: agreed }))).select("phone, token, status");
       if (e2) { setBusy(false); setError(`Dazzle started, but the invites failed: ${e2.message}`); router.replace(`/(app)/trip/${trip.id}`); return; }
+      // not texting: hand the inviter the join links so they can share them however they like
+      if (!agreed) links = (rows ?? []).filter((r) => r.status === "pending").map((r) => ({ name: picks.find((p) => p.phone.replace(/^\+/, "") === r.phone)?.name ?? r.phone, token: r.token }));
     }
     setBusy(false);
     router.replace(`/(app)/trip/${trip.id}`);
-    show({ message: picks.length ? "Invites sent" : "Dazzle started", bust: <Zebra variant="bust" mood="wink" size={28} decorative /> });
+    if (links.length) {
+      show({ message: "Dazzle started. Share the invite links.", bust: <Zebra variant="bust" mood="wink" size={28} decorative /> });
+      const message = `Join '${title.trim()}' on Zebrasplit:\n${links.map((l) => `${l.name}: ${JOIN_BASE}${l.token}`).join("\n")}`;
+      try { await Share.share({ message }); } catch { /* the inviter can share from the Dazzle page later */ }
+      return;
+    }
+    show({ message: picks.length && agreed ? "Invites sent" : "Dazzle started", bust: <Zebra variant="bust" mood="wink" size={28} decorative /> });
   }
 
   const progress = <StripeMeter members={2} done={step} label={`Step ${step} of 2`} style={styles.progress} />;
@@ -193,7 +205,7 @@ export default function NewTripScreen() {
       onBack={() => setStep(1)}
       hero={progress}
       title="Invite the crew"
-      lead="Friends on Zebrasplit are added straight away. Everyone else gets one text with a link. You can add more people later."
+      lead="Friends on Zebrasplit are added straight away. Everyone else gets a link: tick the box to have Zebrasplit text it, or share it yourself. You can add more people later."
       footer={
         <>
           {picks.length > 0 ? (
@@ -201,7 +213,9 @@ export default function NewTripScreen() {
               {/* The checkbox has to carry the SMS consent itself — who is texting, that it
                   is one message, how to stop it and that rates apply. A bare "I agree to the
                   Terms" link is what carriers reject (Twilio 30513), because the screenshot
-                  submitted as opt-in proof then shows no consent to be texted. This wording
+                  submitted as opt-in proof then shows no consent to be texted. It starts
+                  unticked (30508) and never blocks creating the Dazzle (30513): unticked means
+                  the invite exists and the inviter shares the link themselves. This wording
                   is the one sent to Twilio in scripts/tollfree-resubmit.mjs: keep them identical. */}
               <Press onPress={() => setAgreed((v) => !v)} accessibilityRole="checkbox" accessibilityState={{ checked: agreed }} accessibilityLabel="I have these people's permission to send them one text from Zebrasplit about this trip. They can reply STOP to opt out. Message and data rates may apply." scaleTo={0.98} style={styles.consentRow}>
                 <CheckCircle on={agreed} />
@@ -214,7 +228,8 @@ export default function NewTripScreen() {
             </View>
           ) : null}
           <FormError>{error}</FormError>
-          <Button label="Start the Dazzle" onPress={finish} loading={busy} disabled={picks.length > 0 && !agreed} />
+          {/* never gated on the consent box: SMS consent must not be a condition of using the service (toll-free 30513) */}
+          <Button label="Start the Dazzle" onPress={finish} loading={busy} />
         </>
       }
     >

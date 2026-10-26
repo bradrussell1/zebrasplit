@@ -25,10 +25,12 @@ Deno.serve(withSentry("send-invite", async (req) => {
     callerId = user.id;
   }
 
-  const { data: inv } = await admin.from("invites").select("id, trip_id, phone, token, status, invited_by, trips(title), users!invites_invited_by_fkey(display_name)").eq("id", invite_id).maybeSingle();
+  const { data: inv } = await admin.from("invites").select("id, trip_id, phone, token, status, invited_by, text_ok, trips(title), users!invites_invited_by_fkey(display_name)").eq("id", invite_id).maybeSingle();
   if (!inv) return json({ error: "invite not found" }, 404);
   if (callerId && inv.invited_by !== callerId) return json({ error: "forbidden" }, 403);
   if (inv.status !== "pending") return json({ skipped: inv.status });
+  // the inviter did not tick the consent box: the invite exists, nothing is texted (toll-free 30513)
+  if (inv.text_ok === false) return json({ skipped: "no consent to text" });
 
   // one text per invite per day: a successful send is recorded under this dedupe key
   const { data: prior } = await admin.from("notification_log").select("id, sent_at, payload").eq("dedupe_key", `invite.sms:${inv.id}`).maybeSingle();
