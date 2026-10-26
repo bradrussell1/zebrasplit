@@ -15,6 +15,8 @@ Project: `aa02039d` ("Zebrasplit"), dashboard
 | Webhook | `Zebrasplit Supabase` → the Edge Function, all apps, all events, production **and** sandbox |
 | Webhook auth | shared secret in the `Authorization` header, matching `REVENUECAT_WEBHOOK_SECRET` in Supabase |
 | SDK key (iOS) | `EXPO_PUBLIC_REVENUECAT_IOS_KEY` in EAS production, preview and development, and in `apps/mobile/.env` |
+| Play Store app | `Zebrasplit (Play Store)`, id `app756648d438`, package `com.bunktab.app`, service account JSON uploaded (the EAS publisher key, `secrets/play-service-account.json`), "Valid credentials" (2026-10-25) |
+| SDK key (Android) | `EXPO_PUBLIC_REVENUECAT_ANDROID_KEY` in EAS production, preview and development, and in `apps/mobile/.env` (2026-10-25); first Android build carrying it is version code 6 |
 
 The webhook was proved end to end with RevenueCat's own test event: **200**, logged and
 ignored, because `TEST` is not an event we act on. A wrong or missing secret gets 401.
@@ -29,10 +31,15 @@ ignored, because `TEST` is not an event we act on. A wrong or missing secret get
   ability to sell. Generate it in App Store Connect → Users and Access → Integrations →
   App Store Connect API, download the `.p8`, upload it on the app's RevenueCat page,
   then click Import.
-- **Play Store app.** Nothing yet. It needs a Google Play service account JSON, and
-  Play needs the products to exist, which needs the closed test. `EXPO_PUBLIC_REVENUECAT_ANDROID_KEY`
-  stays empty until then; with no key the app reports that buying isn't open rather
-  than failing.
+- **Google real-time developer notifications (Pub/Sub).** Optional for one-time products.
+  "Connect to Google" stays disabled until the service account holds **Pub/Sub Editor**
+  and **Monitoring Viewer** on Cloud project `fabled-citadel-512319-k6` and the Pub/Sub
+  API is enabled; as of 2026-10-25 the account has no Cloud IAM role at all (verified:
+  `pubsub.topics.list` → PERMISSION_DENIED). Grant the roles, reload, Connect, then paste
+  the topic into Play Console → Monetization setup.
+- **Play product import.** The 26 one-time products exist on Play (created and activated
+  through the Android Publisher API on 2026-10-25); the Import button has not appeared for
+  the Play app yet. Not needed to sell: `getProducts()` reads Play directly.
 - **Offerings, entitlements and paywalls.** Deliberately unused. An entitlement answers
   "may this user do X"; our question is "does this user own this outfit", and
   `user_cosmetics` answers it. The Shop is our own screen, not a RevenueCat paywall.
