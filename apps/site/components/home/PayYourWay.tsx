@@ -9,7 +9,7 @@ export function PayYourWay() {
   return (
     <section className={`${l.section} section`} aria-labelledby="pay-title">
       <div className={l.container}>
-        <div className={`${l.band} ${s.bandInk} ${l.split}`}>
+        <div className={`${l.band} ${s.bandInk} ${l.split}`} data-align-right="surface">
           <div className={s.payCopy}>
             <span className={`eyebrow ${s.eyebrowVolt}`} data-align="text">Pay your way</span>
             <h2 id="pay-title" className="display display--tight">One tap<br />Their app. Done.</h2>

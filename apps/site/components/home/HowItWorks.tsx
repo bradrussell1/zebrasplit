@@ -15,7 +15,7 @@ export function HowItWorks() {
         <SectionHeading eyebrow="How it works" title="Three steps. Simplified." eyebrowAlign="text" />
         <ol className={`${l.cardGrid} ${s.steps}`}>
           {STEPS.map((st, i) => (
-            <li key={st.title} className={`${s.card} ${l.card} ${s.step}`}>
+            <li key={st.title} className={`${s.card} ${l.card} ${s.step}`} data-align-right={i === STEPS.length - 1 ? "surface" : undefined}>
               <span className={s.stepNo} aria-hidden="true" data-align={i === 0 ? "text" : undefined}>{i + 1}</span>
               <h3 className={s.h3}>{st.title}</h3>
               <p className={s.cardBody}>{st.body}</p>

@@ -20,7 +20,7 @@ export function Features() {
         <h2 id="features-title" className="display" style={{ maxWidth: 720 }} data-align="text">The expense sharing app you&apos;ll actually enjoy</h2>
         <ul className={`${l.cardGrid} ${s.grid}`}>
           {FEATURES.map((f, i) => (
-            <li key={f.title} className={`${s.card} ${l.card} ${s.feature}`}>
+            <li key={f.title} className={`${s.card} ${l.card} ${s.feature}`} data-align-right={i % 3 === 2 ? "surface" : undefined}>
               <span className={`${s.tile} ${s[`tile_${f.tile}`]}`} aria-hidden="true" data-align={i === 0 ? "text" : undefined}>{f.icon}</span>
               <h3 className={s.featureTitle}>{f.title}</h3>
               <p className={s.cardBody}>{f.body}</p>

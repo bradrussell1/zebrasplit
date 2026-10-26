@@ -14,7 +14,7 @@ export function ReceiptScan() {
   return (
     <section id="features" className={`${l.section} section`}>
       <div className={l.container}>
-        <div className={`${l.band} ${s.bandWhite} ${l.split}`}>
+        <div className={`${l.band} ${s.bandWhite} ${l.split}`} data-align-right="surface">
           <div className={s.receiptCopy}>
             <span className="eyebrow" data-align="text">New · Receipt scanning</span>
             <h2 className="display display--tight">Snap it<br />Split it by item</h2>

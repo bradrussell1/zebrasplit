@@ -42,11 +42,12 @@ export function HerdDemo() {
             <HerdScene done={done} onToggle={toggle} burst={burst} />
             <div className={s.counter} aria-live="polite">{count} of 6 striped</div>
           </div>
-          <div className={s.demoCopy}>
+          {/* column 2 reaches out to the surface line on the right; its content still starts on the column-2 line */}
+          <div className={`${s.demoCopy} ${l.reachRight}`}>
             <span className="eyebrow" data-align="col2">Try it · tap a friend</span>
             <h2 id="stripes-title" className="display display--feature">Earn your Stripes</h2>
             <p className={s.demoBody}><b>Nobody settles up until everyone has finished adding expenses.</b> Each zebra earns its stripes when they tap Done. No more &quot;wait, I forgot the gas.&quot;</p>
-            <div className={s.toggles}>
+            <div className={s.toggles} data-align-right="surface">
               {FRIENDS.map((f, i) => (
                 <button key={f.id} type="button" className={[s.toggle, done[i] && s.toggleOn, "pillFocus"].filter(Boolean).join(" ")} aria-pressed={done[i]} onClick={() => toggle(i)}>
                   {done[i] ? `${f.name} ✓` : f.name}
