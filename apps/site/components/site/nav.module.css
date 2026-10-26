@@ -1,4 +1,4 @@
-.header { padding-top: var(--zs-space-24); }
+.header { padding-top: var(--zs-space-24); padding-inline: var(--zs-layout-gutter); }
 .nav { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--zs-space-16); padding-block: var(--zs-space-8); }
 .logo { display: inline-flex; align-items: center; gap: var(--zs-space-10); border-radius: var(--zs-radius-pill); }
 .disc { width: var(--zs-size-icon-button); height: var(--zs-size-icon-button); border-radius: var(--zs-radius-pill); background: var(--zs-volt); display: inline-flex; align-items: flex-end; justify-content: center; overflow: hidden; flex-shrink: 0; }

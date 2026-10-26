@@ -5,8 +5,8 @@ import s from "./footer.module.css";
 export function Footer({ current }: { current?: "privacy" | "terms" | "feedback" }) {
   return (
     <footer className={s.footer}>
-      <div className={`container ${s.inner}`}>
-        <div className={s.brand}>
+      <div className={`container inset ${s.inner}`}>
+        <div className={s.brand} data-align="text">
           <Wordmark size="footer" />
           <span className={s.legal}>© 2026 Zebrasplit. Venmo and PayPal are trademarks of PayPal, Inc. Cash App is a trademark of Block, Inc. Zebrasplit is not affiliated with them.</span>
         </div>
@@ -15,11 +15,8 @@ export function Footer({ current }: { current?: "privacy" | "terms" | "feedback"
           <Link href="/terms" className={s.link} aria-current={current === "terms" ? "page" : undefined}>Terms</Link>
           <Link href="/faq" className={s.link}>Support</Link>
           <Link href="/feedback" className={s.link} aria-current={current === "feedback" ? "page" : undefined}>Feedback</Link>
-          {/* Press kit: placeholder until the kit exists (see report). */}
-          <span className={`${s.link} ${s.placeholder}`} aria-disabled="true">Press kit<span className="srOnly"> (coming soon)</span></span>
-          {/* Admin is a normal link: the portal is behind a Supabase session and every
-              read is gated on public.is_admin(), so hiding it would buy nothing. */}
-          <Link href="/admin" className={`${s.link} ${s.quiet}`}>Admin</Link>
+          {/* Press kit returns as a real link once a kit exists; a greyed placeholder read as broken.
+              Admin is reached by URL (/admin): the approved design shows no footer link for it. */}
         </nav>
       </div>
     </footer>

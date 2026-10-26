@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import l from "@/components/layout/layout.module.css";
 import s from "./home.module.css";
 
 const I = ({ children }: { children: ReactNode }) => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{children}</svg>;
@@ -14,13 +15,13 @@ const FEATURES: { tile: "volt" | "sand" | "blush"; icon: ReactNode; title: strin
 
 export function Features() {
   return (
-    <section className="section" aria-labelledby="features-title">
-      <div className={`container ${s.stack}`}>
-        <h2 id="features-title" className="display" style={{ maxWidth: 720 }}>The expense sharing app you&apos;ll actually enjoy</h2>
-        <ul className={s.grid}>
-          {FEATURES.map((f) => (
-            <li key={f.title} className={`${s.card} ${s.feature}`}>
-              <span className={`${s.tile} ${s[`tile_${f.tile}`]}`} aria-hidden="true">{f.icon}</span>
+    <section className={`${l.section} section`} aria-labelledby="features-title">
+      <div className={`${l.container} ${l.inset} ${s.stack}`}>
+        <h2 id="features-title" className="display" style={{ maxWidth: 720 }} data-align="text">The expense sharing app you&apos;ll actually enjoy</h2>
+        <ul className={`${l.cardGrid} ${s.grid}`}>
+          {FEATURES.map((f, i) => (
+            <li key={f.title} className={`${s.card} ${l.card} ${s.feature}`}>
+              <span className={`${s.tile} ${s[`tile_${f.tile}`]}`} aria-hidden="true" data-align={i === 0 ? "text" : undefined}>{f.icon}</span>
               <h3 className={s.featureTitle}>{f.title}</h3>
               <p className={s.cardBody}>{f.body}</p>
             </li>

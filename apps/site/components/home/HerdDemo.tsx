@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { FRIENDS, HERD_COLLECT, HERD_START } from "@/content/herd";
 import { trackEvent } from "@/lib/analytics";
+import l from "@/components/layout/layout.module.css";
 import s from "./home.module.css";
 
 // The field, the six zebras and the confetti are below the fold; their code loads on its own.
@@ -33,28 +34,31 @@ export function HerdDemo() {
   const toggle = (i: number) => setDone((d) => d.map((v, j) => (j === i ? !v : v)));
 
   return (
-    <section className="section" aria-labelledby="stripes-title">
-      <div className={`container ${s.twoCol} ${s.herdRow}`}>
-        <div className={s.herdPanel}>
-          <HerdScene done={done} onToggle={toggle} burst={burst} />
-          <div className={s.counter} aria-live="polite">{count} of 6 striped</div>
-        </div>
-        <div className={s.demoCopy}>
-          <span className="eyebrow">Try it · tap a friend</span>
-          <h2 id="stripes-title" className="display display--feature">Earn your Stripes</h2>
-          <p className={s.demoBody}><b>Nobody settles up until everyone has finished adding expenses.</b> Each zebra earns its stripes when they tap Done. No more &quot;wait, I forgot the gas.&quot;</p>
-          <div className={s.toggles}>
-            {FRIENDS.map((f, i) => (
-              <button key={f.id} type="button" className={[s.toggle, done[i] && s.toggleOn, "pillFocus"].filter(Boolean).join(" ")} aria-pressed={done[i]} onClick={() => toggle(i)}>
-                {done[i] ? `${f.name} ✓` : f.name}
-              </button>
-            ))}
+    <section className={`${l.section} section`} aria-labelledby="stripes-title">
+      {/* the panel is a surface: it bleeds back out to the surface line on its left (2.3) */}
+      <div className={`${l.container} ${l.inset}`}>
+        <div className={l.split}>
+          <div className={`${s.herdPanel} ${l.bleedLeft}`}>
+            <HerdScene done={done} onToggle={toggle} burst={burst} />
+            <div className={s.counter} aria-live="polite">{count} of 6 striped</div>
           </div>
-          {all ? (
-            <Button variant="primary" size="lg" href="#get" className={`${s.demoCta} ${s.rise}`}>Close out · collect {HERD_COLLECT}</Button>
-          ) : (
-            <Button variant="locked" size="lg" disabled className={s.demoCta}>Close out unlocks at 6 of 6</Button>
-          )}
+          <div className={s.demoCopy}>
+            <span className="eyebrow" data-align="col2">Try it · tap a friend</span>
+            <h2 id="stripes-title" className="display display--feature">Earn your Stripes</h2>
+            <p className={s.demoBody}><b>Nobody settles up until everyone has finished adding expenses.</b> Each zebra earns its stripes when they tap Done. No more &quot;wait, I forgot the gas.&quot;</p>
+            <div className={s.toggles}>
+              {FRIENDS.map((f, i) => (
+                <button key={f.id} type="button" className={[s.toggle, done[i] && s.toggleOn, "pillFocus"].filter(Boolean).join(" ")} aria-pressed={done[i]} onClick={() => toggle(i)}>
+                  {done[i] ? `${f.name} ✓` : f.name}
+                </button>
+              ))}
+            </div>
+            {all ? (
+              <Button variant="primary" size="lg" href="#get" className={`${s.demoCta} ${s.rise}`}>Close out · collect {HERD_COLLECT}</Button>
+            ) : (
+              <Button variant="locked" size="lg" disabled className={s.demoCta}>Close out unlocks at 6 of 6</Button>
+            )}
+          </div>
         </div>
       </div>
     </section>

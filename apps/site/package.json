@@ -12,7 +12,8 @@
     "start": "next start -p 3100",
     "lint": "node scripts/check-hex.mjs",
     "typecheck": "npm run tokens && tsc --noEmit",
-    "test": "node --test \"test/**/*.test.ts\""
+    "test": "node --test \"test/**/*.test.ts\"",
+    "check:align": "node scripts/check-alignment.mjs"
   },
   "dependencies": {
     "@bunktab/core": "*",

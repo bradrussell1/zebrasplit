@@ -316,6 +316,21 @@ export const siteType = {
   joinTitle: { min: 34, vw: 9,   max: 40, lineHeight: 1,    tracking: -0.035 }, // /join trip name
 } as const;
 
+/**
+ * The marketing site's two vertical lines (homepage alignment fix, 2026-10-26). Everything
+ * with a filled background (bands, panels) sits on the surface line: the 1200px container.
+ * Everything that reads as content (eyebrows, headings, copy, buttons, card text) starts
+ * on the text line, the surface line moved inward by `inset`. Emitted as --zs-layout-*.
+ */
+export const siteLayout = {
+  pageMax: '1200px',                       // surface line to surface line
+  gutter: '24px',                          // viewport edge to surface line
+  inset: 'clamp(20px, 5vw, 60px)',         // surface line to text line (= band horizontal padding); never below cardPad
+  cardPad: 'clamp(20px, 2.2vw, 28px)',     // card horizontal padding; cards pull out by this so their text hits the text line
+  colGap: '48px',                          // gap between the two columns of a split section
+  splitBreakpoint: '900px',                // below this, split sections stack (media queries repeat the literal)
+} as const;
+
 /** Fixed web text sizes the boards use that the mobile scale doesn't have (px, unitless line height, em tracking). */
 export const siteText = {
   lead:      { size: 20, lineHeight: 1.5,  tracking: 0 },       // hero sub-copy

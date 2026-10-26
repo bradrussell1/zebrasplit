@@ -13,14 +13,14 @@ export function LegalPage({ title, which, intro, notice, sections }: { title: st
     <>
       <Nav />
       <main id="main">
-        <section className="container">
+        <section className="container inset">
           <div className={`reading ${s.head}`}>
             <span className="eyebrow">Legal</span>
             <h1 className="display display--legal">{title}</h1>
             <p className={s.dates}>Effective <Ph k="effectiveDate" /> · Last updated <Ph k="lastUpdatedDate" /></p>
           </div>
         </section>
-        <section className="container">
+        <section className="container inset">
           <div className={`reading ${s.content}`}>
             <div className={s.block}>
               {intro}

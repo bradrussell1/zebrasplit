@@ -5,7 +5,7 @@ export const metadata: Metadata = { title: "Design system", robots: { index: fal
 
 export default function DesignPage() {
   return (
-    <main id="main" className="container" style={{ paddingBlock: 48 }}>
+    <main id="main" className="container inset" style={{ paddingBlock: 48 }}>
       <DesignGallery />
     </main>
   );

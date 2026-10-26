@@ -1,0 +1,29 @@
+/*
+ * The homepage grid (design/reference/site/v2, alignment fix 2026-10-26).
+ *
+ * Two vertical lines on each side. Anything with a fill (a band, a panel) sits on the
+ * SURFACE line: the edges of `.container`. Anything that reads as content (eyebrows,
+ * headings, copy, buttons, chips, the text inside cards) starts on the TEXT line: the
+ * surface line moved inward by --zs-layout-inset. One text line for the whole page;
+ * nothing is centred. At 1440px: surface 120 / 1320, text 180 / 1260, column 2 at 830.
+ */
+.section { padding-inline: var(--zs-layout-gutter); }
+.container { width: 100%; max-width: var(--zs-layout-page-max); margin-inline: auto; }   /* edges = surface line */
+.inset { padding-inline: var(--zs-layout-inset); }                                       /* edges = text line */
+
+/* A band is a surface: full container width, content on the text line. Vertical padding stays per band. */
+.band { position: relative; border-radius: var(--zs-radius-band); padding: clamp(28px, 5vw, 60px) var(--zs-layout-inset); }
+
+/* Two columns on the text line, 7/12 + 5/12; both columns' content starts at its column's left edge. */
+.split { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); column-gap: var(--zs-layout-col-gap); align-items: center; }
+.split > * { justify-self: start; min-width: 0; max-width: 100%; }
+@media (max-width: 900px) { .split { grid-template-columns: minmax(0, 1fr); row-gap: 32px; } }
+
+/* A filled panel inside a column reaches out to the surface line on its outer side. */
+.bleedLeft { justify-self: stretch; margin-left: calc(-1 * var(--zs-layout-inset)); }
+.bleedRight { justify-self: stretch; margin-right: calc(-1 * var(--zs-layout-inset)); }
+@media (max-width: 900px) { .bleedLeft, .bleedRight { margin-inline: calc(-1 * var(--zs-layout-inset)); } }
+
+/* Cards are surfaces whose TEXT must start on the text line: pull the grid out by the card padding. */
+.cardGrid { margin-inline: calc(-1 * var(--zs-layout-card-pad)); }
+.card { padding-inline: var(--zs-layout-card-pad); }

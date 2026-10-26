@@ -30,7 +30,7 @@ export default function FaqPage() {
     <>
       <Nav current="faq" />
       <main id="main">
-        <section className="container">
+        <section className="container inset">
           <div className={s.head}>
             <div className={s.headCopy}>
               <span className="eyebrow">FAQ</span>
@@ -39,7 +39,7 @@ export default function FaqPage() {
             <Zebra variant="bust" mood="wink" size={190} animate={{ blink: true }} decorative className={s.headZebra} />
           </div>
         </section>
-        <section className="container" style={{ paddingTop: "var(--zs-space-32)" }}>
+        <section className="container inset" style={{ paddingTop: "var(--zs-space-32)" }}>
           <div className={s.sections}>
             {faqSections.map((sec) => (
               <div key={sec.id} className={s.section} id={`section-${sec.id}`}>

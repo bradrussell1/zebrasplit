@@ -1,5 +1,5 @@
 .row { display: flex; flex-wrap: wrap; gap: var(--zs-space-12); align-items: center; }
-.center { justify-content: center; }
+.center { justify-content: flex-start; }
 .badge { display: inline-flex; border-radius: var(--zs-radius-tile); line-height: 0; transition: transform var(--zs-motion-color-change) ease; }
 .badge:hover { transform: translateY(-1px); }
 .img { height: 40px; width: auto; }
