@@ -12,7 +12,7 @@ export default function AdminPage() {
   return (
     <>
       <Nav />
-      <main id="main" className="container">
+      <main id="main" className="container inset">
         <Portal />
       </main>
       <Footer />

@@ -7,8 +7,8 @@ import s from "./nav.module.css";
 export function Nav({ current }: { current?: "home" | "faq" }) {
   return (
     <header className={s.header}>
-      <nav aria-label="Main" className={`container ${s.nav}`}>
-        <Link href="/" className={s.logo} aria-label="Zebrasplit home">
+      <nav aria-label="Main" className={`container inset ${s.nav}`}>
+        <Link href="/" className={s.logo} aria-label="Zebrasplit home" data-align="text">
           <span className={s.disc} aria-hidden="true"><Zebra variant="bust" mood="happy" size={38} decorative /></span>
           <Wordmark />
         </Link>

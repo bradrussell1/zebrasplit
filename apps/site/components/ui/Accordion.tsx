@@ -10,7 +10,7 @@ export type AccordionItem = { id: string; question: string; answer: ReactNode; l
  * Real <button aria-expanded aria-controls> per question; panels animate height with a
  * grid-rows transition (instant under Reduce Motion). `/faq#<id>` opens that question.
  */
-export function Accordion({ items, defaultOpen = null, mode = "multiple", headingLevel = 3 }: { items: AccordionItem[]; defaultOpen?: string | null; mode?: "single" | "multiple"; headingLevel?: 2 | 3 }) {
+export function Accordion({ items, defaultOpen = null, mode = "multiple", headingLevel = 3, alignFirst }: { items: AccordionItem[]; defaultOpen?: string | null; mode?: "single" | "multiple"; headingLevel?: 2 | 3; /** marks the first question's text for the alignment check */ alignFirst?: boolean }) {
   const [open, setOpen] = useState<Set<string>>(() => new Set(defaultOpen ? [defaultOpen] : []));
   const reduced = useReducedMotion();
   const base = useId();
@@ -38,14 +38,14 @@ export function Accordion({ items, defaultOpen = null, mode = "multiple", headin
 
   return (
     <div className={s.list}>
-      {items.map((it) => {
+      {items.map((it, i) => {
         const isOpen = open.has(it.id);
         const panelId = `${base}-${it.id}`;
         return (
           <div key={it.id} id={it.id} className={[s.item, isOpen && s.open].filter(Boolean).join(" ")}>
             <H className={s.h}>
               <button type="button" className={s.trigger} aria-expanded={isOpen} aria-controls={panelId} onClick={() => toggle(it.id)}>
-                <span className={s.q}>{it.question}</span>
+                <span className={s.q} data-align={alignFirst && i === 0 ? "text" : undefined}>{it.question}</span>
                 <span className={s.icon} aria-hidden="true">{isOpen ? "−" : "+"}</span>
               </button>
             </H>

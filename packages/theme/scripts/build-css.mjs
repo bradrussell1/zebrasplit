@@ -11,7 +11,7 @@ const here = dirname(fileURLToPath(import.meta.url));
 const src = readFileSync(resolve(here, "../src/tokens.ts"), "utf8");
 const js = ts.transpileModule(src, { compilerOptions: { module: ts.ModuleKind.ES2020, target: ts.ScriptTarget.ES2020 } }).outputText;
 const mod = await import("data:text/javascript;base64," + Buffer.from(js).toString("base64"));
-const { palette, color, zebra, pasture, type, space, layout, radius, shadow, size, motion, siteType, siteText } = mod;
+const { palette, color, zebra, pasture, type, space, layout, siteLayout, radius, shadow, size, motion, siteType, siteText } = mod;
 
 const kebab = (s) => s.replace(/([A-Z])/g, "-$1").toLowerCase();
 const lines = [];
@@ -21,6 +21,8 @@ for (const [k, v] of Object.entries(zebra)) lines.push(`--zs-zebra-${kebab(k)}: 
 for (const [k, v] of Object.entries(pasture ?? {})) lines.push(`--zs-pasture-${kebab(k)}: ${v};`);
 for (const [k, v] of Object.entries(space)) lines.push(`--zs-space-${k}: ${v}px;`);
 for (const [k, v] of Object.entries(layout)) lines.push(`--zs-layout-${kebab(k)}: ${v}px;`);
+// the site's surface/text lines carry their own units (px, clamp())
+for (const [k, v] of Object.entries(siteLayout ?? {})) lines.push(`--zs-layout-${kebab(k)}: ${v};`);
 for (const [k, v] of Object.entries(radius)) {
   if (typeof v === "number") lines.push(`--zs-radius-${kebab(k)}: ${v === 999 ? "999px" : v + "px"};`);
   else lines.push(`--zs-radius-${k}: ${v.tl}px ${v.tr}px ${v.br}px ${v.bl}px;`);

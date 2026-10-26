@@ -1,4 +1,5 @@
 import { SectionHeading } from "@/components/site/SectionHeading";
+import l from "@/components/layout/layout.module.css";
 import s from "./home.module.css";
 
 const STEPS = [
@@ -9,13 +10,13 @@ const STEPS = [
 
 export function HowItWorks() {
   return (
-    <section id="how" className="section">
-      <div className={`container ${s.stack}`}>
-        <SectionHeading eyebrow="How it works" title="Three steps. Simplified." />
-        <ol className={s.steps}>
+    <section id="how" className={`${l.section} section`}>
+      <div className={`${l.container} ${l.inset} ${s.stack}`}>
+        <SectionHeading eyebrow="How it works" title="Three steps. Simplified." eyebrowAlign="text" />
+        <ol className={`${l.cardGrid} ${s.steps}`}>
           {STEPS.map((st, i) => (
-            <li key={st.title} className={`${s.card} ${s.step}`}>
-              <span className={s.stepNo} aria-hidden="true">{i + 1}</span>
+            <li key={st.title} className={`${s.card} ${l.card} ${s.step}`}>
+              <span className={s.stepNo} aria-hidden="true" data-align={i === 0 ? "text" : undefined}>{i + 1}</span>
               <h3 className={s.h3}>{st.title}</h3>
               <p className={s.cardBody}>{st.body}</p>
             </li>

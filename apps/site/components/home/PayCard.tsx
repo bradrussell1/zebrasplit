@@ -13,7 +13,7 @@ const AMOUNT = "$84.50";
 export function PayCard({ apps }: { apps: readonly string[] }) {
   const [app, setApp] = useState(apps[0]!);
   return (
-    <div className={s.payCard} role="group" aria-label={`Payment card mock: you owe Jen ${AMOUNT}. Pick Venmo, Cash App or PayPal to see the Pay button change.`}>
+    <div className={s.payCard} role="group" data-align="col2" aria-label={`Payment card mock: you owe Jen ${AMOUNT}. Pick Venmo, Cash App or PayPal to see the Pay button change.`}>
       <div className={s.payHead}>
         <span className={s.payDisc} aria-hidden="true"><Zebra variant="bust" mood="love" size={50} outfit={friend("priya").outfit} decorative /></span>
         <span className={s.payWho}><span className={s.payLabel}>You owe</span><span className={s.payName}>Jen</span></span>

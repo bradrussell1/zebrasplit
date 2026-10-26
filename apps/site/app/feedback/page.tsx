@@ -15,7 +15,7 @@ export default function FeedbackPage() {
     <>
       <Nav />
       <main id="main">
-        <section className="container">
+        <section className="container inset">
           <div className={s.head}>
             <span className="eyebrow">Feedback</span>
             <h1 className="display display--page">Tell us what&apos;s wrong.</h1>
@@ -25,7 +25,7 @@ export default function FeedbackPage() {
             </p>
           </div>
         </section>
-        <section className="container">
+        <section className="container inset">
           <FeedbackForm />
         </section>
       </main>
