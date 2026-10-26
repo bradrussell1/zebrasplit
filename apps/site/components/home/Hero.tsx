@@ -27,7 +27,7 @@ export function Hero({ urls }: { urls: StoreUrls }) {
 /** The "Your dazzles" home screen from direction 1 (Main.dc.html 66–124), built from the kit, never an image. */
 export function PhoneMock() {
   return (
-    <div className={s.phone} role="img" data-align="col2" aria-label="Zebrasplit app showing Your dazzles: you're owed $2,193.10 across 2 open dazzles. Cabo 2026, 4 of 6 done, +$2,193.10. Tahoe cabin, −$142.50. Nashville weekend, settled.">
+    <div className={s.phone} role="img" data-align="right" aria-label="Zebrasplit app showing Your dazzles: you're owed $2,193.10 across 2 open dazzles. Cabo 2026, 4 of 6 done, +$2,193.10. Tahoe cabin, −$142.50. Nashville weekend, settled.">
       <div className={s.screen} aria-hidden="true">
         <div className={s.screenTitle}>Your dazzles</div>
         <div className={s.balance}>

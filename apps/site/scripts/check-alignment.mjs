@@ -19,12 +19,16 @@ for (const w of widths) {
   await p.evaluate(() => document.fonts.ready);
   const r = await p.evaluate(() => {
     const xs = (s) => [...document.querySelectorAll(s)].map((e) => [e.dataset.align + ":" + (e.id || e.textContent.trim().slice(0, 24)), Math.round(e.getBoundingClientRect().left)]);
-    return { text: xs('[data-align="text"]'), col2: xs('[data-align="col2"]'), overflow: document.documentElement.scrollWidth - innerWidth };
+    // data-align="right": things that hang off the right text line (the hero phone); their RIGHT edge must match it
+    const rights = [...document.querySelectorAll('[data-align="right"]')].map((e) => Math.round(e.getBoundingClientRect().right));
+    const inset = document.querySelector('[data-align="text"]')?.getBoundingClientRect().left ?? 0;
+    return { text: xs('[data-align="text"]'), col2: xs('[data-align="col2"]'), rights, rightLine: innerWidth - inset, overflow: document.documentElement.scrollWidth - innerWidth };
   });
   const t = new Set(r.text.map(([, x]) => x));
   const c = new Set(r.col2.map(([, x]) => x));
-  console.log(w, "text line", [...t], "col2", [...c], "overflow", r.overflow);
-  if (t.size !== 1 || r.overflow > 0 || (w > 900 && c.size !== 1)) { fail = true; console.log(JSON.stringify(r, null, 1)); }
+  const rightOk = w <= 900 || r.rights.every((x) => Math.abs(x - r.rightLine) <= 1);
+  console.log(w, "text line", [...t], "col2", [...c], "right line", r.rightLine, "right-aligned", r.rights, "overflow", r.overflow);
+  if (t.size !== 1 || r.overflow > 0 || (w > 900 && c.size !== 1) || !rightOk) { fail = true; console.log(JSON.stringify(r, null, 1)); }
   await p.screenshot({ path: `alignment-${w}.png`, fullPage: true, animations: "disabled" });
   await p.close();
 }
