@@ -34,6 +34,9 @@
 .heroNote { font-size: var(--zs-fs-label); color: var(--zs-color-text-muted); }
 
 /* Phone mock (Main.dc.html 66–124) */
+/* the phone hangs off the right text line (1260 at 1440) rather than the column-2 line; stacked, it sits on the text line like everything else */
+.hero .phone { justify-self: end; }
+@media (max-width: 900px) { .hero .phone { justify-self: start; } }
 .phone { width: min(320px, 100%); border-radius: 48px; background: var(--zs-ink); padding: var(--zs-space-10); box-shadow: var(--zs-shadow-phone); }
 .screen { border-radius: 40px; overflow: hidden; padding: 28px 18px 22px; display: flex; flex-direction: column; gap: var(--zs-space-14); background: var(--zs-bg); }
 .screenTitle { font-size: var(--zs-fs-phone-title); font-weight: 800; letter-spacing: var(--zs-tracking-phone-title); }
