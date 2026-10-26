@@ -94,8 +94,9 @@ const fields = {
   OptInImageUrls: `${OPT_IN_IMAGE},${SMS_PAGE}`,
   ProductionMessageSample: SAMPLE,
   TollfreePhoneNumberSid: pn.sid,
+  // Twilio caps this field at 500 characters ("Invalid use case summary" above that); the detail lives in AdditionalInformation
   UseCaseSummary:
-    "Zebrasplit (Bradley Russell, sole proprietor, doing business as Zebrasplit) is a trip expense-splitting app. When a user adds friends to a trip by phone number, each friend can receive one transactional invitation text with a link to the trip. The text is sent only if the inviter ticks an optional consent checkbox, which is unticked by default (see opt-in image and " + SMS_PAGE + "). Texting is never a condition of using the app: the trip is created either way, and if the box is left unticked no message is sent and the inviter shares the link themselves. No recurring or marketing messages; max 50 invites per user per day. STOP/HELP handled by the Messaging Service; every text ends with Reply STOP to opt out. Login codes go through Twilio Verify, not this number.",
+    "Zebrasplit (Bradley Russell dba Zebrasplit) is a trip expense-splitting app. When a user adds a friend to a trip by phone number, the friend gets one transactional invitation text with a link, sent only if the inviter ticks an optional consent box (unticked by default). Texting is never required to use the app: unticked, no text is sent. No recurring or marketing texts; max 50 invites per user per day. STOP/HELP honoured; every text ends with Reply STOP to opt out.",
   AdditionalInformation:
     "Consent flow: (1) a signed-in Zebrasplit user starts a trip -> step 2 'Invite the crew' and picks friends from contacts or types numbers; " +
     "(2) an optional checkbox appears, unticked by default: \"" + CONSENT + "\" with a link 'How Zebrasplit texts work' to " + SMS_PAGE + "; " +
