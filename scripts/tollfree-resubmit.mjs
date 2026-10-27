@@ -39,6 +39,11 @@
 //         which is its real default — never pass ?consent=1 when taking it.
 //   30513 (consent must not be a condition of service): creating the trip no longer waits
 //         for the box; it only decides whether Zebrasplit sends the text (invites.text_ok).
+// Rejected again 2026-10-27 on one ground, 30488 (DBA name must be accurately provided):
+//   the legal name alone is not enough when the product goes by another name. The fix is the
+//   DoingBusinessAs field, which this script had never sent: BusinessName stays the sole
+//   proprietor's legal name and DoingBusinessAs carries "Zebrasplit", the name on the website
+//   and the /sms page. The record stays editable until 2026-11-10 (edit_allowed).
 const SID = process.env.TWILIO_ACCOUNT_SID, TOK = process.env.TWILIO_AUTH_TOKEN, EMAIL = process.env.BUSINESS_EMAIL;
 if (!SID || !TOK || !EMAIL) { console.error("Set TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN and BUSINESS_EMAIL"); process.exit(1); }
 const official = (e) => /@(zebrasplit\.com|bunktab\.com|check-m8\.io)$/i.test(e);
@@ -76,6 +81,8 @@ const fields = {
   BusinessType: "SOLE_PROPRIETOR",
   // the name on official records (30484): a sole proprietor with no registered DBA is the person
   BusinessName: "Bradley Russell",
+  // the trade name (30488): what the website, the /sms page and the texts themselves say
+  DoingBusinessAs: "Zebrasplit",
   BusinessWebsite: "https://www.zebrasplit.com",
   // the outcome notice goes to a person; the public contact matches the /sms page
   NotificationEmail: process.env.NOTIFY_EMAIL || EMAIL,
@@ -91,6 +98,9 @@ const fields = {
   UseCaseCategories: "ACCOUNT_NOTIFICATIONS",
   MessageVolume: "1,000",
   OptInType: "WEB_FORM",
+  // the same pages AdditionalInformation cites, as fields a reviewer can click without a hop
+  PrivacyPolicyUrl: "https://app.zebrasplit.com/privacy",
+  TermsAndConditionsUrl: "https://app.zebrasplit.com/terms",
   OptInImageUrls: `${OPT_IN_IMAGE},${SMS_PAGE}`,
   ProductionMessageSample: SAMPLE,
   TollfreePhoneNumberSid: pn.sid,
@@ -102,7 +112,7 @@ const fields = {
     "(2) an optional checkbox appears, unticked by default: \"" + CONSENT + "\" with a link 'How Zebrasplit texts work' to " + SMS_PAGE + "; " +
     "(3) the Start button works whether or not the box is ticked: unticked, the trip is created, no text is sent, and the inviter is handed the invitation link to share however they like; " +
     "(4) ticked, one invitation text per person is sent from the Messaging Service with STOP instructions. " +
-    "Business name: Bradley Russell is the sole proprietor's legal name; Zebrasplit is the product and trading name (no separate registered entity). " +
+    "Business name: Bradley Russell is the sole proprietor's legal name (BusinessName); Zebrasplit is the trade name (DoingBusinessAs) under which the website, the /sms page and every text are presented. No separate registered entity. " +
     "Program disclosure (sender, frequency, opt-out, rates, sample message): " + SMS_PAGE + ". Privacy policy with the SMS section: https://zebrasplit.com/privacy. " +
     "Contact: " + EMAIL + ".",
 };
@@ -113,7 +123,7 @@ const current = (list.verifications ?? [])[0];
 console.log(current ? `current verification ${current.sid} is ${current.status}` : "no existing verification for this number");
 
 let st = 400, body = {}, how = "updated the existing request";
-if (current) [st, body] = await twilio("POST", `/Tollfree/Verifications/${current.sid}`, fields);
+if (current) [st, body] = await twilio("POST", `/Tollfree/Verifications/${current.sid}`, { ...fields, EditReason: "Added DoingBusinessAs (Zebrasplit) and policy URLs in answer to 30488" });
 if (st >= 400) {
   console.log(current ? `update refused (${st}: ${body.message ?? ""}); filing a new verification instead` : "filing a new verification");
   [st, body] = await twilio("POST", "/Tollfree/Verifications", fields);
