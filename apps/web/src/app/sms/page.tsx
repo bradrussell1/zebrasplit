@@ -6,7 +6,7 @@ export const metadata = { title: "Text messages from Zebrasplit" };
  * who sends, what, how often, how consent is collected, how to opt out.
  * Linked from the invite step in the app and the landing footer.
  */
-const SAMPLE = "Zebrasplit: Bradley added you to 'Tahoe long weekend' to split trip expenses. Open it: https://zebrasplit.com/join/3f9a1c2e Reply STOP to opt out.";
+const SAMPLE = "Zebrasplit: Bradley invited you to 'Tahoe long weekend' to split trip expenses. Open it: https://zebrasplit.com/join/3f9a1c2e Reply STOP to opt out.";
 const CONSENT = "I have these people's permission to send them one text from Zebrasplit about this trip. They can reply STOP to opt out. Msg & data rates may apply.";
 
 export default function Sms() {
