@@ -1,5 +1,5 @@
 import type { Session } from "@supabase/supabase-js";
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { configurePurchases, signOutOfPurchases } from "./purchases";
 import { registerForPush, unregisterPush } from "./push";
 import { isNetworkError, supabase } from "./supabase";
@@ -11,11 +11,11 @@ import { isNetworkError, supabase } from "./supabase";
  * `pendingPasswordReset` is set by the forgot-password code screen: the
  * texted code signs the user in, and the root layout keeps them on the
  * reset-password screen until it's saved. `notice` is a one-shot line the
- * login hub shows after a reset ("Password updated…"). Every sign-in
- * auto-links invites by number through the accept_invites_for_me RPC.
+ * login hub shows after a reset ("Password updated…"). Invites are never
+ * joined here: they wait under Invitations on Home until accepted.
  *
- * Nothing awaited in the auth listener may throw: a failed profile read or
- * invite link must never leave `loading` stuck or block navigation.
+ * Nothing awaited in the auth listener may throw: a failed profile read
+ * must never leave `loading` stuck or block navigation.
  */
 export type Profile = {
   id: string;
@@ -48,7 +48,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [pendingPasswordReset, setPendingPasswordReset] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
-  const linked = useRef<string | null>(null);
 
   const loadProfile = useCallback(async (userId: string) => {
     try {
@@ -79,13 +78,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(s);
       setTimeout(async () => { try {
         if (s) {
-          // link invites by number as soon as a confirmed phone is on the session:
-          // at sign-in for existing accounts, after the code for new ones
-          const key = `${s.user.id}:${s.user.phone ?? ""}`;
-          if (s.user.phone && linked.current !== key && (event === "SIGNED_IN" || event === "USER_UPDATED" || event === "TOKEN_REFRESHED")) {
-            linked.current = key;
-            supabase.rpc("accept_invites_for_me", { p_via: "app" }).then(() => undefined, () => undefined);
-          }
           await loadProfile(s.user.id);
           if (event === "SIGNED_IN") registerForPush(s.user.id).catch(() => undefined);
           configurePurchases(s.user.id).catch(() => undefined);

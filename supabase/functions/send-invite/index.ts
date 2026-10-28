@@ -52,8 +52,8 @@ Deno.serve(withSentry("send-invite", async (req) => {
     return json({ skipped: "already sent", sid: priorSid, sent_at: prior.sent_at });
   }
 
-  // already on the app? the insert trigger attached them and marked the invite accepted (handled above).
-  // A phone-only account with no display name (never finished sign-up) still gets the text.
+  // already on the app? the insert trigger pushed them the join link and the invite stays pending
+  // until they accept. A phone-only account with no display name (never finished sign-up) still gets the text.
   const { data: existing } = await admin.from("users").select("id, display_name").eq("phone", inv.phone).maybeSingle();
   const trip = (inv as unknown as { trips: { title: string } | null }).trips;
   const inviter = (inv as unknown as { users: { display_name: string | null } | null }).users;
@@ -100,9 +100,11 @@ Deno.serve(withSentry("send-invite", async (req) => {
     result = r.ok ? { sid: j.sid, status: j.status } : { error: j.message ?? `twilio ${r.status}`, code: j.code };
   }
   if (existing?.id) {
-    // they have the app: also push
-    await admin.from("notification_log").insert({ user_id: existing.id, trip_id: inv.trip_id, kind: "invite.push", payload: { title: trip?.title ?? "Zebrasplit", body: `${who} added you to this trip.` } });
-    await admin.rpc("notify", { p_user: existing.id, p_kind: "trip.invited", p_title: trip?.title ?? "Zebrasplit", p_body: `${who} added you to this trip.`, p_data: {}, p_trip: inv.trip_id, p_dedupe: `invite:${inv.id}` }).then(() => undefined, () => undefined);
+    // they have the app: a push carries the join link; joining is theirs to accept
+    // (the insert trigger already sent this for named accounts; the dedupe key keeps it to one)
+    const body = `${who} invited you to this Dazzle. Tap to accept.`;
+    await admin.from("notification_log").insert({ user_id: existing.id, trip_id: inv.trip_id, kind: "invite.push", payload: { title: trip?.title ?? "Zebrasplit", body } });
+    await admin.rpc("notify", { p_user: existing.id, p_kind: "trip.invited", p_title: trip?.title ?? "Zebrasplit", p_body: body, p_data: { token: inv.token, url: `zebrasplit://join/${inv.token}` }, p_trip: inv.trip_id, p_dedupe: `invite:${inv.id}` }).then(() => undefined, () => undefined);
   }
   await admin.from("notification_log").upsert({ user_id: inv.invited_by, trip_id: inv.trip_id, kind: "invite.sms", dedupe_key: `invite.sms:${inv.id}`, payload: { to, text, ...result }, sent_at: new Date().toISOString() }, { onConflict: "dedupe_key" });
   return json({ ok: !("error" in result), ...result });

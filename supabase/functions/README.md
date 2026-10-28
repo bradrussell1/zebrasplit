@@ -45,7 +45,7 @@ configured","missing":[…]}` on the `invite.sms` row; `read-receipt` returns
 
 | Event | kind | Fired from |
 | --- | --- | --- |
-| Invited to a trip | `invite.sms` (text) / `trip.invited` (push if already a user) | `send-invite` |
+| Invited to a trip | `invite.sms` (text) / `trip.invited` (push with the join link if already a user; they must accept) | `invites` insert trigger, `send-invite` |
 | New expense that includes you | `expense.new` | `save_expense` (new rows only) |
 | Expense deleted | `expense.deleted` | `delete_expense` |
 | Your Done badge was reset | `done.reset` | `reset_done_on_new_expense` trigger (replaces `expense.new` for that person) |

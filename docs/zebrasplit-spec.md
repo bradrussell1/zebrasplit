@@ -44,11 +44,11 @@ buys nothing and risks breaking live installs.
 | Surface | Where | Who it is for |
 |---|---|---|
 | **Mobile app** | `apps/mobile`, Expo / React Native, iOS + Android | The product |
-| **Web guest view** | `apps/web`, Next.js, `app.zebrasplit.com` | Invited people who have not installed the app |
+| **Web** | `apps/web`, Next.js, `app.zebrasplit.com` | Privacy, terms and the SMS disclosure; the guest trip view was retired 2026-10-27 |
 | **Marketing site** | `apps/site`, Next.js, `zebrasplit.com` | Prospects, legal pages, invite landing, feedback, admin |
 
-"The app" means the mobile app. The guest view exists so an invitee can take part
-without installing anything; it shares the theme tokens but is not the deliverable.
+"The app" means the mobile app. Taking part in a Dazzle needs the app: an invitee
+installs it, signs in with the number that got the text, and accepts the invite.
 
 Shared code lives in `packages/core` (pure logic, no I/O, tested) and
 `packages/theme` (design tokens). All three apps depend on both.
@@ -98,8 +98,9 @@ The invite link previews the Dazzle (names and counts only — no phones, amount
 ids), carries store badges, and opens the app directly when it is installed, through
 Universal Links / App Links claimed on `/join/*`.
 
-Invitees who do not want the app can verify their number on the guest view and take
-part there.
+Nobody joins a Dazzle without accepting the invite in the app (2026-10-27). Someone who
+already has the app gets a push with the link instead of a text, and the invite also
+waits under Invitations on Home; sign-in never joins a Dazzle by itself.
 
 **Consent:** before sending, the inviter must tick a box that carries the SMS consent
 itself — who is texting, that it is one message, how to stop, and that rates apply.
@@ -287,7 +288,7 @@ Notes worth knowing:
 - `users.first_name` / `last_name` are the source; `display_name` is kept composed by a
   trigger, so readers use `display_name`.
 - `users.venmo_username` is a legacy mirror kept in step with the `venmo` row in
-  `payment_handles` by a trigger, so the guest view needed no change.
+  `payment_handles` by a trigger, for older readers.
 - `expense_history` holds trip-level events too, so `expense_id` is nullable.
 
 ### Security

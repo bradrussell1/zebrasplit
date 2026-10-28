@@ -38,7 +38,9 @@ async function fetchPreview(code: string): Promise<InvitePreview> {
     return INVALID;
   }
   const d = data as Record<string, unknown>;
-  const state = (["valid", "expired", "settled"].includes(String(d.state)) ? d.state : "invalid") as InviteState;
+  // an invite already accepted reads as used-up here; the app tells the two apart
+  const raw = d.state === "accepted" ? "expired" : d.state;
+  const state = (["valid", "expired", "settled"].includes(String(raw)) ? raw : "invalid") as InviteState;
   if (state === "invalid") return INVALID;
   const trip = d.trip as { name?: string; start_date?: string; end_date?: string } | undefined;
   const members = Array.isArray(d.members) ? (d.members as { name?: string; done?: boolean }[]).map((m) => ({ name: String(m.name ?? "Friend"), done: !!m.done })) : [];

@@ -11,7 +11,7 @@ import { supabase } from "./supabase";
 const KEY = "zs.notifications.lastSeenId";
 const SURFACED = ["nudge.manual", "nudge.inactive", "trip.invited", "closeout.forced"];
 
-export type InAppNotification = { id: number; kind: string; trip_id: string | null; title: string; body: string; sent_at: string };
+export type InAppNotification = { id: number; kind: string; trip_id: string | null; title: string; body: string; sent_at: string; token: string | null };
 
 export async function fetchUnseenNotifications(): Promise<InAppNotification[]> {
   const lastSeen = Number((await AsyncStorage.getItem(KEY).catch(() => null)) ?? 0);
@@ -22,14 +22,14 @@ export async function fetchUnseenNotifications(): Promise<InAppNotification[]> {
     .gt("id", lastSeen)
     .order("id", { ascending: false })
     .limit(5);
-  type Row = { id: number; kind: string; trip_id: string | null; payload: { title?: string; body?: string } | null; sent_at: string };
+  type Row = { id: number; kind: string; trip_id: string | null; payload: { title?: string; body?: string; data?: { token?: string } } | null; sent_at: string };
   const rows = ((data ?? []) as Row[]).filter((r) => r.payload?.body);
   if (lastSeen === 0 && rows.length) {
     // first run on this device: don't replay history, just set the mark
     await AsyncStorage.setItem(KEY, String(rows[0]!.id)).catch(() => undefined);
     return [];
   }
-  return rows.map((r) => ({ id: r.id, kind: r.kind, trip_id: r.trip_id, title: r.payload?.title ?? "Zebrasplit", body: r.payload!.body!, sent_at: r.sent_at }));
+  return rows.map((r) => ({ id: r.id, kind: r.kind, trip_id: r.trip_id, title: r.payload?.title ?? "Zebrasplit", body: r.payload!.body!, sent_at: r.sent_at, token: r.payload?.data?.token ?? null }));
 }
 
 export async function markNotificationsSeen(upToId: number): Promise<void> {

@@ -4,8 +4,8 @@ import { StoreBadges, type StoreUrls } from "@/components/site/StoreBadges";
 import { trackEvent } from "@/lib/analytics";
 import s from "./join.module.css";
 
-/** Join → the platform's store (or "Coming soon" pills); Continue in browser → the web guest view. */
-export function JoinButtons({ storeHref, browserHref, platform, urls }: { storeHref: string | null; browserHref: string; platform: "ios" | "android" | "other"; urls: StoreUrls }) {
+/** Join → the platform's store (or "Coming soon" pills). The invite is accepted in the app; there is no browser route in. */
+export function JoinButtons({ storeHref, platform, urls }: { storeHref: string | null; platform: "ios" | "android" | "other"; urls: StoreUrls }) {
   return (
     <div className={s.actions}>
       {storeHref ? (
@@ -15,7 +15,6 @@ export function JoinButtons({ storeHref, browserHref, platform, urls }: { storeH
       ) : (
         <div className={s.coming}><StoreBadges urls={{ appStore: null, playStore: null }} location="join" only={platform === "other" ? undefined : platform} /></div>
       )}
-      <Button variant="secondary" size="lg" full href={browserHref} onClick={() => trackEvent({ name: "join_cta_click", action: "browser" })}>Continue in browser</Button>
     </div>
   );
 }

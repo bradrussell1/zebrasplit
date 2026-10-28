@@ -8,6 +8,7 @@ import { AmountPill, Button, Card, CountUp, Icon, IconButton, Input, InsetPanel,
 import { trackOnboardingFinishedOnce } from "@/lib/analytics";
 import { useAuth } from "@/lib/auth";
 import { useForegroundSeed } from "@/lib/foreground";
+import { acceptInvite, declineInvite, fetchMyInvites, type MyInvite } from "@/lib/invites";
 import { useSignedUrl } from "@/lib/media";
 import { supabase } from "@/lib/supabase";
 import { fetchUnseenNotifications, markNotificationsSeen } from "@/lib/notifications";
@@ -21,6 +22,8 @@ import { sortMembers } from "@/lib/trips";
  * Balances are computed here from the same rows the dazzle page uses (base cents,
  * paid minus share), so the two screens can never disagree. Reloads whenever the
  * screen regains focus, so a dazzle created or edited elsewhere shows at once.
+ * Invitations (pending invites to this account's number) sit above the list:
+ * nobody joins a dazzle without accepting it here or on the join screen.
  */
 type MemberRow = { user_id: string; role: "owner" | "member"; joined_at: string | null; done_at: string | null; display_name: string | null; photo_url: string | null; outfit: Outfit };
 type TripRow = { id: string; title: string; status: "open" | "settled" | "archived"; start_date: string; end_date: string; base_currency: string; cover_photo_url: string | null; last_activity_at: string; members: MemberRow[]; net_cents: number };
@@ -74,16 +77,20 @@ export default function HomeScreen() {
     if (e) { setDrop(d); show({ message: "Couldn't dismiss that. Try again." }); }
   }
   const [trips, setTrips] = useState<TripRow[]>([]);
+  const [invites, setInvites] = useState<MyInvite[]>([]);
+  const [acting, setActing] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [footerH, setFooterH] = useState(size.ctaHeight + layout.bottomCtaPadding);
 
   const load = useCallback(async () => {
-    const [t, m, e] = await Promise.all([
+    const [t, m, e, inv] = await Promise.all([
       supabase.from("trips").select("id, title, status, start_date, end_date, base_currency, cover_photo_url, last_activity_at").order("last_activity_at", { ascending: false }),
       // done_at is read here only for the stripe meter ("3 of 6 stripes"); nothing on Home writes it
       supabase.from("trip_members").select("trip_id, user_id, role, joined_at, done_at, users(display_name, photo_url, user_outfit(head, faceneck, body))").is("removed_at", null),
       supabase.from("expenses").select("trip_id, expense_payers(user_id, base_amount_cents), expense_shares(user_id, base_share_cents)").is("deleted_at", null),
+      fetchMyInvites().catch(() => [] as MyInvite[]),
     ]);
+    setInvites(inv);
     type OutfitRow = { head: string | null; faceneck: string | null; body: string | null };
     type M = { trip_id: string; user_id: string; role: "owner" | "member"; joined_at: string | null; done_at: string | null; users: { display_name: string | null; photo_url: string | null; user_outfit: OutfitRow | OutfitRow[] | null } | null };
     type E = { trip_id: string; expense_payers: { user_id: string; base_amount_cents: number }[]; expense_shares: { user_id: string; base_share_cents: number }[] };
@@ -99,13 +106,32 @@ export default function HomeScreen() {
     setLoading(false);
   }, [me]);
   useFocusEffect(useCallback(() => { load(); }, [load]));
+  async function accept(i: MyInvite) {
+    setActing(i.id);
+    const r = await acceptInvite(i.token);
+    setActing(null);
+    if ("error" in r) { show({ message: r.error }); load(); return; }
+    show({ message: `You're in ${i.title}.`, bust: <Zebra variant="bust" mood="happy" size={28} decorative /> });
+    router.push(`/(app)/trip/${r.tripId}`);
+  }
+  async function decline(i: MyInvite) {
+    setActing(i.id);
+    const e = await declineInvite(i.token);
+    setActing(null);
+    if (e) { show({ message: e }); return; }
+    setInvites((rows) => rows.filter((r) => r.id !== i.id));
+  }
   // the in-app surface for nudges and invites: the newest unseen one shows as a toast on open
   useEffect(() => {
     let live = true;
     fetchUnseenNotifications().then((rows) => {
       if (!live || rows.length === 0) return;
       const top = rows[0]!;
-      show({ message: top.body, duration: 5000, bust: <Zebra variant="bust" mood="happy" size={28} decorative />, action: top.trip_id ? { label: "Open", onPress: () => router.push(`/(app)/trip/${top.trip_id}`) } : undefined });
+      // an invite isn't a dazzle of mine yet: its action opens the join screen to accept
+      const action = top.kind === "trip.invited"
+        ? (top.token ? { label: "View", onPress: () => router.push(`/join/${top.token}`) } : undefined)
+        : top.trip_id ? { label: "Open", onPress: () => router.push(`/(app)/trip/${top.trip_id}`) } : undefined;
+      show({ message: top.body, duration: 5000, bust: <Zebra variant="bust" mood="happy" size={28} decorative />, action });
       markNotificationsSeen(top.id);
     }).catch(() => undefined);
     return () => { live = false; };
@@ -134,8 +160,8 @@ export default function HomeScreen() {
     setSearching((s) => !s);
   }
   function joinWithLink() {
-    // There is no in-app join screen: invites arrive as links that open the dazzle directly.
-    show({ message: "Open the invite link you were sent and you'll land in the Dazzle.", bust: <Zebra variant="bust" mood="wink" size={28} decorative /> });
+    // invites arrive as links (and pushes) that open the join screen; pending ones also sit above the list
+    show({ message: "Open the invite link you were sent and accept it. Invites to your number also show up here.", bust: <Zebra variant="bust" mood="wink" size={28} decorative /> });
   }
 
   const header = loading ? null : (
@@ -175,6 +201,23 @@ export default function HomeScreen() {
             <Icon name="close" size={16} color={palette.hide} />
           </Press>
         </Press>
+      ) : null}
+      {invites.length ? (
+        <View style={styles.invites}>
+          <ZText variant="title2" accessibilityRole="header">Invitations</ZText>
+          {invites.map((i) => (
+            <Card key={i.id} accessibilityLabel={`${i.inviter} invited you to ${i.title}`}>
+              <ZText variant="headline" numberOfLines={2}>{i.title}</ZText>
+              <ZText variant="caption" color={color.textMuted}>
+                {`${i.inviter} invited you · ${shortRange(i.start_date, i.end_date)} · ${i.member_count} ${i.member_count === 1 ? "zebra" : "zebras"} so far`}
+              </ZText>
+              <View style={styles.inviteActions}>
+                <Button label="Accept" loading={acting === i.id} disabled={!!acting && acting !== i.id} onPress={() => accept(i)} style={styles.inviteButton} />
+                <Button kind="secondary" label="Not now" disabled={!!acting} onPress={() => decline(i)} style={styles.inviteButton} />
+              </View>
+            </Card>
+          ))}
+        </View>
       ) : null}
       <View style={styles.titleRow}>
         <ZText variant="title2" accessibilityRole="header">Your Dazzles</ZText>
@@ -322,6 +365,9 @@ const styles = StyleSheet.create({
   search: { paddingHorizontal: layout.screenGutter, paddingBottom: space[12] },
   list: { paddingHorizontal: layout.screenGutter, flexGrow: 1 },
   header: { gap: space[16], paddingTop: space[4], paddingBottom: space[12] },
+  invites: { gap: space[12] },
+  inviteActions: { flexDirection: "row", gap: space[12], marginTop: space[12] },
+  inviteButton: { flex: 1 },
   hero: { minHeight: 176, justifyContent: "center" },
   heroText: { gap: space[8], alignItems: "flex-start", paddingRight: 118 },
   // the bust sits in the bottom-right corner with its whole head (ears included) inside the
