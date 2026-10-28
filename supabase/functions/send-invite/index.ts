@@ -67,7 +67,7 @@ Deno.serve(withSentry("send-invite", async (req) => {
   // www 308-redirects to it and iOS does not follow redirects when fetching the AASA.
   const base = Deno.env.get("INVITE_BASE_URL") ?? "https://zebrasplit.com/join/";
   // one-time invitation; the Messaging Service handles STOP/HELP automatically
-  const text = `Zebrasplit: ${who} added you to '${title}' to split trip expenses. Open it: ${base}${inv.token}\nReply STOP to opt out.`;
+  const text = `Zebrasplit: ${who} invited you to '${title}' to split trip expenses. Open it: ${base}${inv.token}\nReply STOP to opt out.`;
   const to = inv.phone.startsWith("+") ? inv.phone : `+${inv.phone}`;
 
   // texts go to US/Canada numbers only (the toll-free number reaches nowhere else), at most

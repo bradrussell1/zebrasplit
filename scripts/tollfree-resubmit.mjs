@@ -54,7 +54,7 @@ const OPT_IN_IMAGE = "https://zebrasplit.com/compliance/invite-opt-in.png";
 // the apex redirects here, so cite the address that actually answers: a reviewer
 // should never follow a hop (the check-m8.io links are exactly that bug)
 const SMS_PAGE = "https://app.zebrasplit.com/sms";
-const SAMPLE = "Zebrasplit: Bradley added you to 'Tahoe long weekend' to split trip expenses. Open it: https://zebrasplit.com/join/3f9a1c2e\nReply STOP to opt out.";
+const SAMPLE = "Zebrasplit: Bradley invited you to 'Tahoe long weekend' to split trip expenses. Open it: https://zebrasplit.com/join/3f9a1c2e\nReply STOP to opt out.";
 const CONSENT = "I have these people's permission to send them one text from Zebrasplit about this trip. They can reply STOP to opt out. Msg & data rates may apply.";
 
 const auth = "Basic " + Buffer.from(`${SID}:${TOK}`).toString("base64");
