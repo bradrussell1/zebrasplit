@@ -124,3 +124,17 @@
 .drawerHead { display: flex; align-items: center; justify-content: space-between; gap: var(--zs-space-12); }
 .drawerTitle { font-size: var(--zs-fs-h3); font-weight: 800; margin: 0; overflow-wrap: anywhere; }
 .drawerBody { display: flex; flex-direction: column; gap: var(--zs-space-14); }
+
+/* clickable stats, breadcrumbs, photos */
+.statBtn { font: inherit; text-align: left; cursor: pointer; color: inherit; }
+.statBtn:hover { border-color: var(--zs-ink); }
+.statBtn:focus-visible { outline: 2px solid var(--zs-volt); outline-offset: 2px; }
+.statGo { color: var(--zs-color-text-muted); }
+.crumbs { margin-bottom: var(--zs-space-12); font-size: var(--zs-fs-caption); }
+.link { font: inherit; font-size: var(--zs-fs-caption); font-weight: 700; color: var(--zs-color-text); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; }
+.rowGone td { color: var(--zs-color-text-muted); text-decoration: line-through; }
+.drawerWide { width: min(1040px, 100%); }
+.photo { max-width: 100%; height: auto; border-radius: var(--zs-radius-card); border: 1px solid var(--zs-hairline); }
+.badge_pending, .badge_queued, .badge_processing { background: var(--zs-color-surface-inset); }
+.badge_marked_paid, .badge_confirmed, .badge_ready, .badge_accepted { background: var(--zs-ink); color: var(--zs-color-surface); }
+.badge_needs_review, .badge_failed, .badge_declined { background: var(--zs-blush); }
