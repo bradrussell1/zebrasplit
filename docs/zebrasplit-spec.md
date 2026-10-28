@@ -312,7 +312,7 @@ harness lives at `scripts/rls-audit.mjs`.
 | Errors | Sentry, `sendDefaultPii: false`, scrubbing numbers and amounts |
 
 Edge Functions: `send-invite` · `push` · `receipt-parse` · `receipt-save` ·
-`read-receipt` · `purge-trip-media`.
+`reset-otp` · `purge-trip-media` · `revenuecat-webhook`.
 
 Secrets live in Supabase secrets and CI secrets — never in the repository and never in
 the app bundle.

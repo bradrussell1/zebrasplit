@@ -99,13 +99,9 @@ if (PAT) {
   console.log("SKIP  archive / nudge / expiry / pg_net / push-auth checks (set SUPABASE_ACCESS_TOKEN)");
 }
 
-// read-receipt: membership enforced; not-configured path is soft
-let r = await fetch(`${BASE}/functions/v1/read-receipt`, { method: "POST", headers: { "Content-Type": "application/json", apikey: ANON, Authorization: `Bearer ${ANON}` }, body: JSON.stringify({ bucket: "receipts", path: `${tid}/x.jpg` }) });
-ok("read-receipt refuses a non-member", r.status === 401, r.status);
-r = await fetch(`${BASE}/functions/v1/read-receipt`, { method: "POST", headers: { "Content-Type": "application/json", apikey: ANON, Authorization: `Bearer ${ja}` }, body: JSON.stringify({ bucket: "receipts", path: `${tid}/x.jpg` }) });
-const rr = await r.json();
-ok("read-receipt answers a member (404 for a missing object, or a soft/real read)", (r.status === 200 && ("total_cents" in rr || rr.error)) || (r.status === 404 && /not found/i.test(rr.error ?? "")), { status: r.status, rr });
-console.log("     read-receipt:", JSON.stringify(rr));
+// read-receipt is gone (2026-10-28): the legacy reader must answer 404 for everyone
+{ const r = await fetch(`${BASE}/functions/v1/read-receipt`, { method: "POST", headers: { "Content-Type": "application/json", apikey: ANON, Authorization: `Bearer ${ja}` }, body: "{}" });
+  ok("read-receipt is no longer deployed", r.status === 404, r.status); }
 
 [st] = await call("DELETE", `/rest/v1/trips?id=eq.${tid}`, undefined, ja); ok("owner deletes the trip", st === 204, st);
 ok("nothing left behind", (await call("GET", "/rest/v1/notification_log?select=id&trip_id=eq." + tid, undefined, ja))[1].length === 0);

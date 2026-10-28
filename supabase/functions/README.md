@@ -30,7 +30,6 @@ are stored in the repo or in `public`.
 | `push` | `public.notify` (pg_net) | shared secret | `EXPO_ACCESS_TOKEN` (optional, only if Expo push security is enabled) |
 | `send-invite` | `invites` insert trigger (pg_net), or the app with a user JWT | shared secret, or JWT (only the inviter) | `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_FROM` (all set; `TWILIO_FROM` is Messaging Service `MG017e294d00a0daa9ae26697f5bbb8e26` holding toll-free +1 833 612 7553, which US carriers block until toll-free verification is approved), `INVITE_BASE_URL` (set to the Vercel URL until bunktab.app exists) |
 | `reset-otp` | the app, from Forgot password (signed out) | anon key; a one-hour ticket from `request_password_reset_v2` names the account | none (the code goes out through Supabase Auth → Twilio, as at sign-up); optional `INVITE_SMS_DAILY_CAP` is read by `send-invite` (default 500 texts a day) |
-| `read-receipt` | legacy total-only reader; superseded by `receipt-parse` (kept until the app build that uses the new flow is on every phone) | user JWT; membership enforced through RLS | `ANTHROPIC_API_KEY` |
 | `receipt-parse` | `receipts` insert trigger (pg_net) with `status = 'queued'`, `requeue_receipt()`, or the app with a user JWT | shared secret, or JWT (RLS on the receipts row) | `ANTHROPIC_API_KEY` (**needed**), optional `ANTHROPIC_WORKSPACE_ID`, `RECEIPT_MODEL` (default `claude-sonnet-5`), `RECEIPT_RETRY_MODEL` (default `claude-opus-5`), `RECEIPT_DAILY_LIMIT` (default 30; the insert trigger reads `private.config.receipt_daily_limit`) |
 | `receipt-save` | the app and the web guest view, to save a receipt expense | user JWT; recomputes every share with `_shared/receipt` (a generated copy of `packages/core/src/receipt`, see `scripts/sync-functions.mjs`) and rejects a mismatch, then calls `save_receipt_expense` as the user | none |
 
@@ -38,8 +37,8 @@ are stored in the repo or in `public`.
 injected by Supabase.
 
 Missing secrets fail soft: `send-invite` logs `{"error":"twilio not
-configured","missing":[…]}` on the `invite.sms` row; `read-receipt` returns
-`{ total_cents: null, currency: null, confidence: null, error: "not configured" }`.
+configured","missing":[…]}` on the `invite.sms` row; `receipt-parse` marks the
+row `failed` with `error: "not configured"`.
 
 ### Notification events (spec table → kind)
 
@@ -73,7 +72,7 @@ Also enforced in the database: 50 invites per user per day
 export SUPABASE_ACCESS_TOKEN=sbp_…            # personal access token, never committed
 npx supabase functions deploy push        --project-ref qywowvkkkxldgxoatdsh --no-verify-jwt
 npx supabase functions deploy send-invite --project-ref qywowvkkkxldgxoatdsh --no-verify-jwt
-npx supabase functions deploy read-receipt --project-ref qywowvkkkxldgxoatdsh
+npx supabase functions deploy reset-otp    --project-ref qywowvkkkxldgxoatdsh
 npx supabase functions deploy receipt-parse --project-ref qywowvkkkxldgxoatdsh --no-verify-jwt
 npx supabase functions deploy receipt-save  --project-ref qywowvkkkxldgxoatdsh
 npx supabase secrets set TWILIO_AUTH_TOKEN=… TWILIO_FROM=… ANTHROPIC_API_KEY=… --project-ref qywowvkkkxldgxoatdsh
@@ -103,7 +102,7 @@ totals-exact rates.
 checks) drives the whole path as the two test numbers: Done reset, new
 expense, last-one-out, close-out unlocked, comment, delete, payment marked,
 invite cap + text attempts, pg_net delivery, push auth, auto-archive and
-un-archive, nudge cap, invite expiry, read-receipt auth. Cleans up after.
+un-archive, nudge cap, invite expiry. Cleans up after.
 
 ## Still needed from you
 

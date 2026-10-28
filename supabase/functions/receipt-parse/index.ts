@@ -58,6 +58,16 @@ Deno.serve(withSentry("receipt-parse", async (req) => {
   if (rErr || !receipt) return json({ error: "receipt not found" }, 404);
   if (receipt.status === "processing") return json({ ok: true, status: "processing" });
   if (receipt.status === "ready") return json({ ok: true, status: "ready" });
+  // three reads per receipt, whoever asks (the trigger, requeue_receipt or the app); then it's manual entry
+  if ((receipt.attempts ?? 0) >= 3) {
+    await admin.from("receipts").update({ status: "failed", error: "too many attempts" }).eq("id", receiptId);
+    return json({ ok: false, status: "failed", error: "too many attempts" }, 429);
+  }
+  // the photo must be the trip's own (the receipts_path trigger guarantees new rows; this covers older ones)
+  if (typeof receipt.storage_path !== "string" || !receipt.storage_path.startsWith(`${receipt.trip_id}/`) || receipt.storage_path.includes("..")) {
+    await admin.from("receipts").update({ status: "failed", error: "photo missing: bad path" }).eq("id", receiptId);
+    return json({ ok: false, status: "failed", error: "photo missing" }, 404);
+  }
 
   // settings: kill switch + daily limit (private.config via receipt_settings(); env overrides the limit)
   const { data: settings } = await admin.rpc("receipt_settings");
