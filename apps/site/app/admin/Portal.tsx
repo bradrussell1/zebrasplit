@@ -8,8 +8,8 @@ import s from "./admin.module.css";
 /**
  * The admin portal.
  *
- * Signing in is ordinary Supabase Auth; being an admin is a row in
- * private.admins. Every read below goes through a security-definer function
+ * Signing in is Supabase Auth through Google; being an admin is a row in
+ * private.admins plus an OAuth session (is_admin checks both). Every read below goes through a security-definer function
  * that checks public.is_admin() first, so this page has no privileges of its
  * own — a non-admin who signs in sees an empty portal, not a leak.
  */
@@ -421,35 +421,28 @@ function DataTab({ active }: { active: boolean }) {
 }
 
 /* ------------------------------------------------------------------- Shell */
-function SignIn({ onDone }: { onDone: () => void }) {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+function SignIn() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  async function submit(e: React.FormEvent) {
-    e.preventDefault();
+  // Google only: the account's 2-step verification is the second factor, and is_admin()
+  // in the database refuses a session that wasn't opened through a provider.
+  async function google() {
     setBusy(true); setError(null);
-    const { error: err } = await supabaseBrowser().auth.signInWithPassword({ email: email.trim(), password });
-    setBusy(false);
-    if (err) { setError(err.message); return; }
-    onDone();
+    const { error: err } = await supabaseBrowser().auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: `${window.location.origin}/admin`, queryParams: { prompt: "select_account" } },
+    });
+    if (err) { setBusy(false); setError(err.message); }
   }
 
   return (
-    <form className={s.signin} onSubmit={submit}>
+    <div className={s.signin}>
       <h1 className={s.signinTitle}>Admin</h1>
-      <div className={s.field}>
-        <label className={s.settingLabel} htmlFor="ad-email">Email</label>
-        <input id="ad-email" className={s.input} type="email" autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} required />
-      </div>
-      <div className={s.field}>
-        <label className={s.settingLabel} htmlFor="ad-pw">Password</label>
-        <input id="ad-pw" className={s.input} type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-      </div>
+      <p className={s.muted}>Sign in with the Google account on the admin list.</p>
       {error ? <p className={s.error} role="alert">{error}</p> : null}
-      <Button type="submit" variant="primary" disabled={busy}>{busy ? "Signing in…" : "Sign in"}</Button>
-    </form>
+      <Button type="button" variant="primary" disabled={busy} onClick={google}>{busy ? "Opening Google…" : "Continue with Google"}</Button>
+    </div>
   );
 }
 
@@ -472,13 +465,13 @@ export function Portal() {
   }, [session]);
 
   if (!checked) return <p className={s.muted}>Loading…</p>;
-  if (!session) return <SignIn onDone={() => undefined} />;
+  if (!session) return <SignIn />;
 
   if (isAdmin === false) {
     return (
       <div className={s.signin}>
         <h1 className={s.signinTitle}>Not an admin</h1>
-        <p className={s.muted}>That account is signed in but isn&apos;t on the admin list.</p>
+        <p className={s.muted}>That account is signed in but isn&apos;t on the admin list, or it signed in without Google.</p>
         <Button variant="secondary" onClick={() => supabaseBrowser().auth.signOut()}>Sign out</Button>
       </div>
     );
