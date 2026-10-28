@@ -38,14 +38,21 @@ begin
 end $$;
 
 -- ---------------------------------------------------------------------------
--- 3. admin = on the admin list AND signed in through an OAuth provider
---    (the Google account's 2-step verification is the second factor; a
---    password session, even for an admin, sees an empty portal)
+-- 3. admin = bradley@zebrasplit.com (or a user on the old id list), signed in
+--    through Google. The Google account's 2-step verification is the second
+--    factor; a password session, even for an admin, sees an empty portal.
+--    Listing the email means the account need not exist before the first sign-in.
 -- ---------------------------------------------------------------------------
+create table if not exists private.admin_emails (email text primary key);
+insert into private.admin_emails (email) values ('bradley@zebrasplit.com') on conflict do nothing;
+
 create or replace function public.is_admin()
 returns boolean language sql stable security definer set search_path = private, public as $$
-  select exists (select 1 from private.admins a where a.user_id = auth.uid())
-     and exists (select 1 from jsonb_array_elements(coalesce(auth.jwt()->'amr', '[]'::jsonb)) m where m->>'method' = 'oauth');
+  select (
+    exists (select 1 from private.admins a where a.user_id = auth.uid())
+    or exists (select 1 from private.admin_emails e where e.email = lower(coalesce(auth.jwt()->>'email', '')))
+  )
+  and exists (select 1 from jsonb_array_elements(coalesce(auth.jwt()->'amr', '[]'::jsonb)) m where m->>'method' = 'oauth');
 $$;
 comment on function public.is_admin() is
-  'True when the caller is in private.admins and the session was opened through an OAuth provider (Google). The admin portal gates every read on this, so the database enforces it rather than the page.';
+  'True when the caller is in private.admins or private.admin_emails and the session was opened through an OAuth provider (Google). The admin portal gates every read on this, so the database enforces it rather than the page.';
