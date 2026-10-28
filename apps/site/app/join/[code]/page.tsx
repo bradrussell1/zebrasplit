@@ -6,7 +6,7 @@ import { StoreBadges } from "@/components/site/StoreBadges";
 import { Wordmark } from "@/components/site/Wordmark";
 import { JoinButtons } from "./JoinButtons";
 import { formatDates, getInvitePreview, platformFromUA } from "@/lib/invite";
-import { appStoreId, appStoreUrl, playStoreUrl, siteUrl, webAppUrl } from "@/lib/env";
+import { appStoreId, appStoreUrl, playStoreUrl, siteUrl } from "@/lib/env";
 import { site } from "@/content/site";
 import s from "./join.module.css";
 
@@ -35,7 +35,6 @@ export default async function JoinPage({ params }: Params) {
   const [inv, h] = await Promise.all([getInvitePreview(code), headers()]);
   const platform = platformFromUA(h.get("user-agent"));
   const urls = { appStore: appStoreUrl, playStore: playStoreUrl };
-  const browserHref = `${webAppUrl}/i/${encodeURIComponent(code)}`;
   const storeHref = platform === "ios" ? urls.appStore : platform === "android" ? urls.playStore : null;
 
   return (
@@ -67,8 +66,8 @@ export default async function JoinPage({ params }: Params) {
               </ul>
             </section>
             <div className={s.spacer} />
-            <JoinButtons storeHref={storeHref} browserHref={browserHref} platform={platform} urls={urls} />
-            <p className={s.small}>Already have Zebrasplit? This link opens it automatically.<br />Zebrasplit never holds your money. Venmo moves it.</p>
+            <JoinButtons storeHref={storeHref} platform={platform} urls={urls} />
+            <p className={s.small}>Already have Zebrasplit? This link opens it, and you accept the invite there.<br />Zebrasplit never holds your money. Venmo moves it.</p>
           </>
         ) : inv.state === "settled" && inv.trip ? (
           <>
@@ -80,7 +79,6 @@ export default async function JoinPage({ params }: Params) {
             <div className={s.spacer} />
             <div className={s.actions}>
               <StoreBadges urls={urls} location="join_settled" only={platform === "other" ? undefined : platform} />
-              <Button variant="secondary" size="lg" full href={browserHref}>Continue in browser</Button>
             </div>
           </>
         ) : (
