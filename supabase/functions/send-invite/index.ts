@@ -10,6 +10,19 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders, internalOk, json } from "../_shared/cors.ts";
 import { withSentry } from "../_shared/sentry.ts";
 
+/** One line of plain text from something a user typed: links and domains out, whitespace collapsed, cut to `max`. */
+function clean(s: string | null | undefined, max: number): string {
+  return (s ?? "")
+    .replace(/[\u0000-\u001f\u007f]+/g, " ")
+    .replace(/\b(?:https?:\/\/|www\.)\S+/gi, "")
+    .replace(/\S+\.(?:com|net|org|io|app|co|me|link|xyz|info|ly|gg|tv|dev|us|ca)(?:\/\S*)?\b/gi, "")
+    .replace(/['`"]/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, max)
+    .trim();
+}
+
 Deno.serve(withSentry("send-invite", async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return json({ error: "method" }, 405);
@@ -44,20 +57,37 @@ Deno.serve(withSentry("send-invite", async (req) => {
   const { data: existing } = await admin.from("users").select("id, display_name").eq("phone", inv.phone).maybeSingle();
   const trip = (inv as unknown as { trips: { title: string } | null }).trips;
   const inviter = (inv as unknown as { users: { display_name: string | null } | null }).users;
-  const who = inviter?.display_name?.split(" ")[0] || "A friend";
+  // both strings are user-typed: no links, no line breaks, short, so the text cannot be made
+  // to carry anything but the invite
+  const who = clean(inviter?.display_name?.split(" ")[0], 24) || "A friend";
+  const title = clean(trip?.title, 40) || "a trip";
   // zebrasplit.com/join/<token> is the invite landing page: it previews the Dazzle, carries the
   // store badges, and is the path claimed by the apple-app-site-association file, so on a phone
   // with the app installed the link opens the app instead of the browser. The apex is deliberate:
   // www 308-redirects to it and iOS does not follow redirects when fetching the AASA.
   const base = Deno.env.get("INVITE_BASE_URL") ?? "https://zebrasplit.com/join/";
   // one-time invitation; the Messaging Service handles STOP/HELP automatically
-  const text = `Zebrasplit: ${who} added you to '${trip?.title ?? "a trip"}' to split trip expenses. Open it: ${base}${inv.token}\nReply STOP to opt out.`;
+  const text = `Zebrasplit: ${who} added you to '${title}' to split trip expenses. Open it: ${base}${inv.token}\nReply STOP to opt out.`;
   const to = inv.phone.startsWith("+") ? inv.phone : `+${inv.phone}`;
+
+  // texts go to US/Canada numbers only (the toll-free number reaches nowhere else), at most
+  // three a day to one number whoever invites, and at most INVITE_SMS_DAILY_CAP a day in all.
+  // The invite trigger applies the first two before the row exists; this is the backstop for
+  // calls that reach the function another way. A capped invite keeps its join link.
+  const since = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
+  const sentTexts = () => admin.from("notification_log").select("id", { count: "exact", head: true }).eq("kind", "invite.sms").gte("sent_at", since).not("payload->>sid", "is", null);
+  const dailyCap = Number(Deno.env.get("INVITE_SMS_DAILY_CAP") ?? "500") || 500;
+  let capped: string | null = null;
+  if (!/^\+1[2-9]\d{2}[2-9]\d{6}$/.test(to)) capped = "outside US/Canada";
+  else if (((await sentTexts().eq("payload->>to", to)).count ?? 0) >= 3) capped = "three texts a day to one number";
+  else if (((await sentTexts()).count ?? 0) >= dailyCap) capped = "daily text cap";
 
   const sid = Deno.env.get("TWILIO_ACCOUNT_SID"), tok = Deno.env.get("TWILIO_AUTH_TOKEN"), from = Deno.env.get("TWILIO_FROM");
   let result: Record<string, unknown>;
   if (existing?.display_name) {
     result = { skipped: "has account" };  // no text to people who already use Zebrasplit (user decision 2026-09-30)
+  } else if (capped) {
+    result = { skipped: capped };
   } else if (!sid || !tok || !from) {
     result = { error: "twilio not configured", missing: [!sid && "TWILIO_ACCOUNT_SID", !tok && "TWILIO_AUTH_TOKEN", !from && "TWILIO_FROM"].filter(Boolean) };
   } else {

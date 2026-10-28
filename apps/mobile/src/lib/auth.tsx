@@ -155,6 +155,22 @@ export function parseIdentifier(input: string): { email: string } | { phone: str
 
 export const isValidEmail = (s: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s.trim());
 
+/**
+ * Forgot password goes through the reset-otp Edge Function so the account's phone number
+ * never reaches the app: `send` texts the code to the number behind the ticket, `verify`
+ * checks it and answers the session tokens. Errors come back as a message to show.
+ */
+export type ResetOtpResult = { ok?: boolean; access_token?: string; refresh_token?: string; error?: string };
+export async function resetOtp(body: { action: "send" | "verify"; ticket: string; code?: string }): Promise<ResetOtpResult> {
+  const { data, error } = await supabase.functions.invoke<ResetOtpResult>("reset-otp", { body });
+  if (error) {
+    let detail = error.message;
+    try { const ctx = (error as { context?: Response }).context; if (ctx && typeof ctx.json === "function") detail = (await ctx.json())?.error ?? detail; } catch { /* keep message */ }
+    return { error: detail };
+  }
+  return data ?? { error: "Something went wrong. Try again." };
+}
+
 /** Supabase's wording → ours. */
 export function friendlyAuthError(message: string, provider?: "google" | "apple"): string {
   const m = message.toLowerCase();

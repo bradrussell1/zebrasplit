@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { View } from "react-native";
 import { AuthScreen } from "@/components/AuthScreen";
 import { Button, CodeCells, TextLink, ZText } from "@/ui";
-import { friendlyAuthError, useAuth } from "@/lib/auth";
+import { friendlyAuthError, resetOtp, useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 
 /**
@@ -13,16 +13,17 @@ import { supabase } from "@/lib/supabase";
  *  - phone_change: sign-up (or add-phone) attached a number to a signed-in
  *    account; the code confirms it. The root layout then lets them in.
  *  - otp: a plain text-code login for accounts without a password.
- *  - reset: forgot password; the code signs the user in and the root layout
- *    keeps them on "Reset password" (pendingPasswordReset) until saved.
+ *  - reset: forgot password; the app holds a ticket, not the number. The
+ *    reset-otp function checks the code and hands back a session, and the root
+ *    layout keeps them on "Reset password" (pendingPasswordReset) until saved.
  * Success flips the protected routes on its own.
  */
 type Mode = "phone_change" | "otp" | "reset";
 
 export default function CodeScreen() {
   const router = useRouter();
-  const params = useLocalSearchParams<{ phone: string; mode?: Mode; onboarding?: string }>();
-  const { phone, mode = "otp" } = params;
+  const params = useLocalSearchParams<{ phone?: string; mode?: Mode; onboarding?: string; ticket?: string; masked?: string }>();
+  const { phone, mode = "otp", ticket } = params;
   const { setPendingPasswordReset, signOut, session } = useAuth();
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
@@ -40,12 +41,22 @@ export default function CodeScreen() {
     if (submitted.current) return;
     submitted.current = true;
     setBusy(true); setError(null);
-    if (mode === "reset") setPendingPasswordReset(true); // before the session flips
-    const { error: e } = await supabase.auth.verifyOtp({ phone: phone!, token: digits, type: mode === "phone_change" ? "phone_change" : "sms" });
-    if (e) {
-      if (mode === "reset") setPendingPasswordReset(false);
+    let failed: string | null = null;
+    if (mode === "reset") {
+      const r = await resetOtp({ action: "verify", ticket: ticket ?? "", code: digits });
+      if (r.error || !r.access_token || !r.refresh_token) failed = r.error ?? "That code isn't right. Check the text and try again.";
+      else {
+        setPendingPasswordReset(true); // before the session flips
+        const { error: e } = await supabase.auth.setSession({ access_token: r.access_token, refresh_token: r.refresh_token });
+        if (e) { setPendingPasswordReset(false); failed = e.message; }
+      }
+    } else {
+      const { error: e } = await supabase.auth.verifyOtp({ phone: phone!, token: digits, type: mode === "phone_change" ? "phone_change" : "sms" });
+      if (e) failed = e.message;
+    }
+    if (failed) {
       setBusy(false); submitted.current = false;
-      setError(friendlyAuthError(e.message));
+      setError(friendlyAuthError(failed));
       return;
     }
     if (mode === "phone_change") await supabase.auth.refreshSession().then(() => undefined, () => undefined); // pick up phone_confirmed_at
@@ -55,21 +66,24 @@ export default function CodeScreen() {
     if (mode === "otp" || params.onboarding === "1") track("onboarding_code_verified");
     if (mode === "otp") track("login_succeeded");
     setBusy(false);
-  }, [mode, phone, setPendingPasswordReset]);
+  }, [mode, phone, ticket, setPendingPasswordReset]);
 
   async function resend() {
     setError(null);
-    const { error: e } = mode === "phone_change"
-      ? await supabase.auth.updateUser({ phone: phone! })
-      : await supabase.auth.signInWithOtp({ phone: phone!, options: { shouldCreateUser: mode === "otp" } });
-    if (e) { setError(friendlyAuthError(e.message)); return; }
+    const e = mode === "reset"
+      ? (await resetOtp({ action: "send", ticket: ticket ?? "" })).error ?? null
+      : mode === "phone_change"
+        ? (await supabase.auth.updateUser({ phone: phone! })).error?.message ?? null
+        : (await supabase.auth.signInWithOtp({ phone: phone!, options: { shouldCreateUser: mode === "otp" } })).error?.message ?? null;
+    if (e) { setError(friendlyAuthError(e)); return; }
     setWait(30); setCode(""); submitted.current = false;
   }
 
   const title = mode === "phone_change" ? "Enter the code we just sent you" : "Enter your code";
   // mid sign-up the account already exists; "back" means change the number, not abandon it
   const back = () => (mode === "phone_change" && session ? router.replace("/(auth)/add-phone") : router.back());
-  const masked = phone ? phone.replace(/^(\+\d)(\d+)(\d{4})$/, (_, a, b, c) => `${a} ${"•".repeat(Math.max(0, b.length))} ${c}`) : "";
+  // reset mode never sees the number: the server sends the masked form
+  const masked = params.masked || (phone ? phone.replace(/^(\+\d)(\d+)(\d{4})$/, (_, a, b, c) => `${a} ${"•".repeat(Math.max(0, b.length))} ${c}`) : "your number");
 
   return (
     <AuthScreen
