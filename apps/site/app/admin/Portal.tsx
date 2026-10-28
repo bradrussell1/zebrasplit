@@ -18,7 +18,7 @@ import s from "./admin.module.css";
  * p_since: rows created at or after it. "Last 7 days" sub-labels are always the
  * trailing week regardless of the range.
  */
-const TABS = ["Overview", "Users", "Welcome wizard", "Models", "Integrations", "Feedback", "Data"] as const;
+const TABS = ["Overview", "Users", "Dazzles", "Welcome wizard", "Models", "Integrations", "Feedback", "Data"] as const;
 type Tab = (typeof TABS)[number];
 type Range = "7d" | "30d" | "all";
 const RANGES: { key: Range; label: string }[] = [{ key: "7d", label: "Last 7D" }, { key: "30d", label: "Last 30D" }, { key: "all", label: "All-time" }];
@@ -65,12 +65,43 @@ function Panel({ loading, error, empty, children }: { loading: boolean; error: s
   return <>{children}</>;
 }
 
-function Stat({ label, value, sub }: { label: string; value: string; sub?: string }) {
-  return (
-    <div className={s.stat}>
-      <span className={s.statLabel}>{label}</span>
+function Stat({ label, value, sub, onClick }: { label: string; value: string; sub?: string; onClick?: () => void }) {
+  const inner = (
+    <>
+      <span className={s.statLabel}>{label}{onClick ? <span className={s.statGo} aria-hidden="true"> ›</span> : null}</span>
       <span className={s.statValue}>{value}</span>
       {sub ? <span className={s.statSub}>{sub}</span> : null}
+    </>
+  );
+  if (onClick) return <button type="button" className={`${s.stat} ${s.statBtn}`} onClick={onClick}>{inner}</button>;
+  return <div className={s.stat}>{inner}</div>;
+}
+
+/** A short-lived link to a private photo, requested as the signed-in admin (storage policy admin_reads_receipts). */
+async function signedUrl(bucket: "receipts" | "covers", path: string): Promise<string | null> {
+  const { data } = await supabaseBrowser().storage.from(bucket).createSignedUrl(path, 300);
+  return data?.signedUrl ?? null;
+}
+
+function PhotoViewer({ title, bucket, path, onClose, children }: { title: string; bucket: "receipts" | "covers"; path: string; onClose: () => void; children?: React.ReactNode }) {
+  const [url, setUrl] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  useEffect(() => {
+    let live = true;
+    signedUrl(bucket, path).then((u) => { if (!live) return; if (u) setUrl(u); else setError("Couldn't open this photo."); });
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    return () => { live = false; window.removeEventListener("keydown", onKey); };
+  }, [bucket, path, onClose]);
+  return (
+    <div className={s.drawerWrap}>
+      <button type="button" className={s.overlay} aria-label="Close" onClick={onClose} />
+      <aside className={s.drawer} role="dialog" aria-modal="true" aria-label={title}>
+        <div className={s.drawerHead}><h2 className={s.drawerTitle}>{title}</h2><Button variant="secondary" size="sm" onClick={onClose}>Close</Button></div>
+        {error ? <p className={s.error}>{error}</p> : url ? <img src={url} alt={title} className={s.photo} /> : <p className={s.muted}>Loading…</p>}
+        {url ? <a className={s.link} href={url} target="_blank" rel="noreferrer">Open full size</a> : null}
+        {children}
+      </aside>
     </div>
   );
 }
@@ -101,38 +132,147 @@ type Overview = {
   feedback_new: number;
   invites: { total: number; accepted: number; pending: number };
 };
-const RAIL_LABEL: Record<string, string> = { venmo: "Venmo", cashapp: "Cash App", paypal: "PayPal", manual: "Cash / by hand" };
+const METHODS: { key: string; label: string }[] = [
+  { key: "manual", label: "Cash/by hand" }, { key: "venmo", label: "Venmo" }, { key: "cashapp", label: "Cashapp" }, { key: "paypal", label: "Paypal" },
+];
+type TripRow = { id: string; title: string; status: string; base_currency: string; created_at: string; members: number; done: number; expenses: number; cents: number; settled_cents: number };
+type Detail = "expenses" | "receipts" | "payments";
+const SPLIT_LABEL: Record<string, string> = { equal: "Equally", exact: "Exact amounts", percent: "By percent", shares: "By shares", nights: "By nights", itemized: "Itemized receipt" };
 
-function OverviewTab({ active, since }: { active: boolean; since: string | null }) {
+function OverviewTab({ active, since, go }: { active: boolean; since: string | null; go: (tab: Tab, filter?: Filter) => void }) {
   const { data, error, loading } = useRpc<Overview>("admin_overview", { p_since: since }, active);
+  const [detail, setDetail] = useState<Detail | null>(null);
   const d = data;
   const outstanding = d ? Number(d.expenses.cents) - Number(d.settlements.paid_cents) : 0;
   const railTotal = d ? d.settlements.rails.reduce((a, r) => a + Number(r.payments), 0) : 0;
+  const byRail = new Map((d?.settlements.rails ?? []).map((r) => [r.rail, r]));
+
+  if (detail) {
+    const title = detail === "expenses" ? "Expenses" : detail === "receipts" ? "Receipts" : "Payments";
+    return (
+      <>
+        <div className={s.crumbs}><button type="button" className={s.link} onClick={() => setDetail(null)}>‹ Overview</button><span className={s.muted}> / {title}</span></div>
+        {detail === "expenses" ? <ExpensesList since={since} /> : detail === "receipts" ? <ReceiptsList since={since} /> : <PaymentsList since={since} />}
+      </>
+    );
+  }
+
   return (
     <Panel loading={loading} error={error}>
       {d ? (
         <>
           <div className={s.stats}>
-            <Stat label="People" value={num(d.users.total)} sub={`${num(d.users.new_7d)} in the last 7 days`} />
-            <Stat label="Can be paid" value={num(d.users.with_payment)} sub="have a payment handle" />
-            <Stat label="Dazzles" value={num(d.trips.total)} sub={`${num(d.trips.open)} open · ${num(d.trips.settled)} settled · ${num(d.trips.archived)} archived`} />
-            <Stat label="Expenses" value={num(d.expenses.total)} sub={`${num(d.expenses.from_receipt)} from receipts · ${num(d.expenses.manual)} by hand`} />
-            <Stat label="Logged" value={moneyShort(d.expenses.cents)} sub="across every Dazzle" />
-            <Stat label="Settled" value={moneyShort(d.settlements.paid_cents)} sub={`${num(d.settlements.paid)} of ${num(d.settlements.total)} payments marked`} />
-            <Stat label="Outstanding" value={moneyShort(outstanding)} sub={`${moneyShort(d.settlements.pending_lt7_cents)} pending < 7 days · ${moneyShort(d.settlements.pending_gt30_cents)} aging > 30 days`} />
-            <Stat label="Time to settle" value={d.settlements.avg_days_to_settle == null ? "—" : `${Number(d.settlements.avg_days_to_settle).toFixed(1)} days`} sub={d.settlements.settled_trips ? `avg. from the last expense, ${num(d.settlements.settled_trips)} settled` : "no Dazzle has settled yet"} />
-            <Stat label="Receipts read" value={num(d.receipts.total)} sub={`${num(d.receipts.failed)} failed · ${usd(d.receipts.cost_usd)} spent · ${usd(d.receipts.avg_cost_usd)} each`} />
-            <Stat label="Corrected after reading" value={pct(ratio(d.receipts.corrected, d.receipts.read))} sub={`${num(d.receipts.corrected)} of ${num(d.receipts.read)} receipts · ${pct(ratio(d.receipts.lines_edited, d.receipts.lines))} of lines`} />
-            <Stat label="Group size" value={d.trips.avg_members == null ? "—" : Number(d.trips.avg_members).toFixed(1)} sub={d.trips.expenses_per_day == null ? "people per Dazzle" : `people per Dazzle · ${Number(d.trips.expenses_per_day).toFixed(2)} expenses per active day`} />
-            <Stat label="Invites" value={num(d.invites.total)} sub={`${num(d.invites.accepted)} accepted · ${num(d.invites.pending)} waiting`} />
-            <Stat label="New feedback" value={num(d.feedback_new)} sub="waiting to be read" />
+            <Stat label="People" value={num(d.users.total)} sub={`${num(d.users.new_7d)} in the last 7 days`} onClick={() => go("Users")} />
+            <Stat label="Can be paid" value={num(d.users.with_payment)} sub="have a payment handle" onClick={() => go("Users", "no_payment")} />
+            <Stat label="Dazzles" value={num(d.trips.total)} sub={`${num(d.trips.open)} open · ${num(d.trips.settled)} settled · ${num(d.trips.archived)} archived`} onClick={() => go("Dazzles")} />
+            <Stat label="Expenses" value={num(d.expenses.total)} sub={`${num(d.expenses.from_receipt)} from receipts · ${num(d.expenses.manual)} by hand`} onClick={() => setDetail("expenses")} />
+            <Stat label="Logged" value={moneyShort(d.expenses.cents)} sub="across every Dazzle" onClick={() => setDetail("expenses")} />
+            <Stat label="Settled" value={moneyShort(d.settlements.paid_cents)} sub={`${num(d.settlements.paid)} of ${num(d.settlements.total)} payments marked`} onClick={() => setDetail("payments")} />
+            <Stat label="Outstanding" value={moneyShort(outstanding)} sub={`${moneyShort(d.settlements.pending_lt7_cents)} pending < 7 days · ${moneyShort(d.settlements.pending_gt30_cents)} aging > 30 days`} onClick={() => setDetail("payments")} />
+            <Stat label="Time to settle" value={d.settlements.avg_days_to_settle == null ? "—" : `${Number(d.settlements.avg_days_to_settle).toFixed(1)} days`} sub={d.settlements.settled_trips ? `avg. from the last expense, ${num(d.settlements.settled_trips)} settled` : "no Dazzle has settled yet"} onClick={() => go("Dazzles")} />
+            <Stat label="Receipts read" value={num(d.receipts.total)} sub={`${num(d.receipts.failed)} failed · ${usd(d.receipts.cost_usd)} spent · ${usd(d.receipts.avg_cost_usd)} each`} onClick={() => setDetail("receipts")} />
+            <Stat label="Corrected after reading" value={pct(ratio(d.receipts.corrected, d.receipts.read))} sub={`${num(d.receipts.corrected)} of ${num(d.receipts.read)} receipts · ${pct(ratio(d.receipts.lines_edited, d.receipts.lines))} of lines`} onClick={() => setDetail("receipts")} />
+            <Stat label="Group size" value={d.trips.avg_members == null ? "—" : Number(d.trips.avg_members).toFixed(1)} sub={d.trips.expenses_per_day == null ? "people per Dazzle" : `people per Dazzle · ${Number(d.trips.expenses_per_day).toFixed(2)} expenses per active day`} onClick={() => go("Dazzles")} />
+            <Stat label="Invites" value={num(d.invites.total)} sub={`${num(d.invites.accepted)} accepted · ${num(d.invites.pending)} waiting`} onClick={() => go("Users", "invited")} />
+            <Stat label="New feedback" value={num(d.feedback_new)} sub="waiting to be read" onClick={() => go("Feedback")} />
           </div>
-          <h3 className={s.sub}>Which rail carries the payments</h3>
-          {railTotal === 0 ? <p className={s.muted}>No payment has been marked paid yet.</p> : (
-            <Bars rows={d.settlements.rails.map((r) => ({ key: r.rail, label: RAIL_LABEL[r.rail] ?? r.rail, value: Number(r.payments), num: `${num(r.payments)} · ${money(r.cents)}`, pct: pct(Number(r.payments) / railTotal) }))} top={railTotal} />
-          )}
+          <h3 className={s.sub}>Payment method</h3>
+          <Bars rows={METHODS.map((m) => { const r = byRail.get(m.key); const n = Number(r?.payments ?? 0); return { key: m.key, label: m.label, value: n, num: `${num(n)} · ${money(r?.cents ?? 0)}`, pct: railTotal ? pct(n / railTotal) : "—" }; })} top={Math.max(railTotal, 1)} />
+          {railTotal === 0 ? <p className={s.hint}>No payment has been marked paid yet.</p> : null}
         </>
       ) : null}
+    </Panel>
+  );
+}
+
+/* ------------------------------------------------- Overview detail lists */
+type ExpenseRow = { id: string; trip_id: string; trip_title: string; description: string; category: string; subcategory: string | null; amount_cents: number; currency: string; base_amount_cents: number; split_type: string; nights: number | null; paid_by: string | null; people: number; receipt_id: string | null; created_by: string | null; created_at: string; deleted_at: string | null };
+function ExpensesList({ since, trip }: { since: string | null; trip?: string }) {
+  const { data, error, loading } = useRpc<ExpenseRow[]>("admin_expenses", { p_since: since, p_limit: 500, p_offset: 0, p_trip: trip ?? null }, true);
+  return (
+    <Panel loading={loading} error={error} empty={!!data && data.length === 0}>
+      <div className={s.scroll}>
+        <table className={s.table}>
+          <thead><tr><th>When</th>{trip ? null : <th>Dazzle</th>}<th>Expense</th><th>Category</th><th>Paid by</th><th>Split</th><th className={s.n}>People</th><th className={s.n}>Amount</th><th>Receipt</th><th>Logged by</th></tr></thead>
+          <tbody>
+            {(data ?? []).map((e) => (
+              <tr key={e.id} className={e.deleted_at ? s.rowGone : undefined}>
+                <td>{when(e.created_at)}</td>
+                {trip ? null : <td className={s.wrap}>{e.trip_title}</td>}
+                <td className={s.wrap}>{e.description}{e.deleted_at ? <span className={s.muted}> (deleted)</span> : null}</td>
+                <td>{e.category}{e.subcategory ? <span className={s.muted}> · {e.subcategory}</span> : null}</td>
+                <td>{e.paid_by ?? "—"}</td>
+                <td>{SPLIT_LABEL[e.split_type] ?? e.split_type}{e.nights ? ` · ${e.nights} nights` : ""}</td>
+                <td className={s.n}>{num(e.people)}</td>
+                <td className={s.n}>{money(e.base_amount_cents)}{e.currency !== "USD" ? <span className={s.muted}> ({e.currency} {(e.amount_cents / 100).toFixed(2)})</span> : null}</td>
+                <td>{e.receipt_id ? "scanned" : "—"}</td>
+                <td>{e.created_by ?? "—"}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </Panel>
+  );
+}
+
+type ReceiptRow = { id: string; trip_id: string; trip_title: string; expense_id: string | null; storage_path: string; status: string; model: string | null; merchant: string | null; receipt_date: string | null; currency: string | null; printed_total_cents: number | null; subtotal_cents: number | null; reconciled: boolean | null; error: string | null; attempts: number; cost_usd: number; lines: number; lines_edited: number; created_by: string | null; created_at: string };
+function ReceiptsList({ since, trip }: { since: string | null; trip?: string }) {
+  const { data, error, loading } = useRpc<ReceiptRow[]>("admin_receipts", { p_since: since, p_limit: 500, p_offset: 0, p_trip: trip ?? null }, true);
+  const [view, setView] = useState<ReceiptRow | null>(null);
+  return (
+    <Panel loading={loading} error={error} empty={!!data && data.length === 0}>
+      <div className={s.scroll}>
+        <table className={s.table}>
+          <thead><tr><th>When</th>{trip ? null : <th>Dazzle</th>}<th>Merchant</th><th>Status</th><th className={s.n}>Printed total</th><th className={s.n}>Lines</th><th className={s.n}>Edited</th><th>Model</th><th className={s.n}>Cost</th><th>Scanned by</th><th>Photo</th></tr></thead>
+          <tbody>
+            {(data ?? []).map((r) => (
+              <tr key={r.id}>
+                <td>{when(r.created_at)}</td>
+                {trip ? null : <td className={s.wrap}>{r.trip_title}</td>}
+                <td className={s.wrap}>{r.merchant ?? <span className={s.muted}>—</span>}{r.receipt_date ? <span className={s.muted}> · {r.receipt_date}</span> : null}</td>
+                <td><span className={`${s.badge} ${s[`badge_${r.status}`] ?? ""}`}>{r.status}</span>{r.error ? <span className={s.muted}> {r.error}</span> : null}{r.expense_id ? <span className={s.muted}> · saved</span> : null}</td>
+                <td className={s.n}>{r.printed_total_cents == null ? "—" : money(r.printed_total_cents)}</td>
+                <td className={s.n}>{num(r.lines)}</td>
+                <td className={s.n}>{num(r.lines_edited)}</td>
+                <td><code>{r.model ?? "—"}</code></td>
+                <td className={s.n}>{usd(r.cost_usd)}</td>
+                <td>{r.created_by ?? "—"}</td>
+                <td><Button variant="secondary" size="sm" onClick={() => setView(r)}>View</Button></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {view ? <PhotoViewer title={`${view.merchant ?? "Receipt"} · ${view.trip_title}`} bucket="receipts" path={view.storage_path} onClose={() => setView(null)} /> : null}
+    </Panel>
+  );
+}
+
+type PaymentRow = { id: string; trip_id: string; trip_title: string; from_name: string | null; to_name: string | null; amount_cents: number; currency: string; status: string; platform: string | null; created_at: string; marked_at: string | null; confirmed_at: string | null };
+const METHOD_LABEL = Object.fromEntries(METHODS.map((m) => [m.key, m.label]));
+function PaymentsList({ since, trip }: { since: string | null; trip?: string }) {
+  const { data, error, loading } = useRpc<PaymentRow[]>("admin_settlements", { p_since: since, p_limit: 500, p_offset: 0, p_trip: trip ?? null }, true);
+  return (
+    <Panel loading={loading} error={error} empty={!!data && data.length === 0}>
+      <div className={s.scroll}>
+        <table className={s.table}>
+          <thead><tr><th>Created</th>{trip ? null : <th>Dazzle</th>}<th>From</th><th>To</th><th className={s.n}>Amount</th><th>Status</th><th>Method</th><th>Marked paid</th><th>Confirmed</th></tr></thead>
+          <tbody>
+            {(data ?? []).map((x) => (
+              <tr key={x.id}>
+                <td>{when(x.created_at)}</td>
+                {trip ? null : <td className={s.wrap}>{x.trip_title}</td>}
+                <td>{x.from_name ?? "—"}</td><td>{x.to_name ?? "—"}</td>
+                <td className={s.n}>{money(x.amount_cents)}{x.currency !== "USD" ? <span className={s.muted}> {x.currency}</span> : null}</td>
+                <td><span className={`${s.badge} ${s[`badge_${x.status}`] ?? ""}`}>{x.status.replace("_", " ")}</span></td>
+                <td>{x.status === "pending" ? "—" : METHOD_LABEL[x.platform ?? "manual"] ?? x.platform}</td>
+                <td>{when(x.marked_at)}</td><td>{when(x.confirmed_at)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </Panel>
   );
 }
@@ -149,10 +289,10 @@ const FILTERS: { key: Filter; label: string }[] = [
 ];
 type SortKey = "display_name" | "trips" | "expenses" | "created_at" | "last_active" | "net_cents";
 
-function UsersTab({ active, since }: { active: boolean; since: string | null }) {
+function UsersTab({ active, since, initialFilter = "all" }: { active: boolean; since: string | null; initialFilter?: Filter }) {
   const [search, setSearch] = useState("");
   const [query, setQuery] = useState("");
-  const [filter, setFilter] = useState<Filter>("all");
+  const [filter, setFilter] = useState<Filter>(initialFilter);
   const [sort, setSort] = useState<{ key: SortKey; dir: 1 | -1 }>({ key: "created_at", dir: -1 });
   const [open, setOpen] = useState<UserRow | null>(null);
   const { data, error, loading } = useRpc<UserRow[]>("admin_users", { p_search: query || null, p_limit: 200, p_offset: 0, p_since: since, p_filter: filter }, active);
@@ -295,6 +435,173 @@ function UserDrawer({ row, onClose }: { row: UserRow; onClose: () => void }) {
           ) : null}
         </Panel>
       </aside>
+    </div>
+  );
+}
+
+/* ----------------------------------------------------------------- Dazzles */
+type TripDetail = {
+  trip: { id: string; title: string; description: string | null; status: string; currency: string; start_date: string; end_date: string; created_at: string; settled_at: string | null; last_activity_at: string; owner: string | null; closeout_override_at: string | null } | null;
+  members: { user_id: string; name: string; email: string | null; phone: string | null; role: string; done: boolean; joined_at: string; joined_via: string | null; removed_at: string | null; paid_cents: number; share_cents: number }[];
+  expenses: { id: string; description: string; category: string; subcategory: string | null; amount_cents: number; currency: string; base_amount_cents: number; tip_cents: number; split_type: string; nights: number | null; receipt_id: string | null; created_at: string; deleted_at: string | null; created_by: string | null; payers: { name: string | null; cents: number }[]; shares: { name: string | null; cents: number }[] }[];
+  settlements: { id: string; from_name: string | null; to_name: string | null; amount_cents: number; status: string; platform: string | null; created_at: string; marked_at: string | null; confirmed_at: string | null }[];
+  receipts: { id: string; storage_path: string; status: string; model: string | null; merchant: string | null; receipt_date: string | null; printed_total_cents: number | null; currency: string | null; cost_usd: number; expense_id: string | null; created_by: string | null; created_at: string; items: { name: string; cents: number; kind: string; edited: boolean }[] }[];
+  invites: { phone: string; status: string; invited_by: string | null; created_at: string }[];
+  history: { action: string; actor: string | null; expense_id: string | null; at: string }[];
+};
+
+function DazzlesTab({ active, since }: { active: boolean; since: string | null }) {
+  const trips = useRpc<TripRow[]>("admin_trips", { p_limit: 500, p_offset: 0, p_since: since }, active);
+  const [open, setOpen] = useState<TripRow | null>(null);
+  const [q, setQ] = useState("");
+  const rows = (trips.data ?? []).filter((t) => !q.trim() || t.title.toLowerCase().includes(q.trim().toLowerCase()));
+  return (
+    <>
+      <p className={s.muted}>Every Dazzle ever started, with its people, expenses, payments and receipts. Click one to open the whole record.</p>
+      <div className={s.toolbar}><input className={s.search} value={q} onChange={(e) => setQ(e.target.value)} placeholder="Find a Dazzle by title" aria-label="Find a Dazzle" /></div>
+      <Panel loading={trips.loading} error={trips.error} empty={!!trips.data && trips.data.length === 0}>
+        <div className={s.scroll}>
+          <table className={s.table}>
+            <thead><tr><th>Title</th><th>Status</th><th className={s.n}>People</th><th className={s.n}>Stripes</th><th className={s.n}>Expenses</th><th className={s.n}>Total</th><th className={s.n}>Settled</th><th>Started</th></tr></thead>
+            <tbody>
+              {rows.map((t) => (
+                <tr key={t.id} className={s.rowBtn} tabIndex={0} onClick={() => setOpen(t)} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setOpen(t); } }}>
+                  <td className={s.wrap}>{t.title}</td>
+                  <td><span className={`${s.badge} ${s[`badge_${t.status}`] ?? ""}`}>{t.status}</span></td>
+                  <td className={s.n}>{num(t.members)}</td>
+                  <td className={s.n}>{num(t.done)} / {num(t.members)}</td>
+                  <td className={s.n}>{num(t.expenses)}</td>
+                  <td className={s.n}>{money(t.cents)}</td>
+                  <td className={s.n}>{money(t.settled_cents)}</td>
+                  <td>{when(t.created_at)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </Panel>
+      {open ? <TripDrawer row={open} onClose={() => setOpen(null)} /> : null}
+    </>
+  );
+}
+
+function TripDrawer({ row, onClose }: { row: TripRow; onClose: () => void }) {
+  const { data, error, loading } = useRpc<TripDetail>("admin_trip_detail", { p_trip: row.id }, true);
+  const [photo, setPhoto] = useState<TripDetail["receipts"][number] | null>(null);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") { if (photo) setPhoto(null); else onClose(); } };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose, photo]);
+  const d = data;
+  const t = d?.trip;
+  const named = (xs: { name: string | null; cents: number }[]) => xs.map((x) => `${x.name ?? "Someone"} ${money(x.cents)}`).join(", ");
+  return (
+    <div className={s.drawerWrap}>
+      <button type="button" className={s.overlay} aria-label="Close" onClick={onClose} />
+      <aside className={`${s.drawer} ${s.drawerWide}`} role="dialog" aria-modal="true" aria-labelledby="trip-title">
+        <div className={s.drawerHead}><h2 id="trip-title" className={s.drawerTitle}>{row.title}</h2><Button variant="secondary" size="sm" onClick={onClose}>Close</Button></div>
+        <Panel loading={loading} error={error}>
+          {d && t ? (
+            <div className={s.drawerBody}>
+              <dl className={s.kv}>
+                <dt>Status</dt><dd><span className={`${s.badge} ${s[`badge_${t.status}`] ?? ""}`}>{t.status}</span>{t.closeout_override_at ? <span className={s.muted}> · closed early by the owner</span> : null}</dd>
+                <dt>Dates</dt><dd>{t.start_date} → {t.end_date}</dd>
+                <dt>Owner</dt><dd>{t.owner ?? "—"}</dd>
+                <dt>Currency</dt><dd>{t.currency}</dd>
+                <dt>Started</dt><dd>{when(t.created_at)}</dd>
+                <dt>Last activity</dt><dd>{when(t.last_activity_at)}</dd>
+                <dt>Settled</dt><dd>{when(t.settled_at)}</dd>
+                {t.description ? <><dt>Description</dt><dd className={s.wrap} style={{ textAlign: "left" }}>{t.description}</dd></> : null}
+              </dl>
+              <div className={s.stats}>
+                <Stat label="Logged" value={money(d.expenses.filter((e) => !e.deleted_at).reduce((a, e) => a + Number(e.base_amount_cents), 0))} sub={`${num(d.expenses.filter((e) => !e.deleted_at).length)} expenses`} />
+                <Stat label="Settled" value={money(d.settlements.filter((x) => x.status !== "pending").reduce((a, x) => a + Number(x.amount_cents), 0))} sub={`${num(d.settlements.filter((x) => x.status !== "pending").length)} of ${num(d.settlements.length)} payments`} />
+                <Stat label="Receipts" value={num(d.receipts.length)} sub={`${usd(d.receipts.reduce((a, r) => a + Number(r.cost_usd), 0))} to read`} />
+              </div>
+
+              <h3 className={s.sub}>People</h3>
+              <div className={s.scroll}><table className={s.table}>
+                <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Role</th><th>Done</th><th className={s.n}>Paid</th><th className={s.n}>Share</th><th className={s.n}>Position</th><th>Joined</th></tr></thead>
+                <tbody>{d.members.map((m) => { const net = Number(m.paid_cents) - Number(m.share_cents); return (
+                  <tr key={m.user_id} className={m.removed_at ? s.rowGone : undefined}>
+                    <td>{m.name}{m.removed_at ? <span className={s.muted}> (removed)</span> : null}</td><td className={s.wrap}>{m.email ?? "—"}</td><td>{m.phone ?? "—"}</td><td>{m.role}</td><td>{m.done ? "yes" : "no"}</td>
+                    <td className={s.n}>{money(m.paid_cents)}</td><td className={s.n}>{money(m.share_cents)}</td>
+                    <td className={s.n}>{net === 0 ? "even" : <span className={net > 0 ? s.owed : s.owes}>{net > 0 ? "+" : ""}{money(net)}</span>}</td>
+                    <td>{when(m.joined_at)}{m.joined_via ? <span className={s.muted}> · {m.joined_via}</span> : null}</td>
+                  </tr>); })}</tbody>
+              </table></div>
+
+              <h3 className={s.sub}>Expenses</h3>
+              {d.expenses.length === 0 ? <p className={s.muted}>None logged.</p> : (
+                <div className={s.scroll}><table className={s.table}>
+                  <thead><tr><th>When</th><th>Expense</th><th>Category</th><th>Paid by</th><th>Split</th><th>Shares</th><th className={s.n}>Amount</th><th>Receipt</th><th>Logged by</th></tr></thead>
+                  <tbody>{d.expenses.map((e) => (
+                    <tr key={e.id} className={e.deleted_at ? s.rowGone : undefined}>
+                      <td>{when(e.created_at)}</td>
+                      <td className={s.wrap}>{e.description}{e.deleted_at ? <span className={s.muted}> (deleted)</span> : null}</td>
+                      <td>{e.category}{e.subcategory ? <span className={s.muted}> · {e.subcategory}</span> : null}</td>
+                      <td className={s.wrap}>{named(e.payers) || "—"}</td>
+                      <td>{SPLIT_LABEL[e.split_type] ?? e.split_type}{e.nights ? ` · ${e.nights} nights` : ""}</td>
+                      <td className={s.wrap}>{named(e.shares) || "—"}</td>
+                      <td className={s.n}>{money(e.base_amount_cents)}{Number(e.tip_cents) ? <span className={s.muted}> incl. {money(e.tip_cents)} tip</span> : null}{e.currency !== t.currency ? <span className={s.muted}> ({e.currency} {(e.amount_cents / 100).toFixed(2)})</span> : null}</td>
+                      <td>{e.receipt_id ? "scanned" : "—"}</td>
+                      <td>{e.created_by ?? "—"}</td>
+                    </tr>))}</tbody>
+                </table></div>
+              )}
+
+              <h3 className={s.sub}>Payments</h3>
+              {d.settlements.length === 0 ? <p className={s.muted}>Not at close-out yet.</p> : (
+                <div className={s.scroll}><table className={s.table}>
+                  <thead><tr><th>From</th><th>To</th><th className={s.n}>Amount</th><th>Status</th><th>Method</th><th>Marked paid</th><th>Confirmed</th></tr></thead>
+                  <tbody>{d.settlements.map((x) => (
+                    <tr key={x.id}><td>{x.from_name ?? "—"}</td><td>{x.to_name ?? "—"}</td><td className={s.n}>{money(x.amount_cents)}</td>
+                      <td><span className={`${s.badge} ${s[`badge_${x.status}`] ?? ""}`}>{x.status.replace("_", " ")}</span></td>
+                      <td>{x.status === "pending" ? "—" : METHOD_LABEL[x.platform ?? "manual"] ?? x.platform}</td><td>{when(x.marked_at)}</td><td>{when(x.confirmed_at)}</td></tr>))}</tbody>
+                </table></div>
+              )}
+
+              <h3 className={s.sub}>Receipts</h3>
+              {d.receipts.length === 0 ? <p className={s.muted}>No receipts scanned.</p> : (
+                <div className={s.scroll}><table className={s.table}>
+                  <thead><tr><th>When</th><th>Merchant</th><th>Status</th><th className={s.n}>Printed total</th><th className={s.n}>Lines</th><th>Model</th><th className={s.n}>Cost</th><th>Scanned by</th><th>Photo</th></tr></thead>
+                  <tbody>{d.receipts.map((r) => (
+                    <tr key={r.id}><td>{when(r.created_at)}</td><td className={s.wrap}>{r.merchant ?? "—"}{r.receipt_date ? <span className={s.muted}> · {r.receipt_date}</span> : null}</td>
+                      <td><span className={`${s.badge} ${s[`badge_${r.status}`] ?? ""}`}>{r.status}</span>{r.expense_id ? <span className={s.muted}> · saved</span> : null}</td>
+                      <td className={s.n}>{r.printed_total_cents == null ? "—" : money(r.printed_total_cents)}</td><td className={s.n}>{num(r.items.length)}{r.items.some((i) => i.edited) ? <span className={s.muted}> · {num(r.items.filter((i) => i.edited).length)} edited</span> : null}</td>
+                      <td><code>{r.model ?? "—"}</code></td><td className={s.n}>{usd(r.cost_usd)}</td><td>{r.created_by ?? "—"}</td>
+                      <td><Button variant="secondary" size="sm" onClick={() => setPhoto(r)}>View</Button></td></tr>))}</tbody>
+                </table></div>
+              )}
+
+              {d.invites.length ? (<>
+                <h3 className={s.sub}>Invites</h3>
+                <div className={s.scroll}><table className={s.table}>
+                  <thead><tr><th>Phone</th><th>Status</th><th>Invited by</th><th>When</th></tr></thead>
+                  <tbody>{d.invites.map((i, k) => <tr key={`${i.phone}-${k}`}><td>{i.phone}</td><td><span className={`${s.badge} ${s[`badge_${i.status}`] ?? ""}`}>{i.status}</span></td><td>{i.invited_by ?? "—"}</td><td>{when(i.created_at)}</td></tr>)}</tbody>
+                </table></div>
+              </>) : null}
+
+              {d.history.length ? (<>
+                <h3 className={s.sub}>History</h3>
+                <div className={s.scroll}><table className={s.table}>
+                  <thead><tr><th>When</th><th>What</th><th>Who</th></tr></thead>
+                  <tbody>{d.history.map((h, k) => <tr key={k}><td>{when(h.at)}</td><td>{h.action.replace(".", " ")}</td><td>{h.actor ?? "—"}</td></tr>)}</tbody>
+                </table></div>
+              </>) : null}
+            </div>
+          ) : null}
+        </Panel>
+      </aside>
+      {photo ? (
+        <PhotoViewer title={`${photo.merchant ?? "Receipt"} · ${row.title}`} bucket="receipts" path={photo.storage_path} onClose={() => setPhoto(null)}>
+          {photo.items.length ? (
+            <table className={s.table}><thead><tr><th>Line</th><th className={s.n}>Amount</th></tr></thead>
+              <tbody>{photo.items.map((i, k) => <tr key={k}><td className={s.wrap}>{i.name}{i.edited ? <span className={s.muted}> (edited)</span> : null}</td><td className={s.n}>{money(i.cents)}</td></tr>)}</tbody></table>
+          ) : null}
+        </PhotoViewer>
+      ) : null}
     </div>
   );
 }
@@ -541,10 +848,8 @@ function FeedbackTab({ active }: { active: boolean }) {
 }
 
 /* -------------------------------------------------------------------- Data */
-type TripRow = { id: string; title: string; status: string; base_currency: string; created_at: string; members: number; done: number; expenses: number; cents: number; settled_cents: number };
 type CatRow = { category: string; subcategory: string; expenses: number; cents: number; share: number };
 type SplitRow = { split_type: string; expenses: number; cents: number; from_receipt: number };
-const SPLIT_LABEL: Record<string, string> = { equal: "Equally", exact: "Exact amounts", percent: "By percent", shares: "By shares", nights: "By nights", itemized: "Itemized receipt" };
 
 function DataTab({ active, since }: { active: boolean; since: string | null }) {
   const trips = useRpc<TripRow[]>("admin_trips", { p_limit: 200, p_offset: 0, p_since: since }, active);
@@ -655,6 +960,9 @@ export function Portal() {
   const [tab, setTab] = useState<Tab>("Overview");
   const [range, setRange] = useState<Range>("all");
   const since = sinceOf(range);
+  const [usersFilter, setUsersFilter] = useState<Filter>("all");
+  const [usersKey, setUsersKey] = useState(0);
+  const go = (t: Tab, filter?: Filter) => { if (filter) { setUsersFilter(filter); setUsersKey((k) => k + 1); } setTab(t); };
 
   useEffect(() => {
     const sb = supabaseBrowser();
@@ -704,8 +1012,9 @@ export function Portal() {
       </nav>
 
       <section className={s.panel}>
-        {tab === "Overview" ? <OverviewTab active since={since} /> : null}
-        {tab === "Users" ? <UsersTab active since={since} /> : null}
+        {tab === "Overview" ? <OverviewTab active since={since} go={go} /> : null}
+        {tab === "Users" ? <UsersTab key={usersKey} active since={since} initialFilter={usersFilter} /> : null}
+        {tab === "Dazzles" ? <DazzlesTab active since={since} /> : null}
         {tab === "Welcome wizard" ? <WizardTab active /> : null}
         {tab === "Models" ? <ModelsTab active since={since} /> : null}
         {tab === "Integrations" ? <IntegrationsTab active /> : null}
