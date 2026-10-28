@@ -27,11 +27,10 @@ function sinceOf(r: Range): string | null {
   return new Date(Date.now() - (r === "7d" ? 7 : 30) * 86400 * 1000).toISOString();
 }
 
-const money = (cents: number | null | undefined) =>
-  `$${(((cents ?? 0) as number) / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-const moneyShort = (cents: number | null | undefined) => {
-  const d = Math.abs((cents ?? 0) as number) / 100;
-  return `${(cents ?? 0) < 0 ? "−" : ""}$${d >= 10000 ? `${(d / 1000).toFixed(1)}k` : d.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+// one dollar format everywhere: $3,545.00 (a minus sign ahead of the $ for negatives)
+const money = (cents: number | null | undefined) => {
+  const c = Number(cents ?? 0);
+  return `${c < 0 ? "−" : ""}$${(Math.abs(c) / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 };
 const usd = (n: number | null | undefined) => `$${Number(n ?? 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 4 })}`;
 const num = (n: number | null | undefined) => Number(n ?? 0).toLocaleString("en-US");
@@ -157,29 +156,53 @@ function OverviewTab({ active, since, go }: { active: boolean; since: string | n
     );
   }
 
+  const handles = ratio(d?.users.with_payment, d?.users.total);
   return (
     <Panel loading={loading} error={error}>
       {d ? (
-        <>
-          <div className={s.stats}>
-            <Stat label="People" value={num(d.users.total)} sub={`${num(d.users.new_7d)} in the last 7 days`} onClick={() => go("Users")} />
-            <Stat label="Can be paid" value={num(d.users.with_payment)} sub="have a payment handle" onClick={() => go("Users", "no_payment")} />
-            <Stat label="Dazzles" value={num(d.trips.total)} sub={`${num(d.trips.open)} open · ${num(d.trips.settled)} settled · ${num(d.trips.archived)} archived`} onClick={() => go("Dazzles")} />
-            <Stat label="Expenses" value={num(d.expenses.total)} sub={`${num(d.expenses.from_receipt)} from receipts · ${num(d.expenses.manual)} by hand`} onClick={() => setDetail("expenses")} />
-            <Stat label="Logged" value={moneyShort(d.expenses.cents)} sub="across every Dazzle" onClick={() => setDetail("expenses")} />
-            <Stat label="Settled" value={moneyShort(d.settlements.paid_cents)} sub={`${num(d.settlements.paid)} of ${num(d.settlements.total)} payments marked`} onClick={() => setDetail("payments")} />
-            <Stat label="Outstanding" value={moneyShort(outstanding)} sub={`${moneyShort(d.settlements.pending_lt7_cents)} pending < 7 days · ${moneyShort(d.settlements.pending_gt30_cents)} aging > 30 days`} onClick={() => setDetail("payments")} />
-            <Stat label="Time to settle" value={d.settlements.avg_days_to_settle == null ? "—" : `${Number(d.settlements.avg_days_to_settle).toFixed(1)} days`} sub={d.settlements.settled_trips ? `avg. from the last expense, ${num(d.settlements.settled_trips)} settled` : "no Dazzle has settled yet"} onClick={() => go("Dazzles")} />
-            <Stat label="Receipts read" value={num(d.receipts.total)} sub={`${num(d.receipts.failed)} failed · ${usd(d.receipts.cost_usd)} spent · ${usd(d.receipts.avg_cost_usd)} each`} onClick={() => setDetail("receipts")} />
-            <Stat label="Corrected after reading" value={pct(ratio(d.receipts.corrected, d.receipts.read))} sub={`${num(d.receipts.corrected)} of ${num(d.receipts.read)} receipts · ${pct(ratio(d.receipts.lines_edited, d.receipts.lines))} of lines`} onClick={() => setDetail("receipts")} />
-            <Stat label="Group size" value={d.trips.avg_members == null ? "—" : Number(d.trips.avg_members).toFixed(1)} sub={d.trips.expenses_per_day == null ? "people per Dazzle" : `people per Dazzle · ${Number(d.trips.expenses_per_day).toFixed(2)} expenses per active day`} onClick={() => go("Dazzles")} />
-            <Stat label="Invites" value={num(d.invites.total)} sub={`${num(d.invites.accepted)} accepted · ${num(d.invites.pending)} waiting`} onClick={() => go("Users", "invited")} />
-            <Stat label="New feedback" value={num(d.feedback_new)} sub="waiting to be read" onClick={() => go("Feedback")} />
+        <div className={s.domains}>
+          {/* 1. money: what was logged, what is still owed, what moved, and how */}
+          <section className={`${s.block} ${s.hero}`} aria-labelledby="dom-money">
+            <h3 id="dom-money" className={s.blockTitle}>Financials &amp; settlement flow</h3>
+            <div className={s.heroGrid}>
+              <Stat label="Logged" value={money(d.expenses.cents)} sub={`across ${num(d.expenses.total)} expenses · ${num(d.expenses.from_receipt)} from receipts`} onClick={() => setDetail("expenses")} />
+              <Stat label="Outstanding" value={money(outstanding)} sub={`${money(d.settlements.pending_lt7_cents)} pending < 7 days · ${money(d.settlements.pending_gt30_cents)} aging > 30 days`} onClick={() => setDetail("payments")} />
+              <Stat label="Settled" value={money(d.settlements.paid_cents)} sub={`${num(d.settlements.paid)} of ${num(d.settlements.total)} payments completed`} onClick={() => setDetail("payments")} />
+              <Stat label="Settlement velocity" value={d.settlements.avg_days_to_settle == null ? "—" : `${Number(d.settlements.avg_days_to_settle).toFixed(1)} days`} sub={d.settlements.settled_trips ? `last expense → settled, ${num(d.settlements.settled_trips)} Dazzles` : "no Dazzle has settled yet"} onClick={() => go("Dazzles")} />
+            </div>
+            <h4 className={s.blockSub}>Payment method</h4>
+            <Bars rows={METHODS.map((m) => { const r = byRail.get(m.key); const n = Number(r?.payments ?? 0); return { key: m.key, label: m.label, value: n, num: `${num(n)} · ${money(r?.cents ?? 0)}`, pct: railTotal ? pct(n / railTotal) : "—" }; })} top={Math.max(railTotal, 1)} />
+            {railTotal === 0 ? <p className={s.hint}>No payment has been marked paid yet.</p> : null}
+          </section>
+
+          <div className={s.halves}>
+            {/* 2. the network: groups, people, invitations */}
+            <section className={s.block} aria-labelledby="dom-groups">
+              <h3 id="dom-groups" className={s.blockTitle}>Group dynamics &amp; network growth</h3>
+              <div className={s.blockGrid}>
+                <Stat label="Dazzles" value={`${num(d.trips.total)} total`} sub={`${num(d.trips.open)} open · ${num(d.trips.settled)} settled · ${num(d.trips.archived)} archived`} onClick={() => go("Dazzles")} />
+                <Stat label="People" value={num(d.users.total)} sub={`${num(d.users.with_payment)} have handles (${handles == null ? "—" : `${Math.round(handles * 100)}%`}) · ${num(d.users.new_7d)} joined this week`} onClick={() => go("Users")} />
+                <Stat label="Group health" value={d.trips.avg_members == null ? "—" : `${Number(d.trips.avg_members).toFixed(1)} avg. size`} sub={`${num(d.invites.total)} invites sent (${num(d.invites.accepted)} accepted)${d.trips.expenses_per_day == null ? "" : ` · ${Number(d.trips.expenses_per_day).toFixed(2)} expenses/day`}`} onClick={() => go("Users", "invited")} />
+              </div>
+            </section>
+
+            {/* 3. the machinery: the receipt reader and what is waiting on you */}
+            <section className={s.block} aria-labelledby="dom-ops">
+              <h3 id="dom-ops" className={s.blockTitle}>OCR &amp; operations</h3>
+              <div className={s.blockGrid}>
+                <Stat label="Receipt pipeline" value={`${num(d.receipts.total)} read`} sub={`${num(d.receipts.failed)} failed · ${usd(d.receipts.cost_usd)} cost · ${usd(d.receipts.avg_cost_usd)} each`} onClick={() => setDetail("receipts")} />
+                <Stat label="OCR quality" value={`${pct(ratio(d.receipts.corrected, d.receipts.read))} corrected`} sub={`${num(d.receipts.corrected)} of ${num(d.receipts.read)} receipts edited · ${pct(ratio(d.receipts.lines_edited, d.receipts.lines))} of lines`} onClick={() => setDetail("receipts")} />
+                <button type="button" className={`${s.stat} ${s.statBtn}`} onClick={() => go("Feedback")}>
+                  <span className={s.statLabel}>Feedback<span className={s.statGo} aria-hidden="true"> ›</span></span>
+                  {Number(d.feedback_new) === 0
+                    ? <span className={`${s.chip} ${s.chipOk}`}>✓ All caught up</span>
+                    : <span className={`${s.chip} ${s.chipWarn}`}>{num(d.feedback_new)} awaiting review</span>}
+                  <span className={s.statSub}>{Number(d.feedback_new) === 0 ? "nothing new from the app or the site" : "new from the app or the site"}</span>
+                </button>
+              </div>
+            </section>
           </div>
-          <h3 className={s.sub}>Payment method</h3>
-          <Bars rows={METHODS.map((m) => { const r = byRail.get(m.key); const n = Number(r?.payments ?? 0); return { key: m.key, label: m.label, value: n, num: `${num(n)} · ${money(r?.cents ?? 0)}`, pct: railTotal ? pct(n / railTotal) : "—" }; })} top={Math.max(railTotal, 1)} />
-          {railTotal === 0 ? <p className={s.hint}>No payment has been marked paid yet.</p> : null}
-        </>
+        </div>
       ) : null}
     </Panel>
   );
@@ -404,7 +427,7 @@ function UserDrawer({ row, onClose }: { row: UserRow; onClose: () => void }) {
                 <dt>Pays with</dt><dd className={s.wrap}>{d.platforms.length ? d.platforms.map((p) => `${p.platform} ${p.handle}`).join(" · ") : "nothing yet"}</dd>
               </dl>
               <div className={s.stats}>
-                <Stat label="Position" value={net === 0 ? "even" : moneyShort(net)} sub="paid minus share, open Dazzles" />
+                <Stat label="Position" value={net === 0 ? "even" : money(net)} sub="paid minus share, open Dazzles" />
                 <Stat label="Owes" value={money(d.owes_cents)} sub="pending payments to make" />
                 <Stat label="Owed" value={money(d.owed_cents)} sub="pending payments to receive" />
                 <Stat label="Stripes" value={num(d.stripes)} sub={`${num(d.cosmetics_owned)} wardrobe ${d.cosmetics_owned === 1 ? "item" : "items"}${look ? ` · wearing ${look}` : ""}`} />
