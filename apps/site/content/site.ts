@@ -18,7 +18,7 @@ export const legal: Record<LegalKey, string | null> = {
   // on the Privacy and Terms pages; unsetPlaceholders() warns at build time if one goes back to null.
   companyLegalName: "Bradley Russell, doing business as Zebrasplit",
   effectiveDate: "October 16, 2026",
-  lastUpdatedDate: "October 16, 2026",
+  lastUpdatedDate: "October 28, 2026",
   supportEmail: "support@zebrasplit.com",
   privacyEmail: "privacy@zebrasplit.com",
   arbitrationProvider: "the American Arbitration Association (AAA)",
