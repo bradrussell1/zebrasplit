@@ -3,6 +3,7 @@ import { useState } from "react";
 import { AuthScreen } from "@/components/AuthScreen";
 import { Button, Input } from "@/ui";
 import { friendlyAuthError, parseIdentifier, resetOtp } from "@/lib/auth";
+import { useCaptcha } from "@/lib/captcha";
 import { supabase } from "@/lib/supabase";
 
 /**
@@ -15,6 +16,7 @@ import { supabase } from "@/lib/supabase";
  */
 export default function ForgotScreen() {
   const router = useRouter();
+  const getCaptcha = useCaptcha();
   const [id, setId] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -28,7 +30,7 @@ export default function ForgotScreen() {
     if (e1) { setBusy(false); setError(friendlyAuthError(e1.message)); return; }
     const d = (data ?? null) as { masked?: string; ticket?: string } | null;
     if (!d?.ticket) { setBusy(false); setError("We don't have an account with that " + ("email" in who ? "email." : "number.")); return; }
-    const sent = await resetOtp({ action: "send", ticket: d.ticket });
+    const sent = await resetOtp({ action: "send", ticket: d.ticket, captcha_token: await getCaptcha() });
     setBusy(false);
     if (sent.error) { setError(friendlyAuthError(sent.error)); return; }
     router.push({ pathname: "/(auth)/code", params: { mode: "reset", ticket: d.ticket, masked: d.masked ?? "" } });

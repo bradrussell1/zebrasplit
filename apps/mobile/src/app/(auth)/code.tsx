@@ -6,6 +6,7 @@ import { View } from "react-native";
 import { AuthScreen } from "@/components/AuthScreen";
 import { Button, CodeCells, TextLink, ZText } from "@/ui";
 import { friendlyAuthError, resetOtp, useAuth } from "@/lib/auth";
+import { useCaptcha } from "@/lib/captcha";
 import { supabase } from "@/lib/supabase";
 
 /**
@@ -25,6 +26,7 @@ export default function CodeScreen() {
   const params = useLocalSearchParams<{ phone?: string; mode?: Mode; onboarding?: string; ticket?: string; masked?: string }>();
   const { phone, mode = "otp", ticket } = params;
   const { setPendingPasswordReset, signOut, session } = useAuth();
+  const getCaptcha = useCaptcha();
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -70,11 +72,12 @@ export default function CodeScreen() {
 
   async function resend() {
     setError(null);
+    // a phone change is an authenticated request and needs no captcha; the other two send a text to a stranger
     const e = mode === "reset"
-      ? (await resetOtp({ action: "send", ticket: ticket ?? "" })).error ?? null
+      ? (await resetOtp({ action: "send", ticket: ticket ?? "", captcha_token: await getCaptcha() })).error ?? null
       : mode === "phone_change"
         ? (await supabase.auth.updateUser({ phone: phone! })).error?.message ?? null
-        : (await supabase.auth.signInWithOtp({ phone: phone!, options: { shouldCreateUser: mode === "otp" } })).error?.message ?? null;
+        : (await supabase.auth.signInWithOtp({ phone: phone!, options: { shouldCreateUser: mode === "otp", captchaToken: await getCaptcha() } })).error?.message ?? null;
     if (e) { setError(friendlyAuthError(e)); return; }
     setWait(30); setCode(""); submitted.current = false;
   }

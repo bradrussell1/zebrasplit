@@ -37,7 +37,8 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   async headers() {
     return [
-      { source: "/(.*)", headers: securityHeaders },
+      // /captcha sets its own, Cloudflare-only policy (app/captcha/route.ts)
+      { source: "/((?!captcha$).*)", headers: securityHeaders },
       { source: "/join/:code*", headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }] },
       { source: "/design", headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }] },
       { source: "/admin/:path*", headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }] },

@@ -53,7 +53,9 @@ async function remoteClient() {
   if (remoteSession) return remoteSession;
   const { createClient } = await import("@supabase/supabase-js");
   const sb = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY, { auth: { persistSession: false } });
-  const { error: e1 } = await sb.auth.signInWithOtp({ phone: process.env.TEST_PHONE }); if (e1) throw e1;
+  // captcha-exempt sender when the service key is given (see rls-audit.mjs)
+  const sender = process.env.SUPABASE_SERVICE_ROLE_KEY ? createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } }) : sb;
+  const { error: e1 } = await sender.auth.signInWithOtp({ phone: process.env.TEST_PHONE }); if (e1) throw e1;
   const { data: auth, error: e2 } = await sb.auth.verifyOtp({ phone: process.env.TEST_PHONE, token: process.env.TEST_OTP, type: "sms" }); if (e2) throw e2;
   remoteSession = { sb, auth };
   return remoteSession;

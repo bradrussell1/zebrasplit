@@ -310,6 +310,7 @@ harness lives at `scripts/rls-audit.mjs`.
 | SMS — invites | Twilio Messaging Service, toll-free |
 | Receipt reading | Anthropic API, from Edge Functions only |
 | Errors | Sentry, `sendDefaultPii: false`, scrubbing numbers and amounts |
+| Bot protection | Cloudflare Turnstile, invisible, on every request that sends a text or checks a password (sign-up, login code, resend, reset code, password login). Widget page: `zebrasplit.com/captcha`; the app loads it in a hidden WebView (`apps/mobile/src/lib/captcha.tsx`). Apple and Google sign-in are exempt server-side. Kill switch: clear `TURNSTILE_SITE_KEY` on the site and turn captcha off in Supabase, no build needed. |
 
 Edge Functions: `send-invite` · `push` · `receipt-parse` · `receipt-save` ·
 `reset-otp` · `purge-trip-media` · `revenuecat-webhook`.

@@ -15,12 +15,16 @@ import fs from "node:fs";
 
 const env = (k, d) => process.env[k] ?? d;
 const URL_ = env("SUPABASE_URL"), ANON = env("SUPABASE_ANON_KEY"), TRIP = env("TRIP_ID"), OTP = env("TEST_OTP", "123456");
+// With captcha on in the project, /otp refuses anonymous requests without a Turnstile token;
+// a service-role caller is exempt, so the code is requested with it when the key is given.
+const SERVICE = env("SUPABASE_SERVICE_ROLE_KEY");
 if (!URL_ || !ANON || !TRIP) { console.error("SUPABASE_URL, SUPABASE_ANON_KEY and TRIP_ID are required"); process.exit(2); }
 const mdOut = process.argv.includes("--md") ? process.argv[process.argv.indexOf("--md") + 1] : null;
 
 async function signIn(phone) {
   const sb = createClient(URL_, ANON, { auth: { persistSession: false, autoRefreshToken: false } });
-  const { error: e1 } = await sb.auth.signInWithOtp({ phone }); if (e1) throw new Error(`${phone}: ${e1.message}`);
+  const sender = SERVICE ? createClient(URL_, SERVICE, { auth: { persistSession: false, autoRefreshToken: false } }) : sb;
+  const { error: e1 } = await sender.auth.signInWithOtp({ phone }); if (e1) throw new Error(`${phone}: ${e1.message}`);
   const { data, error: e2 } = await sb.auth.verifyOtp({ phone, token: OTP, type: "sms" }); if (e2) throw new Error(`${phone}: ${e2.message}`);
   return { sb, uid: data.user.id };
 }
