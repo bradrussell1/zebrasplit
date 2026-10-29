@@ -3,6 +3,7 @@ import { useState } from "react";
 import { AuthScreen } from "@/components/AuthScreen";
 import { Button, Input, TextLink } from "@/ui";
 import { friendlyAuthError, parseIdentifier } from "@/lib/auth";
+import { useCaptcha } from "@/lib/captcha";
 import { supabase } from "@/lib/supabase";
 
 /**
@@ -11,6 +12,7 @@ import { supabase } from "@/lib/supabase";
  */
 export default function PasswordLoginScreen() {
   const router = useRouter();
+  const getCaptcha = useCaptcha();
   const [id, setId] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
@@ -21,7 +23,7 @@ export default function PasswordLoginScreen() {
     if (!who) { setError("Enter the email or phone number on your account."); return; }
     if (!password) { setError("Enter your password."); return; }
     setBusy(true); setError(null);
-    const { error: e } = await supabase.auth.signInWithPassword({ ...who, password });
+    const { error: e } = await supabase.auth.signInWithPassword({ ...who, password, options: { captchaToken: await getCaptcha() } });
     setBusy(false);
     if (e) setError(friendlyAuthError(e.message));
   }

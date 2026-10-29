@@ -2,6 +2,7 @@ import { Redirect, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, View } from "react-native";
 import { supabase } from "@/lib/supabase";
+import { useCaptcha } from "@/lib/captcha";
 
 /**
  * DEV ONLY: zebrasplit://dev-login?phone=15555550100 signs a test number in
@@ -11,6 +12,7 @@ import { supabase } from "@/lib/supabase";
  * project's auth config anyway.
  */
 export default function DevLogin() {
+  const getCaptcha = useCaptcha();
   const { phone, signout } = useLocalSearchParams<{ phone?: string; signout?: string }>();
   const [done, setDone] = useState(false);
   useEffect(() => {
@@ -19,12 +21,12 @@ export default function DevLogin() {
       await supabase.auth.signOut();
       if (phone) {
         const p = phone.startsWith("+") ? phone : `+${phone}`;
-        await supabase.auth.signInWithOtp({ phone: p });
+        await supabase.auth.signInWithOtp({ phone: p, options: { captchaToken: await getCaptcha() } });
         await supabase.auth.verifyOtp({ phone: p, token: "123456", type: "sms" });
       }
       setDone(true);
     })();
-  }, [phone, signout]);
+  }, [phone, signout, getCaptcha]);
   if (!done) return <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}><ActivityIndicator /></View>;
   return <Redirect href="/" />;
 }

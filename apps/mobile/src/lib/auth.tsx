@@ -153,7 +153,7 @@ export const isValidEmail = (s: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s.t
  * checks it and answers the session tokens. Errors come back as a message to show.
  */
 export type ResetOtpResult = { ok?: boolean; access_token?: string; refresh_token?: string; error?: string };
-export async function resetOtp(body: { action: "send" | "verify"; ticket: string; code?: string }): Promise<ResetOtpResult> {
+export async function resetOtp(body: { action: "send" | "verify"; ticket: string; code?: string; captcha_token?: string }): Promise<ResetOtpResult> {
   const { data, error } = await supabase.functions.invoke<ResetOtpResult>("reset-otp", { body });
   if (error) {
     let detail = error.message;
@@ -173,6 +173,7 @@ export function friendlyAuthError(message: string, provider?: "google" | "apple"
   if (m.includes("invalid login credentials")) return "That email or phone and password don't match.";
   if (m.includes("user already registered") || m.includes("already been registered")) return "There's already an account with that number. Log in instead.";
   if (m.includes("rate limit") || m.includes("too many")) return "Too many tries. Wait a minute and try again.";
+  if (m.includes("captcha")) return "We couldn't confirm you're a real person. Check your connection and try again.";
   if (m.includes("token has expired") || m.includes("otp_expired")) return "That code has expired. Request a new one.";
   if (m.includes("invalid") && m.includes("otp")) return "That code isn't right. Check the text and try again.";
   return message;

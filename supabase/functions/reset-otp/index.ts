@@ -9,12 +9,12 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders, json } from "../_shared/cors.ts";
 import { withSentry } from "../_shared/sentry.ts";
 
-type Body = { action?: string; ticket?: string; code?: string };
+type Body = { action?: string; ticket?: string; code?: string; captcha_token?: string };
 
 Deno.serve(withSentry("reset-otp", async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return json({ error: "method" }, 405);
-  const { action, ticket, code } = await req.json().catch(() => ({})) as Body;
+  const { action, ticket, code, captcha_token } = await req.json().catch(() => ({})) as Body;
   if (!ticket || !/^[0-9a-f-]{36}$/i.test(ticket)) return json({ error: "ticket required" }, 400);
 
   const url = Deno.env.get("SUPABASE_URL")!;
@@ -26,7 +26,8 @@ Deno.serve(withSentry("reset-otp", async (req) => {
     const { data: phone, error } = await admin.rpc("reset_ticket_phone", { p_ticket: ticket, p_action: "send" });
     if (error) return json({ error: error.message }, 429);
     if (typeof phone !== "string") return json({ error: expired }, 400);
-    const { error: e } = await auth.auth.signInWithOtp({ phone, options: { shouldCreateUser: false } });
+    // the app's Turnstile token rides along: with captcha on in Supabase the text is refused without it
+    const { error: e } = await auth.auth.signInWithOtp({ phone, options: { shouldCreateUser: false, captchaToken: captcha_token } });
     if (e) return json({ error: e.message }, e.status ?? 400);
     return json({ ok: true });
   }

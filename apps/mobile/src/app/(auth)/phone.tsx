@@ -4,6 +4,7 @@ import { useState } from "react";
 import { AuthScreen, FormError } from "@/components/AuthScreen";
 import { Button, Input } from "@/ui";
 import { friendlyAuthError, toE164 } from "@/lib/auth";
+import { useCaptcha } from "@/lib/captcha";
 import { supabase, supabaseConfigured } from "@/lib/supabase";
 
 /**
@@ -13,6 +14,7 @@ import { supabase, supabaseConfigured } from "@/lib/supabase";
  */
 export default function PhoneScreen() {
   const router = useRouter();
+  const getCaptcha = useCaptcha();
   const [raw, setRaw] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -23,7 +25,7 @@ export default function PhoneScreen() {
     if (!phone) { setError("Enter a phone number, like (555) 555-0100."); return; }
     setBusy(true); setError(null);
     track("onboarding_phone_entered");
-    const { error: e } = await supabase.auth.signInWithOtp({ phone });
+    const { error: e } = await supabase.auth.signInWithOtp({ phone, options: { captchaToken: await getCaptcha() } });
     setBusy(false);
     if (e) { setError(friendlyAuthError(e.message)); return; }
     track("onboarding_code_sent");

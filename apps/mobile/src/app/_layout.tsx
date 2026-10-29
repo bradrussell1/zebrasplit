@@ -7,6 +7,7 @@ import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useRef, useState } from "react";
 import { AuthProvider, useAuth } from "@/lib/auth";
+import { CaptchaProvider } from "@/lib/captcha";
 import { takePendingJoin } from "@/lib/invites";
 import { initSentry, wrapRoot } from "@/lib/sentry";
 import { OfflineBanner, ToastProvider } from "@/ui";
@@ -111,9 +112,11 @@ function RootLayout() {
   return (
     <AuthProvider>
       <ToastProvider>
-        <StatusBar style="dark" />
-        <Routes />
-        <OfflineBanner />
+        <CaptchaProvider>
+          <StatusBar style="dark" />
+          <Routes />
+          <OfflineBanner />
+        </CaptchaProvider>
       </ToastProvider>
     </AuthProvider>
   );

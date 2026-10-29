@@ -7,6 +7,7 @@ import { View } from "react-native";
 import { AuthScreen, FormError } from "@/components/AuthScreen";
 import { Button, Input, ZText } from "@/ui";
 import { friendlyAuthError, isValidEmail, toE164 } from "@/lib/auth";
+import { useCaptcha } from "@/lib/captcha";
 import { PlatformPills } from "@/components/PaymentMethods";
 import { supabase } from "@/lib/supabase";
 
@@ -21,6 +22,7 @@ import { supabase } from "@/lib/supabase";
  */
 export default function SignupScreen() {
   const router = useRouter();
+  const getCaptcha = useCaptcha();
   const [first, setFirst] = useState("");
   const [last, setLast] = useState("");
   const [email, setEmail] = useState("");
@@ -51,7 +53,10 @@ export default function SignupScreen() {
     const { data, error: err } = await supabase.auth.signUp({
       email: email.trim().toLowerCase(),
       password,
-      options: { data: { first_name: firstClean, last_name: lastClean, display_name: joinName(firstClean, lastClean), pay_platform: payPlatform, pay_handle: handleClean, venmo_username: payPlatform === "venmo" ? handleClean : null } },
+      options: {
+        captchaToken: await getCaptcha(),
+        data: { first_name: firstClean, last_name: lastClean, display_name: joinName(firstClean, lastClean), pay_platform: payPlatform, pay_handle: handleClean, venmo_username: payPlatform === "venmo" ? handleClean : null },
+      },
     });
     if (err) { setBusy(false); setError(friendlyAuthError(err.message)); return; }
     if (!data.session) { setBusy(false); setError("Check your email to confirm the address, then log in."); return; } // only if autoconfirm is ever turned off
