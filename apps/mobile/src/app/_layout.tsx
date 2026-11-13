@@ -34,7 +34,6 @@ initSentry(); // no-op without EXPO_PUBLIC_SENTRY_DSN
 function Routes() {
   const { session, profile, loading, pendingPasswordReset } = useAuth();
   useEffect(() => { if (!loading) SplashScreen.hideAsync(); }, [loading]);
-  if (loading) return null;
   const signedIn = !!session;
   const needsPhone = signedIn && !session.user.phone;
   const needsPassword = signedIn && !needsPhone && pendingPasswordReset;
@@ -59,6 +58,9 @@ function Routes() {
     if (!navReady || !inApp) return;
     takePendingJoin().then((code) => { if (code) router.push(`/join/${code}`); }).catch(() => undefined);
   }, [navReady, inApp]);
+  // Every hook above runs on every render. Returning before them while the session loads made the
+  // next render call more hooks than the first, which React treats as fatal (build 20 launch crash).
+  if (loading) return null;
   return (
     <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: palette.bgMid } }}>
       <Stack.Protected guard={!signedIn}>
