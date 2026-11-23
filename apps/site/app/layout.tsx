@@ -4,7 +4,7 @@ import { Analytics } from "@vercel/analytics/next";
 import { palette } from "@bunktab/theme";
 import { ScreenBackground } from "@/components/site/ScreenBackground";
 import { site } from "@/content/site";
-import { siteUrl } from "@/lib/env";
+import { appStoreId, siteUrl } from "@/lib/env";
 import "@/styles/tokens.css";
 import "@/styles/globals.css";
 
@@ -22,6 +22,8 @@ export const metadata: Metadata = {
   openGraph: { type: "website", siteName: site.name, locale: "en_US", title: site.title, description: site.description, url: "/" },
   twitter: { card: "summary_large_image", title: site.title, description: site.description },
   formatDetection: { telephone: false },
+  // Safari's "Open in the App Store" banner on every page; /join/<code> overrides it with the invite link.
+  ...(appStoreId ? { itunes: { appId: appStoreId } } : {}),
 };
 
 export const viewport: Viewport = { themeColor: palette.volt, width: "device-width", initialScale: 1, colorScheme: "light" };
