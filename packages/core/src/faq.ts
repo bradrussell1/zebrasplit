@@ -18,8 +18,8 @@ export const faqSections: FaqSection[] = [
     ["what-is-a-dazzle", "What’s a “Dazzle”?", "A group of zebras is called a Dazzle. In Zebrasplit, it’s your trip: the people, the expenses and the herd."],
     ["what-is-the-herd", "What’s the herd?", "Everyone in the Dazzle is their own zebra, standing in a field on the trip page. A zebra is plain until its owner has finished adding expenses, then it earns its stripes. When every zebra is striped, the group can settle up."],
     ["what-do-the-stripes-mean", "What do the stripes mean?", "That person has finished adding their expenses. Stripes never mean money — what you owe or are owed is always shown as a number."],
-    ["how-do-i-invite-people", "How do I invite people?", "Pick them from your contacts or type a phone number. They get a text with a link and can join from the app or straight from their browser."],
-    ["do-my-friends-need-to-download-the-app", "Do my friends need to download the app?", "No. They can open the invite link in a browser, verify their phone number, add expenses and tap Done. The app adds nudges and the one-tap payments."],
+    ["how-do-i-invite-people", "How do I invite people?", "Pick them from your contacts or type a phone number. They get a text with a link. It opens Zebrasplit, where they accept the invite."],
+    ["do-my-friends-need-to-download-the-app", "Do my friends need to download the app?", "Yes. Everyone on the trip uses the app, and it’s free. The invite link takes them to it, and they accept the invite there."],
   ]),
   S("adding", "Adding expenses", [
     ["is-there-a-limit", "Is there a limit on how many expenses I can add?", "No. Log as many as the trip needs."],

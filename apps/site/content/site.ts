@@ -6,8 +6,9 @@
 export const site = {
   name: "Zebrasplit",
   tagline: "Split the trip. Not the friendship.",
-  title: "Zebrasplit · Split the trip. Not the friendship.",
-  description: "Track who paid what, wait until the whole dazzle earns its stripes, then settle up once in Venmo, Cash App or PayPal.",
+  // The title leads with what people search for ("split trip expenses"); the tagline stays the H1 and the share image.
+  title: "Zebrasplit: Split trip expenses with friends, free",
+  description: "The free app for splitting group trip expenses. Track who paid what, split by item or by night, then settle up once in Venmo, Cash App or PayPal. No daily limits.",
   joinDescription: "Join the Dazzle to add expenses and settle up.",
 } as const;
 
