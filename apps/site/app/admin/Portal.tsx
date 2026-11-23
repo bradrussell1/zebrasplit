@@ -14,17 +14,25 @@ import s from "./admin.module.css";
  * so this page has no privileges of its own — a non-admin who signs in sees an
  * empty portal, not a leak.
  *
- * The range pills top-right (7 days / 30 days / all time) go to every read as
- * p_since: rows created at or after it. "Last 7 days" sub-labels are always the
- * trailing week regardless of the range.
+ * The range pills top-right go to every read as p_since: rows created at or after
+ * it. "Last 7 days" sub-labels are always the trailing week regardless of the range.
+ *
+ * The default is "Since launch" (owner, 2026-11-23): everything before the App Store
+ * release was TestFlight testing, about $20K of made-up expenses, and should not
+ * count. Nothing is deleted. The 7 and 30 day ranges never reach back before launch
+ * either; "All-time + testing" is the only range that shows the test data.
  */
+/** The App Store release (2026-11-22, midnight Pacific). */
+const LAUNCH = "2026-11-22T08:00:00.000Z";
 const TABS = ["Overview", "Users", "Dazzles", "Welcome wizard", "Models", "Integrations", "Feedback", "Data"] as const;
 type Tab = (typeof TABS)[number];
-type Range = "7d" | "30d" | "all";
-const RANGES: { key: Range; label: string }[] = [{ key: "7d", label: "Last 7D" }, { key: "30d", label: "Last 30D" }, { key: "all", label: "All-time" }];
+type Range = "7d" | "30d" | "launch" | "all";
+const RANGES: { key: Range; label: string }[] = [{ key: "7d", label: "Last 7D" }, { key: "30d", label: "Last 30D" }, { key: "launch", label: "Since launch" }, { key: "all", label: "All-time + testing" }];
 function sinceOf(r: Range): string | null {
   if (r === "all") return null;
-  return new Date(Date.now() - (r === "7d" ? 7 : 30) * 86400 * 1000).toISOString();
+  if (r === "launch") return LAUNCH;
+  const from = new Date(Date.now() - (r === "7d" ? 7 : 30) * 86400 * 1000).toISOString();
+  return from > LAUNCH ? from : LAUNCH;
 }
 
 // one dollar format everywhere: $3,545.00 (a minus sign ahead of the $ for negatives)
@@ -642,8 +650,9 @@ const STEP_LABELS: Record<string, string> = {
   onboarding_finished: "Reached the app",
 };
 
-function WizardTab({ active }: { active: boolean }) {
-  const { data, error, loading } = useRpc<FunnelRow[]>("admin_funnel", {}, active);
+function WizardTab({ active, since }: { active: boolean; since: string | null }) {
+  // no p_since = the function's own default, the last 30 days
+  const { data, error, loading } = useRpc<FunnelRow[]>("admin_funnel", since ? { p_since: since } : {}, active);
   const rows = data ?? [];
   const first = rows[0]?.people ?? 0;
   const noData = rows.every((r) => Number(r.people) === 0);
@@ -981,7 +990,7 @@ export function Portal() {
   const [checked, setChecked] = useState(false);
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const [tab, setTab] = useState<Tab>("Overview");
-  const [range, setRange] = useState<Range>("all");
+  const [range, setRange] = useState<Range>("launch");
   const since = sinceOf(range);
   const [usersFilter, setUsersFilter] = useState<Filter>("all");
   const [usersKey, setUsersKey] = useState(0);
@@ -1038,7 +1047,7 @@ export function Portal() {
         {tab === "Overview" ? <OverviewTab active since={since} go={go} /> : null}
         {tab === "Users" ? <UsersTab key={usersKey} active since={since} initialFilter={usersFilter} /> : null}
         {tab === "Dazzles" ? <DazzlesTab active since={since} /> : null}
-        {tab === "Welcome wizard" ? <WizardTab active /> : null}
+        {tab === "Welcome wizard" ? <WizardTab active since={since} /> : null}
         {tab === "Models" ? <ModelsTab active since={since} /> : null}
         {tab === "Integrations" ? <IntegrationsTab active /> : null}
         {tab === "Feedback" ? <FeedbackTab active /> : null}
