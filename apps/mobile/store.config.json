@@ -1,7 +1,7 @@
 {
   "configVersion": 0,
   "apple": {
-    "version": "1.0.3",
+    "version": "1.1.1",
     "copyright": "2026 Bradley Russell",
     "categories": [
       "FINANCE",
@@ -23,18 +23,25 @@
     "info": {
       "en-US": {
         "title": "Zebrasplit",
-        "subtitle": "Split and share expenses",
+        "subtitle": "Split trip costs with friends",
         "promoText": "Everyone gets a zebra. Log what you paid, dress your zebra, and settle the whole trip with one payment each.",
-        "description": "Zebrasplit is the expense sharing app without the confusion and hassle of leading competitors.\n\nSplit the trip or expense, track who paid for what, know exactly when everyone is done, then settle the whole thing with a single payment each.\n\nEVERYONE GETS A ZEBRA\n\nYour group is a herd. Every person in the trip is their own zebra, standing in a field on the trip page. A zebra is plain until its owner has finished adding expenses, then it earns its stripes. One glance tells you who you are still waiting on, by name.\n\nNudge anyone holding things up. If someone never responds, the trip owner can close it out anyway.\n\nDRESS YOUR ZEBRA\n\nHats, shades, chains, hoodies, jerseys, a crown if you've earned it. Pick one for the head, one for the face and neck, one for the body. Everyone in your trips sees what you're wearing, and some items you earn rather than buy: settle your first trip, settle five, send your first gift.\n\nHOW IT WORKS\n\n1. Start a trip and invite your people from your contacts or by phone number.\n2. Everyone logs what they paid as they go.\n3. Each person taps Done when they've finished adding expenses.\n4. Once every zebra has its stripes, Zebrasplit works out the fewest payments that settle the group and opens Venmo, Cash App or PayPal with the amount already filled in.\n\nSPLIT IT HOWEVER IT ACTUALLY HAPPENED\n\n- Evenly, by exact amounts, by percentage or by shares\n- By nights stayed, so people who arrive late pay less automatically\n- Item by item from a photo of the receipt\n- In any currency, with the exchange rate locked in when you save\n\nONE PAYMENT EACH, NOT FIVE\n\nInstead of six people paying six people, Zebrasplit works out the smallest set of payments that settles everyone, so you usually pay one person once. Tap Pay and Venmo, Cash App or PayPal opens with the amount ready to send.\n\nZebrasplit never touches your money. It never holds funds, never processes a payment and never asks for bank or card details. Paying another way - cash, Zelle, a bank transfer - works fine too; just mark the payment as paid.\n\nFRIENDS DON'T NEED THE APP\n\nAnyone you invite gets a text with a link. They can open it in a browser, verify their number, add expenses and tap Done without installing anything.\n\nAFTER THE TRIP\n\nSettled trips move to Past with a recap: the total, cost per person, the biggest expense and who fronted the most. Export it as an image for the group chat.\n\nFREE\n\nSplitting, stripes and settling up are free, and always will be. Outfits are optional.",
+        "description": "Zebrasplit is the group expense tracker built for real life without the headaches, confusion, or paywalls.\n\nTrack every expense and see who\u2019s finished adding their receipts. No confusion about when it\u2019s time to settle up, the app signals the group the second everyone is ready, then squares up the whole trip with one payment each.\n\nEARN YOUR STRIPES\nA group of zebras is a dazzle. Every person on the trip has their own zebra  avatar; only without any stripes. Earn your stripes by finishing adding your expenses and tapping \"Done.\"\n\nOne glance tells you exactly who\u2019s ready to settle up and who\u2019s holding up the dazzle. Send a quick nudge to the stragglers, or if someone ghosts, the trip host can lock the tab and close it out anyway.\n\nDRESS YOUR ZEBRA\nHats, shades, chains, hoodies, jerseys, even a crown if you\u2019ve earned it. Customize your look across every trip. \n\nHOW IT WORKS\n\n- Start a trip and invite friends via contacts or phone number.\n- Add expenses as they happen.\n- Tap Done to earn your stripes when all your receipts are in.\n- Settle up in one tap via Venmo, Cashapp, or Paypal. Zebrasplit calculates the fewest possible payments to get everyone square and opens Venmo, Cash App, or PayPal with the exact amount pre-filled.\n\nSPLIT IT HOWEVER IT ACTUALLY HAPPENED\n- Flexible math: Split evenly, by exact dollar amounts, percentages, or shares.\n- By nights stayed: Late arrivals or early departures automatically pay their fair share.\n- Receipt scanning: Snap a photo of the bill and claim items line by line.\n- Multi-currency: Track spend in any currency with the real-time exchange rate locked in the moment you save.\n\nONE PAYMENT EACH\n- Zebrasplit simplifies the payment strategy so you usually just pay one person, once.\n\nZebrasplit never touches your money, holds funds, or asks for your bank or card details. Prefer cash, Zelle, or wire? Just mark the balance as paid and you\u2019re square.\n\nINVITE BY TEXT\nAdd friends from your contacts or by phone number. They get a text with a link that opens Zebrasplit, where they accept the invite and start adding expenses.\n\n100% FREE TO SPLIT\nSplitting expenses, earning your stripes, and settling up are completely free. And always will be. Zebra drip is optional.",
         "keywords": [
-          "split expenses",
-          "group trip",
-          "venmo",
-          "bill splitter",
-          "settle up",
-          "roommates",
-          "travel costs",
-          "receipt scan"
+          "expense",
+          "splitter",
+          "bill",
+          "group",
+          "vacation",
+          "travel",
+          "receipt",
+          "settle",
+          "iou",
+          "tab",
+          "bachelorette",
+          "share",
+          "owe",
+          "money",
+          "ski"
         ],
         "marketingUrl": "https://zebrasplit.com",
         "supportUrl": "https://zebrasplit.com/faq",
@@ -47,7 +54,8 @@
             "./screenshots/en-US/4-shop.png",
             "./screenshots/en-US/5-settle.png"
           ]
-        }
+        },
+        "releaseNotes": "Clearer answers in the FAQ about inviting friends, plus small fixes."
       }
     },
     "advisory": {
