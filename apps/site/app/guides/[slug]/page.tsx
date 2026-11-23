@@ -11,6 +11,8 @@ import { guideBySlug, guides } from "@/content/guides";
 import { appStoreUrl, playStoreUrl, siteUrl } from "@/lib/env";
 import { site } from "@/content/site";
 import { GuideTile } from "../GuideTile";
+import { FeatureTile } from "@/components/features/FeatureTile";
+import { features } from "@/content/features";
 import s from "../guides.module.css";
 
 export const dynamicParams = false;
@@ -41,6 +43,7 @@ export default async function GuidePage({ params }: Params) {
   const url = `${siteUrl}/guides/${g.slug}`;
   const faqs = g.faqIds.map((id) => faqById(id)).filter((f): f is FaqItem => Boolean(f));
   const related = g.related.map((r) => guideBySlug(r)).filter((r) => r !== undefined);
+  const usedFeatures = features.filter((f) => f.guides.includes(g.slug));
   const jsonLd = {
     "@context": "https://schema.org",
     "@graph": [
@@ -112,6 +115,14 @@ export default async function GuidePage({ params }: Params) {
             <StoreBadges urls={{ appStore: appStoreUrl, playStore: playStoreUrl }} location={`guide_${g.slug}`} onInk only="ios" size="lg" />
           </Card>
         </section>
+        {usedFeatures.length ? (
+          <section className="container inset" style={{ paddingTop: 72 }}>
+            <div className={s.content}>
+              <h2 className={s.h2}>Features in this guide</h2>
+              <div className={s.more}>{usedFeatures.map((f) => <FeatureTile key={f.slug} feature={f} />)}</div>
+            </div>
+          </section>
+        ) : null}
         {related.length ? (
           <section className="container inset" style={{ paddingTop: 72 }}>
             <div className={s.content}>

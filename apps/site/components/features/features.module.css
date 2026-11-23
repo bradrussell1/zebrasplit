@@ -1,0 +1,45 @@
+/* Feature pages (/features/<slug>). Layout lines come from components/layout/layout.module.css; the
+   article body reuses app/guides/guides.module.css. Tokens only. */
+
+/* Hero band: copy in column 1, the mock on the column-2 line */
+.hero { padding-top: var(--zs-space-32); padding-inline: var(--zs-layout-gutter); }
+.heroCopy { display: flex; flex-direction: column; gap: 18px; }
+.crumbs { display: flex; flex-wrap: wrap; gap: var(--zs-space-8); }
+.intro { font-size: var(--zs-fs-body-l); line-height: var(--zs-lh-body-l); color: var(--zs-color-text-secondary); max-width: 540px; }
+.introOnInk { color: var(--zs-hairline); }
+.eyebrowOnInk { color: var(--zs-color-accent-on-ink); }
+.badges { padding-top: var(--zs-space-6); }
+
+/* The computed mocks (nights, currency): a cream card on the white band */
+.mockWrap { width: 380px; max-width: 100%; }
+.mock { border-radius: var(--zs-radius-card-l); background: var(--zs-cream); color: var(--zs-ink); padding: var(--zs-space-20); display: flex; flex-direction: column; gap: var(--zs-space-14); box-shadow: inset 0 0 0 1.5px var(--zs-color-outline); }
+.mockHead { display: flex; align-items: center; justify-content: space-between; gap: var(--zs-space-12); }
+.mockTitle { font-size: var(--zs-fs-body-m); font-weight: 800; }
+.mockTotal { padding: var(--zs-space-6) var(--zs-space-12); border-radius: var(--zs-radius-pill); background: var(--zs-ink); color: var(--zs-hide); font-size: var(--zs-fs-label); font-weight: 800; line-height: 1.2; }
+.mockFoot { font-size: var(--zs-fs-caption); line-height: var(--zs-lh-caption); color: var(--zs-color-text-muted); }
+.person { display: flex; align-items: center; gap: var(--zs-space-8); min-width: 0; }
+.personName { font-size: var(--zs-fs-label); font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bust { width: var(--zs-size-pill-small); height: var(--zs-size-pill-small); border-radius: var(--zs-radius-pill); background: var(--zs-pink-tint); box-shadow: 0 0 0 2px var(--zs-white); display: inline-flex; align-items: flex-end; justify-content: center; overflow: hidden; flex-shrink: 0; }
+.share { font-size: var(--zs-fs-label); font-weight: 800; text-align: right; white-space: nowrap; }
+
+/* Nights: name | one cell per night | share */
+.nightsGrid { display: grid; grid-template-columns: minmax(0, 1fr) repeat(3, var(--zs-size-pill-button)) minmax(64px, auto); column-gap: var(--zs-space-6); row-gap: var(--zs-space-8); align-items: center; }
+.nightsRow { display: contents; }
+.nightLabel { font-size: var(--zs-fs-small); font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--zs-color-text-muted); text-align: center; }
+.night { height: var(--zs-size-pill-button); border-radius: var(--zs-radius-tile); border: 1.5px dashed var(--zs-color-outline-dashed); display: inline-flex; align-items: center; justify-content: center; }
+.nightOn { border: 0; background: var(--zs-volt); color: var(--zs-ink); }
+
+/* Currency */
+.code { padding: var(--zs-space-4) var(--zs-space-10); border-radius: var(--zs-radius-pill); background: var(--zs-sand); font-size: var(--zs-fs-small); font-weight: 800; letter-spacing: 0.06em; }
+.bigAmount { font-size: var(--zs-fs-feature); line-height: 1; font-weight: 800; letter-spacing: var(--zs-tracking-feature); }
+.rateRow { display: flex; flex-wrap: wrap; align-items: center; gap: var(--zs-space-8); padding: var(--zs-space-10) var(--zs-space-14); border-radius: var(--zs-radius-tile); background: var(--zs-white); font-size: var(--zs-fs-caption); font-weight: 700; }
+.rate { margin-left: auto; color: var(--zs-color-text-muted); }
+.convert { display: flex; align-items: center; justify-content: space-between; gap: var(--zs-space-12); }
+.convertLabel { font-size: var(--zs-fs-label); font-weight: 700; }
+.convertAmount { padding: var(--zs-space-6) var(--zs-space-12); border-radius: var(--zs-radius-pill); background: var(--zs-volt); font-size: var(--zs-fs-body-l); font-weight: 800; line-height: 1.2; }
+.shareList { display: flex; flex-direction: column; gap: var(--zs-space-8); padding-top: var(--zs-space-12); border-top: 2px dotted var(--zs-color-outline-dashed); }
+.shareRow { display: flex; align-items: center; justify-content: space-between; gap: var(--zs-space-12); }
+
+/* Article body sits on the text line, under the band */
+.body { padding-top: 56px; }
+.tiles { padding-top: 72px; }

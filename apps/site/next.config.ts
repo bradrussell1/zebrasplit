@@ -56,6 +56,8 @@ const nextConfig: NextConfig = {
       { source: "/i/:path*", destination: `${webApp}/i/:path*`, permanent: false },
       { source: "/t/:path*", destination: `${webApp}/t/:path*`, permanent: false },
       { source: "/sms", destination: `${webApp}/sms`, permanent: false },
+      // There is no /features index (the nav item is a dropdown); a typed URL lands on the homepage grid.
+      { source: "/features", destination: "/#features-title", permanent: false },
     ];
   },
 };
