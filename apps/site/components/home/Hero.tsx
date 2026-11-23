@@ -15,7 +15,7 @@ export function Hero({ urls }: { urls: StoreUrls }) {
             <h1 className="display display--hero">Split the trip<br />Not the friendship</h1>
             <p className={`lead ${s.heroSub}`}>Track who paid what, wait until the whole dazzle earns its stripes, then settle up once in <b>Venmo, Cash App or PayPal</b>.</p>
             <div className={s.badges}><StoreBadges urls={urls} location="hero" /></div>
-            <p className={s.heroNote}>Friends can join from a link. No download needed.</p>
+            <p className={s.heroNote}>Invite friends by text. They join in the app, free.</p>
           </div>
           <PhoneMock />
         </div>

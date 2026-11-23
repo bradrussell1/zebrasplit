@@ -10,7 +10,8 @@ export function FinalCta({ urls }: { urls: StoreUrls }) {
       <div className={l.container}>
         <div className={`${l.band} ${s.bandInk} ${s.cta}`} data-align-right="surface">
           <h2 id="get-title" className="display display--cta" data-align="text">Create your Dazzle</h2>
-          <p className={s.ctaSub}>Free on iPhone and Android.</p>
+          {/* Only name a platform whose listing is live. */}
+          <p className={s.ctaSub}>{urls.playStore ? "Free on iPhone and Android." : "Free on iPhone. Android is on the way."}</p>
           <StoreBadges urls={urls} location="final_cta" onInk variant="band" />
           <svg className={s.ctaHill} viewBox="0 0 1200 200" preserveAspectRatio="none" aria-hidden="true"><path d="M0 60 Q300 20 600 50 T1200 44 V200 H0 Z" fill="var(--zs-ink-soft)" /></svg>
           <CtaHerd />
