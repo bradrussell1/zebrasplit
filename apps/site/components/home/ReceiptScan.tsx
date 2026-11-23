@@ -32,7 +32,8 @@ export function ReceiptScan() {
   );
 }
 
-function ReceiptMock() {
+/** Also the hero picture on /features/receipt-scanning. */
+export function ReceiptMock() {
   const who = (ids: readonly string[]) => ids.map((id) => friend(id).name).join(", ");
   const summary = RECEIPT.lines.map((l) => `${l.item} ${l.amount}, ${who(l.who)}`).join("; ");
   return (

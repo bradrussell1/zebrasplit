@@ -9,3 +9,25 @@
 .cta { font-size: var(--zs-fs-nav); font-weight: 700; padding: var(--zs-space-12) var(--zs-space-20); border-radius: var(--zs-radius-pill); background: var(--zs-volt); color: var(--zs-color-text-on-volt); min-height: var(--zs-layout-min-tap-target); display: inline-flex; align-items: center; transition: transform var(--zs-motion-color-change) ease; }
 .cta:hover { transform: translateY(-1px); }
 @media (max-width: 400px) { .link { padding-inline: var(--zs-space-10); } .cta { padding-inline: var(--zs-space-14); } }
+
+/* Features dropdown (FeaturesMenu.tsx). The button is not a link; hovering it opens the panel. The panel
+   hangs directly off the button with its gap as padding, so the pointer never crosses dead space. */
+.nav { position: relative; }
+.menuWrap { position: relative; display: inline-flex; }
+.menuButton { border: 0; background: transparent; cursor: default; gap: var(--zs-space-6); }
+.menuButton[aria-expanded="true"] { color: var(--zs-ink-soft); }
+.menuButton[data-current] { font-weight: 700; text-decoration: underline; text-underline-offset: 6px; text-decoration-thickness: 2px; }
+.chevron { transition: transform var(--zs-motion-color-change) ease; }
+.menuButton[aria-expanded="true"] .chevron { transform: rotate(180deg); }
+.menu { position: absolute; z-index: 50; top: 100%; left: 0; width: 320px; padding-top: var(--zs-space-6); }
+.menuList { padding: var(--zs-space-8); border-radius: var(--zs-radius-card); background: var(--zs-white); box-shadow: var(--zs-shadow-hero); display: flex; flex-direction: column; gap: var(--zs-space-4); }
+.menuItem { display: flex; flex-direction: column; gap: 2px; padding: var(--zs-space-12) var(--zs-space-14); border-radius: var(--zs-radius-row); }
+.menuItem:hover, .menuItem:focus-visible { background: var(--zs-cream); }
+.menuItem[aria-current="page"] { background: var(--zs-sand); }
+.menuLabel { font-size: var(--zs-fs-nav); font-weight: 700; color: var(--zs-ink); }
+.menuBlurb { font-size: var(--zs-fs-caption); line-height: var(--zs-lh-caption); color: var(--zs-color-text-muted); }
+/* On phones the links wrap, so the panel hangs off the whole nav row and spans it. */
+@media (max-width: 640px) {
+  .menuWrap { position: static; }
+  .menu { left: 0; right: 0; width: auto; }
+}

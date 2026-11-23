@@ -156,7 +156,13 @@
 /* Feature grid */
 .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
 @media (max-width: 900px) { .grid { grid-template-columns: minmax(0, 1fr); } }
-.feature { padding-block: 26px; }
+.feature { position: relative; padding-block: 26px; }
+/* four of the six cards open a feature page: the title is the link and it covers the whole card */
+.featureLink::after { content: ""; position: absolute; inset: 0; border-radius: var(--zs-radius-card-l); }
+.featureLink:focus-visible { outline: none; }
+.featureLink:focus-visible::after { outline: 2px solid var(--zs-ink); outline-offset: 3px; }
+.featureMore { margin-top: auto; padding-top: var(--zs-space-4); font-size: var(--zs-fs-label); font-weight: 700; color: var(--zs-ink); }
+.feature:hover .featureMore { text-decoration: underline; text-underline-offset: 3px; }
 .tile { width: 48px; height: 48px; border-radius: var(--zs-radius-inset); display: inline-flex; align-items: center; justify-content: center; color: var(--zs-ink); }
 .tile_volt { background: var(--zs-volt); }
 .tile_sand { background: var(--zs-sand); }
