@@ -17,7 +17,7 @@ export const faqSections: FaqSection[] = [
     ["what-is-zebrasplit", "What is Zebrasplit?", "An app for splitting group trip costs. Everyone logs what they paid, taps Done when they’re finished, and the group settles up in Venmo, Cash App or PayPal with the fewest payments possible."],
     ["what-is-a-dazzle", "What’s a “Dazzle”?", "A group of zebras is called a Dazzle. In Zebrasplit, it’s your trip: the people, the expenses and the herd."],
     ["what-is-the-herd", "What’s the herd?", "Everyone in the Dazzle is their own zebra, standing in a field on the trip page. A zebra is plain until its owner has finished adding expenses, then it earns its stripes. When every zebra is striped, the group can settle up."],
-    ["what-do-the-stripes-mean", "What do the stripes mean?", "That person has finished adding their expenses. Stripes never mean money — what you owe or are owed is always shown as a number."],
+    ["what-do-the-stripes-mean", "What do the stripes mean?", "Select “Done” from the app and your zebra avatar earns its stripes, signaling to the rest of the group you’ve finished adding expenses."],
     ["how-do-i-invite-people", "How do I invite people?", "Pick them from your contacts or type a phone number. They get a text with a link. It opens Zebrasplit, where they accept the invite."],
     ["do-my-friends-need-to-download-the-app", "Do my friends need to download the app?", "Yes. Everyone on the trip uses the app, and it’s free. The invite link takes them to it, and they accept the invite there."],
   ]),
@@ -39,7 +39,7 @@ export const faqSections: FaqSection[] = [
   S("money", "Money and payments", [
     ["does-zebrasplit-handle-my-money", "Does Zebrasplit handle my money?", "No. Zebrasplit does the math and your payment app moves the money. We never hold funds or ask for bank or card details."],
     ["which-payment-apps-work", "Which payment apps work?", "Venmo, Cash App and PayPal. You only see the apps the person you owe has set up. Paid in cash or Zelle? Mark it paid another way."],
-    ["which-apps-can-i-get-paid-on", "Which apps can I get paid on?", "Venmo, Cash App or PayPal. Add at least one when you sign up, and as many as you like in Settings — the more you add, the easier you are to pay. Whoever owes you picks from the ones you've added."],
+    ["which-apps-can-i-get-paid-on", "Which apps can I get paid on?", "Venmo, Cash App or PayPal. Add at least one when you sign up, and as many as you like in Settings. The more you add, the easier you are to pay. Whoever owes you picks from the ones you’ve added."],
     ["can-i-pay-people-on-different-apps", "Can I pay different people on different apps?", "Yes. Each payment shows the app it will open, and you can switch it to any other app that person has added. If someone has nothing listed, or you paid by cash, Zelle or bank transfer, just mark the payment as paid."],
     ["how-do-i-know-someone-paid", "How do I know someone actually paid me?", "They mark the payment as paid, and you can confirm with “Got it”. The trip shows as settled once every payment is marked."],
   ]),
@@ -52,7 +52,7 @@ export const faqSections: FaqSection[] = [
     ["what-are-the-zebra-outfits", "What are the zebra outfits?", "Your zebra is your avatar on every trip. Dress it with free outfits or new drops from the shop. Outfits are cosmetic only and never needed to split or settle."],
     ["can-i-customise-my-zebra", "Can I change how my zebra looks?", "Yes. Open Account → Zebra and pick one item for the head, one for the face and neck, and one for the body. Everyone in your Dazzles sees what you’re wearing."],
     ["how-do-i-get-outfits", "How do I get outfits?", "Some are free from the start, some you earn, and the rest are small one-off purchases. You earn the yellow cap by settling your first trip, the party hat at five, and the tiara by sending your first gift."],
-    ["do-outfits-cost-real-money", "Do outfits cost real money?", "The paid ones do, and they’re bought through the App Store or Google Play like any other in-app purchase — never through Venmo, Cash App or PayPal. Those are only ever used to pay the people you travelled with, and Zebrasplit never touches that money."],
+    ["do-outfits-cost-real-money", "Do outfits cost money?", "The paid ones do, and they’re bought through the App Store or Google Play like any other in-app purchase."],
     ["does-an-outfit-change-my-split", "Does what I wear affect my share?", "No. Outfits are decoration. They change nothing about who owes what."],
   ]),
   S("pricing", "Pricing", [

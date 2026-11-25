@@ -15,8 +15,8 @@ export function ProblemBand() {
             <li className={s.dayItem}><span>Breakfast tacos</span><span>1</span></li>
             <li className={s.dayItem}><span>Rideshare to the beach</span><span>2</span></li>
             <li className={s.dayItem}><span>Boat rental</span><span>3</span></li>
-            <li className={`${s.dayItem} ${s.dayBlocked}`}><span>Groceries · blocked elsewhere</span><span>4</span></li>
-            <li className={`${s.dayItem} ${s.dayFree}`}><span>Dinner · still free here</span><span>5</span></li>
+            <li className={`${s.dayItem} ${s.dayBlocked}`}><span>Groceries: Blocked on other apps</span><span>4</span></li>
+            <li className={`${s.dayItem} ${s.dayFree}`}><span>Dinner: No expense limit here</span><span>5</span></li>
           </ol>
         </div>
       </div>
