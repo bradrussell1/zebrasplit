@@ -45,7 +45,6 @@ export default function FaqPage() {
               <div key={sec.id} className={s.section} id={`section-${sec.id}`}>
                 <div className={s.sectionHead}>
                   <h2 className={s.sectionTitle}>{sec.title}</h2>
-                  <span className={s.count}>{sec.items.length} {sec.items.length === 1 ? "question" : "questions"}</span>
                 </div>
                 <div className={s.sectionBody}>
                   <Accordion items={sec.items} defaultOpen={sec.id === faqSections[0]?.id ? firstId : null} mode="multiple" />

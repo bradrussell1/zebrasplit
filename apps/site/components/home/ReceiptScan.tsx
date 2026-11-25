@@ -4,8 +4,8 @@ import l from "@/components/layout/layout.module.css";
 import s from "./home.module.css";
 
 const STEPS = [
-  <><b>Snap the receipt.</b> Every item, the tax and the total come out on their own.</>,
-  <><b>Everyone taps what they ordered.</b> Shared plates split between whoever had them.</>,
+  <><b>Scan the receipt.</b> Every menu item is itemized with an intuitive UI to view who had what.</>,
+  <><b>Everyone taps what they ordered.</b> Shared plates can be easily split between people.</>,
   <><b>Tax and tip follow your order.</b> The tip gets its own field, because receipts print before you write it in.</>,
 ];
 
@@ -16,8 +16,7 @@ export function ReceiptScan() {
       <div className={l.container}>
         <div className={`${l.band} ${s.bandWhite} ${l.split}`} data-align-right="surface">
           <div className={s.receiptCopy}>
-            <span className="eyebrow" data-align="text">New · Receipt scanning</span>
-            <h2 className="display display--tight">Snap it<br />Split it by item</h2>
+            <h2 className="display display--tight" data-align="text">Scan it<br />Split it by item</h2>
             <ol className={s.receiptSteps}>
               {STEPS.map((body, i) => (
                 <li key={i} className={s.receiptStep}><span className={s.stepDot} aria-hidden="true">{i + 1}</span><span className={s.receiptStepText}>{body}</span></li>

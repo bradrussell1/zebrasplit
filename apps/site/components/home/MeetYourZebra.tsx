@@ -19,8 +19,7 @@ export function MeetYourZebra() {
       <div className={`${l.container} ${l.inset}`}>
         <div className={l.split}>
           <div className={s.zebraCopy}>
-            <span className="eyebrow" data-align="text">New · Your zebra</span>
-            <h2 id="zebra-title" className="display display--tight">Meet your zebra</h2>
+            <h2 id="zebra-title" className="display display--tight" data-align="text">Meet your zebra avatar</h2>
             <p className={s.sectionBody}>Dress it up. Your friends see it on every trip. Free outfits to start, new drops all the time.</p>
             <div role="group" aria-label="Try a look" className={s.looks}>
               {FRIENDS.map((f, i) => (

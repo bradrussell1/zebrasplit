@@ -44,8 +44,7 @@ export function HerdDemo() {
           </div>
           {/* column 2 reaches out to the surface line on the right; its content still starts on the column-2 line */}
           <div className={`${s.demoCopy} ${l.reachRight}`}>
-            <span className="eyebrow" data-align="col2">Try it · tap a friend</span>
-            <h2 id="stripes-title" className="display display--feature">Earn your Stripes</h2>
+            <h2 id="stripes-title" className="display display--feature" data-align="col2">Earn your Stripes</h2>
             <p className={s.demoBody}><b>Nobody settles up until everyone has finished adding expenses.</b> Each zebra earns its stripes when they tap Done. No more &quot;wait, I forgot the gas.&quot;</p>
             <div className={s.toggles} data-align-right="surface">
               {FRIENDS.map((f, i) => (

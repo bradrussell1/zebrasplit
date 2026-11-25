@@ -97,7 +97,6 @@ export default async function FeaturePage({ params }: Params) {
             <div className={l.container}>
               <div className={`${l.band} ${ink ? h.bandInk : h.bandWhite} ${l.split}`}>
                 <div className={s.heroCopy}>
-                  <span className={`eyebrow ${ink ? s.eyebrowOnInk : ""}`}>Features · {f.nav}</span>
                   <h1 className="display display--feature">{f.h1}</h1>
                   <p className={`${s.intro} ${ink ? s.introOnInk : ""}`}>{f.intro}</p>
                   <div className={s.badges}><StoreBadges urls={urls} location={`feature_${f.slug}_hero`} onInk={ink} only="ios" /></div>
